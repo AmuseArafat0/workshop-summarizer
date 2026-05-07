@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -599,7 +600,10 @@
   <div class="results" id="results">
     <div class="results-header">
       <div class="results-title">Workshop Intelligence Report</div>
-      <button class="copy-all-btn" onclick="copyAll()">Copy All ↗</button>
+      <div style="display:flex;gap:8px;">
+        <button class="copy-all-btn" onclick="copyAll()">Copy All ↗</button>
+        <button class="copy-all-btn" id="downloadDocBtn" onclick="downloadDoc()" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">⬇ Download .docx</button>
+      </div>
     </div>
 
     <div class="section-card card-1">
@@ -919,6 +923,21 @@
       const end = clean.lastIndexOf('}');
       if (start === -1 || end === -1) throw new Error('No JSON object found');
       clean = clean.substring(start, end + 1);
+
+      // FIX: Gemini sometimes emits literal newlines inside JSON string values,
+      // which breaks JSON.parse. We sanitize by replacing newlines that appear
+      // inside a string value (between quotes) with the \n escape sequence.
+      // Strategy: replace all literal \n and \r inside the JSON with the escape,
+      // but only within string values (between " pairs).
+      clean = clean.replace(/"((?:[^"\\]|\\.)*)"/gs, (match, inner) => {
+        // Escape any raw newlines inside this string value
+        const fixed = inner
+          .replace(/\r\n/g, '\\n')
+          .replace(/\r/g, '\\n')
+          .replace(/\n/g, '\\n');
+        return '"' + fixed + '"';
+      });
+
       data = JSON.parse(clean);
     } catch(e) {
       // Show first 300 chars of raw response to help debug
@@ -965,6 +984,125 @@
       btn.textContent = 'Copied ✓';
       setTimeout(() => btn.textContent = 'Copy All ↗', 2000);
     });
+  }
+
+  // ── Download .docx ─────────────────────────────────────────────────────────
+  async function downloadDoc() {
+    const btn = document.getElementById('downloadDocBtn');
+    btn.textContent = 'Building…';
+    btn.disabled = true;
+
+    try {
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, BorderStyle } = docx;
+
+      const sections = [
+        { title: '01 — What They Taught',      id: 'content1', emoji: '📚' },
+        { title: '02 — Tools Used',            id: 'content2', emoji: '🛠️' },
+        { title: '03 — Courses Being Sold',    id: 'content3', emoji: '🎓' },
+        { title: '04 — Upsell Prices',         id: 'content4', emoji: '💰' },
+        { title: '05 — Important Hook Points', id: 'content5', emoji: '🎣' },
+      ];
+
+      const children = [];
+
+      // Title
+      children.push(new Paragraph({
+        children: [new TextRun({ text: 'Workshop Intelligence Report', bold: true, size: 48, font: 'Arial', color: '111111' })],
+        spacing: { after: 120 },
+      }));
+
+      // Subtitle with date
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      children.push(new Paragraph({
+        children: [new TextRun({ text: 'Generated ' + dateStr + ' · Workshop Intel', size: 20, font: 'Arial', color: '888888' })],
+        spacing: { after: 480 },
+      }));
+
+      // Divider
+      children.push(new Paragraph({
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'CCCCCC', space: 1 } },
+        spacing: { after: 480 },
+        children: [],
+      }));
+
+      sections.forEach((sec, idx) => {
+        const rawText = document.getElementById(sec.id).textContent || '—';
+
+        // Section heading
+        children.push(new Paragraph({
+          children: [new TextRun({ text: sec.title, bold: true, size: 28, font: 'Arial', color: '111111' })],
+          spacing: { before: idx === 0 ? 0 : 480, after: 200 },
+        }));
+
+        // Parse bullet lines
+        const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+        lines.forEach(line => {
+          const isBullet = line.startsWith('•');
+          const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
+          children.push(new Paragraph({
+            numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
+            children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '333333' })],
+            spacing: { after: 80 },
+          }));
+        });
+
+        // Divider between sections (not after last)
+        if (idx < sections.length - 1) {
+          children.push(new Paragraph({
+            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'EEEEEE', space: 1 } },
+            spacing: { before: 360, after: 0 },
+            children: [],
+          }));
+        }
+      });
+
+      // Footer note
+      children.push(new Paragraph({
+        children: [new TextRun({ text: 'Generated by Workshop Intel · workshopintel.app', size: 18, font: 'Arial', color: 'AAAAAA', italics: true })],
+        spacing: { before: 600 },
+        alignment: AlignmentType.CENTER,
+      }));
+
+      const doc = new Document({
+        numbering: {
+          config: [{
+            reference: 'bullets',
+            levels: [{
+              level: 0,
+              format: LevelFormat.BULLET,
+              text: '\u2022',
+              alignment: AlignmentType.LEFT,
+              style: { paragraph: { indent: { left: 720, hanging: 360 } } }
+            }]
+          }]
+        },
+        sections: [{
+          properties: {
+            page: {
+              size: { width: 12240, height: 15840 },
+              margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+            }
+          },
+          children
+        }]
+      });
+
+      const buffer = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(buffer);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workshop-intel-report.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      btn.textContent = 'Downloaded ✓';
+      setTimeout(() => { btn.textContent = '⬇ Download .docx'; btn.disabled = false; }, 2500);
+    } catch (err) {
+      console.error('docx error:', err);
+      btn.textContent = '⚠ Failed';
+      setTimeout(() => { btn.textContent = '⬇ Download .docx'; btn.disabled = false; }, 2500);
+    }
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
