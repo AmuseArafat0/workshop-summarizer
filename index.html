@@ -784,17 +784,30 @@
 
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
-    return 'You are an expert workshop analyst. Analyze the following workshop transcript(s) and produce a structured report.\n\n' +
-      'Return ONLY a raw JSON object with exactly these 5 keys (no markdown, no code fences, no extra text):\n\n' +
-      '{"taught":"...","tools":"...","courses":"...","upsell":"...","hooks":"..."}\n\n' +
-      'KEY INSTRUCTIONS:\n' +
-      '"taught" — Main lessons, concepts, workflows and skills taught. Use bullet points starting with "• " separated by newlines.\n' +
-      '"tools" — Every tool, software, platform, API, service mentioned. Use "• " bullets.\n' +
-      '"courses" — Courses, programs, memberships being promoted/sold. Describe each. Use "• " bullets.\n' +
-      '"upsell" — All prices, tiers, payment plans, discounts mentioned (include exact numbers). Use "• " bullets.\n' +
-      '"hooks" — Compelling hooks, pain points, promises, urgency/scarcity tactics used. Use "• " bullets.\n\n' +
-      'If a section has no info, write: "Not mentioned in this transcript."\n\n' +
-      'TRANSCRIPT(S):\n' + transcript.substring(0, 900000);
+    var lines = [
+      'You are a workshop analyst. Read the transcript and fill in the 5 JSON fields.',
+      '',
+      'STRICT RULES:',
+      '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
+      '2. Your entire reply must start with { and end with }.',
+      '3. All 5 keys must exist. Values are plain strings.',
+      '4. Use bullet character (u2022) at start of each point, separated by newline character.',
+      '5. If a field has no relevant info, use: "Not mentioned in this transcript."',
+      '',
+      'OUTPUT FORMAT (replace placeholder text with real content):',
+      '{"taught":"u2022 lesson1\nu2022 lesson2","tools":"u2022 tool1\nu2022 tool2","courses":"u2022 course details","upsell":"u2022 price info","hooks":"u2022 hook statement"}',
+      '',
+      'FIELD DEFINITIONS:',
+      'taught  = Main lessons, concepts, workflows and skills demonstrated.',
+      'tools   = Every tool, software, platform, API, or service mentioned.',
+      'courses = Any courses, programs, memberships being promoted or sold.',
+      'upsell  = All prices, tiers, discounts, payment plans (include exact numbers).',
+      'hooks   = Sales hooks, pain points, promises, urgency or scarcity tactics.',
+      '',
+      'TRANSCRIPT:',
+      transcript.substring(0, 900000)
+    ];
+    return lines.join('\n').replace(/u2022/g, '\u2022');
   }
 
   // ── API Calls ──────────────────────────────────────────────────────────────
@@ -899,12 +912,23 @@
   function parseAndDisplay(text) {
     let data;
     try {
-      const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const match = clean.match(/\{[\s\S]*\}/);
-      data = JSON.parse(match ? match[0] : clean);
+      // Strip any markdown fences
+      let clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      // Extract JSON object — find first { and last }
+      const start = clean.indexOf('{');
+      const end = clean.lastIndexOf('}');
+      if (start === -1 || end === -1) throw new Error('No JSON object found');
+      clean = clean.substring(start, end + 1);
+      data = JSON.parse(clean);
     } catch(e) {
-      showError('Could not parse AI response. See console for raw output.');
-      console.error('Raw output:', text);
+      // Show first 300 chars of raw response to help debug
+      const preview = text ? text.substring(0, 300).replace(/</g,'&lt;') : '(empty)';
+      document.getElementById('errorBox').innerHTML =
+        '<b>⚠ Could not parse AI response.</b><br><br>' +
+        '<span style="opacity:0.7">Raw output preview:</span><br>' +
+        '<code style="font-size:11px;word-break:break-all;white-space:pre-wrap">' + preview + '</code>';
+      document.getElementById('errorBox').classList.add('active');
+      console.error('Full raw output:', text);
       return;
     }
 
