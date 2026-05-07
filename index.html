@@ -115,6 +115,13 @@
       gap: 10px;
     }
 
+    .provider-tabs-row2 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
     .provider-tab {
       background: var(--surface);
       border: 1.5px solid var(--border);
@@ -462,7 +469,7 @@
     }
 
     @media (max-width: 580px) {
-      .provider-tabs { grid-template-columns: 1fr; }
+      .provider-tabs, .provider-tabs-row2 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -499,6 +506,31 @@
         <div class="p-name">Claude (Anthropic)</div>
         <div class="p-model">claude-haiku-4-5</div>
         <span class="p-badge badge-paid">Paid · Best quality</span>
+      </button>
+
+    </div>
+
+    <div class="provider-tabs-row2">
+
+      <button class="provider-tab" onclick="selectProvider('groq')" id="tab-groq">
+        <div class="p-icon">⚡</div>
+        <div class="p-name">Groq</div>
+        <div class="p-model">llama-3.3-70b</div>
+        <span class="p-badge badge-free">FREE · Ultra fast</span>
+      </button>
+
+      <button class="provider-tab" onclick="selectProvider('mistral')" id="tab-mistral">
+        <div class="p-icon">🌊</div>
+        <div class="p-name">Mistral AI</div>
+        <div class="p-model">mistral-small-latest</div>
+        <span class="p-badge badge-free">FREE tier</span>
+      </button>
+
+      <button class="provider-tab" onclick="selectProvider('cohere')" id="tab-cohere">
+        <div class="p-icon">🔵</div>
+        <div class="p-name">Cohere</div>
+        <div class="p-model">command-r-plus</div>
+        <span class="p-badge badge-free">FREE tier</span>
       </button>
 
     </div>
@@ -568,6 +600,76 @@
       <div class="provider-hint" style="margin-top:12px">
         🟠 Paid API — best accuracy on long transcripts.<br>
         Get key → <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+      </div>
+    </div>
+
+    <!-- Groq -->
+    <div id="fields-groq" class="provider-fields" style="display:none">
+      <div class="api-row">
+        <div class="field">
+          <span class="field-label">Groq API Key</span>
+          <input type="password" id="key-groq" placeholder="gsk_..." autocomplete="off" oninput="updateRunBtn()" />
+        </div>
+        <button class="save-btn" onclick="saveKey('groq')">Save</button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <span class="field-label">Select Model</span>
+        <select id="model-groq">
+          <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile — FREE</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant — FREE (fastest)</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7B — FREE</option>
+          <option value="gemma2-9b-it">Gemma 2 9B — FREE</option>
+        </select>
+      </div>
+      <div class="provider-hint" style="margin-top:12px">
+        ⚡ Completely free — insanely fast inference.<br>
+        Get key → <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> (sign up free)
+      </div>
+    </div>
+
+    <!-- Mistral -->
+    <div id="fields-mistral" class="provider-fields" style="display:none">
+      <div class="api-row">
+        <div class="field">
+          <span class="field-label">Mistral API Key</span>
+          <input type="password" id="key-mistral" placeholder="..." autocomplete="off" oninput="updateRunBtn()" />
+        </div>
+        <button class="save-btn" onclick="saveKey('mistral')">Save</button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <span class="field-label">Select Model</span>
+        <select id="model-mistral">
+          <option value="mistral-small-latest">Mistral Small — FREE tier</option>
+          <option value="open-mistral-nemo">Mistral Nemo — FREE tier</option>
+          <option value="mistral-large-latest">Mistral Large — Paid</option>
+        </select>
+      </div>
+      <div class="provider-hint" style="margin-top:12px">
+        🆓 Free tier available with generous limits.<br>
+        Get key → <a href="https://console.mistral.ai/api-keys" target="_blank">console.mistral.ai</a> (sign up free)
+      </div>
+    </div>
+
+    <!-- Cohere -->
+    <div id="fields-cohere" class="provider-fields" style="display:none">
+      <div class="api-row">
+        <div class="field">
+          <span class="field-label">Cohere API Key</span>
+          <input type="password" id="key-cohere" placeholder="..." autocomplete="off" oninput="updateRunBtn()" />
+        </div>
+        <button class="save-btn" onclick="saveKey('cohere')">Save</button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <span class="field-label">Select Model</span>
+        <select id="model-cohere">
+          <option value="command-r-plus">Command R+ — FREE trial key</option>
+          <option value="command-r">Command R — FREE trial key</option>
+          <option value="command-light">Command Light — FREE trial key</option>
+        </select>
+      </div>
+      <div class="provider-hint" style="margin-top:12px">
+        🆓 Free trial key — no credit card needed.<br>
+        Get key → <a href="https://dashboard.cohere.com/api-keys" target="_blank">dashboard.cohere.com</a> (sign up free)
       </div>
     </div>
 
@@ -659,7 +761,7 @@
 
 </div>
 
-<footer>Workshop Intel v3.0 · Gemini (free) · OpenRouter (free models) · Claude API</footer>
+<footer>Workshop Intel v3.1 · Gemini · Groq · Mistral · Cohere · OpenRouter · Claude</footer>
 
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
@@ -670,7 +772,7 @@
   function selectProvider(p) {
     currentProvider = p;
 
-    ['gemini','openrouter','claude'].forEach(id => {
+    ['gemini','openrouter','claude','groq','mistral','cohere'].forEach(id => {
       document.getElementById('tab-' + id).classList.toggle('active', id === p);
       document.getElementById('fields-' + id).style.display = id === p ? 'block' : 'none';
     });
@@ -873,6 +975,66 @@
     return data.content?.[0]?.text || '';
   }
 
+  async function callGroq(apiKey, prompt) {
+    const model = document.getElementById('model-groq').value;
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 4096
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Groq API error ' + res.status); }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  async function callMistral(apiKey, prompt) {
+    const model = document.getElementById('model-mistral').value;
+    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 4096
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Mistral API error ' + res.status); }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  async function callCohere(apiKey, prompt) {
+    const model = document.getElementById('model-cohere').value;
+    const res = await fetch('https://api.cohere.com/v2/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 4096
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Cohere API error ' + res.status); }
+    const data = await res.json();
+    return data.message?.content?.[0]?.text || '';
+  }
+
   // ── Main ───────────────────────────────────────────────────────────────────
   async function runSummary() {
     const keyEl = document.getElementById('key-' + currentProvider);
@@ -898,9 +1060,12 @@
       const prompt = buildPrompt(transcripts.join('\n\n'));
       let text = '';
 
-      if (currentProvider === 'gemini')      text = await callGemini(apiKey, prompt);
+      if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
-      else if (currentProvider === 'claude') text = await callClaude(apiKey, prompt);
+      else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
+      else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
+      else if (currentProvider === 'mistral')    text = await callMistral(apiKey, prompt);
+      else if (currentProvider === 'cohere')     text = await callCohere(apiKey, prompt);
 
       if (!text) throw new Error('Empty response from API. Please try again.');
       parseAndDisplay(text);
@@ -1107,7 +1272,7 @@
 
   // ── Init ───────────────────────────────────────────────────────────────────
   // Restore any previously saved keys in this session
-  ['gemini','openrouter','claude'].forEach(p => {
+  ['gemini','openrouter','claude','groq','mistral','cohere'].forEach(p => {
     const stored = sessionStorage.getItem('wk_key_' + p);
     if (stored) document.getElementById('key-' + p).value = stored;
   });
