@@ -799,7 +799,7 @@
 
   // ── API Calls ──────────────────────────────────────────────────────────────
   async function callGemini(apiKey, prompt) {
-    const model = 'gemini-2.5-flash-preview-05-20';
+    const model = 'gemini-2.5-flash';
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
     const res = await fetch(url, {
       method: 'POST',
@@ -859,7 +859,10 @@
   // ── Main ───────────────────────────────────────────────────────────────────
   async function runSummary() {
     const keyEl = document.getElementById('key-' + currentProvider);
-    const apiKey = keyEl?.value.trim();
+    // Always read fresh from the input field (user may not have clicked Save)
+    const apiKey = (keyEl?.value || '').trim();
+    // Also auto-save it for convenience
+    if (apiKey) sessionStorage.setItem('wk_key_' + currentProvider, apiKey);
     if (!apiKey) { showError('Please enter your API key for the selected provider.'); return; }
     if (!uploadedFiles.length) { showError('Please upload at least one transcript file.'); return; }
 
