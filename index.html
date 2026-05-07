@@ -482,7 +482,7 @@
       <button class="provider-tab active" onclick="selectProvider('gemini')" id="tab-gemini">
         <div class="p-icon">🟦</div>
         <div class="p-name">Google Gemini</div>
-        <div class="p-model">gemini-2.5-flash</div>
+        <div class="p-model">gemini-2.5-flash-preview</div>
         <span class="p-badge badge-free">FREE · No credit card</span>
       </button>
 
@@ -655,7 +655,7 @@
 
 </div>
 
-<footer>Workshop Intel v3.0 · Gemini (free) · OpenRouter (free models) · Claude API</footer>
+<footer>Workshop Intel v3.0 · Gemini (free) · OpenRouter (free models) · Claude API · Your API key is stored in sessionStorage only</footer>
 
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
@@ -742,7 +742,7 @@
   function parseVTT(text) {
     return text.split('\n')
       .map(l => l.trim())
-      .filter(l => l && l !== 'WEBVTT' && !/^\d+$/.test(l) && !l.includes('-->'))
+      .filter(l => l && l !== 'WEBVTT' && !/^\d+$/.test(l) && !l.includes('-->') && !/^NOTE\b/.test(l) && !/^STYLE\b/.test(l) && !/^REGION\b/.test(l))
       .join(' ');
   }
 
@@ -812,7 +812,7 @@
 
   // ── API Calls ──────────────────────────────────────────────────────────────
   async function callGemini(apiKey, prompt) {
-    const model = 'gemini-2.5-flash';
+    const model = 'gemini-2.5-flash-preview-05-20';
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
     const res = await fetch(url, {
       method: 'POST',
