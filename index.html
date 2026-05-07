@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workshop Intel — Transcript Summarizer (Free · Gemini)</title>
+  <title>Workshop Intel — Transcript Summarizer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
@@ -35,7 +35,6 @@
       overflow-x: hidden;
     }
 
-    /* — GRID BACKGROUND — */
     body::before {
       content: '';
       position: fixed;
@@ -56,7 +55,7 @@
       padding: 0 24px 80px;
     }
 
-    /* — HEADER — */
+    /* HEADER */
     header {
       padding: 52px 0 40px;
       display: flex;
@@ -91,30 +90,89 @@
       color: var(--muted);
       font-weight: 400;
       margin-top: 6px;
-      max-width: 500px;
+      max-width: 520px;
       line-height: 1.6;
     }
 
-    /* — API KEY SECTION — */
+    /* STEP LABEL */
+    .step-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* PROVIDER TABS */
+    .provider-section { margin-bottom: 20px; }
+
+    .provider-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .provider-tab {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .provider-tab:hover { border-color: rgba(255,255,255,0.18); }
+    .provider-tab.active { border-color: var(--accent); background: rgba(200,255,0,0.04); }
+
+    .p-icon { font-size: 22px; line-height: 1; margin-bottom: 6px; }
+    .p-name { font-size: 14px; font-weight: 700; color: #fff; }
+    .p-model { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
+    .p-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+    .badge-free { background: rgba(200,255,0,0.12); color: var(--accent); }
+    .badge-mixed { background: rgba(124,109,255,0.15); color: var(--accent3); }
+    .badge-paid  { background: rgba(255,107,53,0.12); color: var(--accent2); }
+
+    /* API SECTION */
     .api-section {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 24px 28px;
-      margin-bottom: 24px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
       display: flex;
+      flex-direction: column;
       gap: 12px;
+    }
+
+    .api-row {
+      display: flex;
+      gap: 10px;
       align-items: flex-end;
     }
 
-    .api-section .field {
+    .field {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    label {
+    .field-label {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
       letter-spacing: 0.15em;
@@ -122,11 +180,11 @@
       color: var(--muted);
     }
 
-    input[type="password"], input[type="text"] {
+    input[type="password"], input[type="text"], select {
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 12px 16px;
+      padding: 11px 14px;
       color: var(--text);
       font-family: 'DM Mono', monospace;
       font-size: 13px;
@@ -135,13 +193,22 @@
       transition: border-color 0.2s;
     }
 
-    input:focus { border-color: var(--accent); }
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b80' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    input:focus, select:focus { border-color: var(--accent); }
 
     .save-btn {
       background: var(--surface2);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 12px 20px;
+      padding: 11px 20px;
       border-radius: 10px;
       font-family: 'Syne', sans-serif;
       font-size: 13px;
@@ -153,16 +220,25 @@
 
     .save-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-    .key-status {
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      margin-top: 6px;
-    }
-
-    .key-status.ok { color: var(--accent); }
+    .key-status { font-family: 'DM Mono', monospace; font-size: 11px; }
+    .key-status.ok   { color: var(--accent); }
     .key-status.none { color: var(--muted); }
 
-    /* — UPLOAD ZONE — */
+    .provider-hint {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 8px;
+      border-left: 2px solid var(--border);
+    }
+
+    .provider-hint a { color: var(--accent); text-decoration: none; }
+    .provider-hint a:hover { text-decoration: underline; }
+
+    /* UPLOAD */
     .upload-zone {
       border: 2px dashed var(--border);
       border-radius: 20px;
@@ -171,7 +247,7 @@
       cursor: pointer;
       transition: border-color 0.25s, background 0.25s;
       background: var(--surface);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       position: relative;
     }
 
@@ -189,32 +265,12 @@
       height: 100%;
     }
 
-    .upload-icon {
-      font-size: 40px;
-      margin-bottom: 12px;
-      line-height: 1;
-    }
+    .upload-icon  { font-size: 40px; margin-bottom: 12px; line-height: 1; }
+    .upload-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .upload-hint  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
 
-    .upload-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-
-    .upload-hint {
-      font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* — FILE CHIPS — */
-    .file-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
+    /* FILE CHIPS */
+    .file-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 
     .file-chip {
       display: flex;
@@ -232,23 +288,18 @@
 
     @keyframes pop {
       from { transform: scale(0.85); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+      to   { transform: scale(1); opacity: 1; }
     }
 
     .file-chip .dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
     .file-chip .remove {
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      padding: 0 0 0 4px;
-      transition: color 0.15s;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 14px; line-height: 1;
+      padding: 0 0 0 4px; transition: color 0.15s;
     }
     .file-chip .remove:hover { color: var(--accent2); }
 
-    /* — RUN BUTTON — */
+    /* RUN BUTTON */
     .run-btn {
       width: 100%;
       padding: 18px;
@@ -266,24 +317,18 @@
       justify-content: center;
       gap: 10px;
       transition: opacity 0.2s, transform 0.15s;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
     }
 
     .run-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-    .run-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    .run-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
-    /* — LOADER — */
-    .loader {
-      display: none;
-      text-align: center;
-      padding: 60px 0;
-    }
-
+    /* LOADER */
+    .loader { display: none; text-align: center; padding: 60px 0; }
     .loader.active { display: block; }
 
     .spinner {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       border: 3px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
@@ -292,14 +337,9 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); }
 
-    .loader-text {
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    /* — ERROR — */
+    /* ERROR */
     .error-box {
       display: none;
       background: rgba(255,107,53,0.08);
@@ -312,16 +352,10 @@
       margin-bottom: 24px;
       line-height: 1.5;
     }
-
     .error-box.active { display: block; }
 
-    /* — RESULTS — */
-    .results {
-      display: none;
-      flex-direction: column;
-      gap: 20px;
-    }
-
+    /* RESULTS */
+    .results { display: none; flex-direction: column; gap: 20px; }
     .results.active { display: flex; }
 
     .results-header {
@@ -332,8 +366,8 @@
     }
 
     .results-title {
-      font-size: 13px;
       font-family: 'DM Mono', monospace;
+      font-size: 13px;
       color: var(--muted);
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -351,10 +385,9 @@
       letter-spacing: 0.08em;
       transition: color 0.2s, border-color 0.2s;
     }
-
     .copy-all-btn:hover { color: var(--accent); border-color: var(--accent); }
 
-    /* — SECTION CARDS — */
+    /* CARDS */
     .section-card {
       border-radius: 18px;
       padding: 28px 32px;
@@ -366,13 +399,13 @@
 
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .section-card:nth-child(2) { animation-delay: 0.05s; }
-    .section-card:nth-child(3) { animation-delay: 0.1s; }
+    .section-card:nth-child(3) { animation-delay: 0.10s; }
     .section-card:nth-child(4) { animation-delay: 0.15s; }
-    .section-card:nth-child(5) { animation-delay: 0.2s; }
+    .section-card:nth-child(5) { animation-delay: 0.20s; }
     .section-card:nth-child(6) { animation-delay: 0.25s; }
 
     .card-1 { background: var(--card-1); border-color: rgba(124,109,255,0.18); }
@@ -388,111 +421,47 @@
     .card-5::before { content: '05'; }
 
     .section-card::before {
-      position: absolute;
-      top: 20px;
-      right: 28px;
+      position: absolute; top: 20px; right: 28px;
+      font-family: 'DM Mono', monospace; font-size: 48px;
+      font-weight: 500; color: rgba(255,255,255,0.03);
+      line-height: 1; pointer-events: none;
+    }
+
+    .section-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .section-icon { font-size: 20px; line-height: 1; }
+    .card-label {
       font-family: 'DM Mono', monospace;
-      font-size: 48px;
-      font-weight: 500;
-      color: rgba(255,255,255,0.03);
-      line-height: 1;
-      pointer-events: none;
+      font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; opacity: 0.5;
     }
 
-    .section-meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .section-icon {
-      font-size: 20px;
-      line-height: 1;
-    }
-
-    .section-label {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      opacity: 0.5;
-    }
-
-    .section-title {
-      font-size: 19px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 14px;
-      line-height: 1.3;
-    }
+    .section-title { font-size: 19px; font-weight: 700; color: #fff; margin-bottom: 14px; }
 
     .section-content {
-      font-size: 14.5px;
-      line-height: 1.75;
-      color: #c0c0d0;
-      white-space: pre-wrap;
-      font-family: inherit;
+      font-size: 14.5px; line-height: 1.78;
+      color: #c0c0d0; white-space: pre-wrap; font-family: inherit;
     }
 
-    .section-content ul {
-      list-style: none;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .section-content ul li::before {
-      content: '→ ';
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .card-action {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 18px;
-    }
+    .card-action { display: flex; justify-content: flex-end; margin-top: 18px; }
 
     .copy-btn {
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 7px 14px;
-      border-radius: 8px;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      cursor: pointer;
-      letter-spacing: 0.08em;
+      color: var(--muted); padding: 7px 14px;
+      border-radius: 8px; font-family: 'DM Mono', monospace;
+      font-size: 11px; cursor: pointer;
       transition: color 0.2s, border-color 0.2s;
     }
+    .copy-btn:hover, .copy-btn.copied { color: var(--accent); border-color: rgba(200,255,0,0.3); }
 
-    .copy-btn:hover { color: var(--accent); border-color: rgba(200,255,0,0.3); }
-    .copy-btn.copied { color: var(--accent); border-color: rgba(200,255,0,0.3); }
-
-    /* — PRICE HIGHLIGHT — */
-    .price-badge {
-      display: inline-block;
-      background: rgba(200,255,0,0.12);
-      border: 1px solid rgba(200,255,0,0.25);
-      color: var(--accent);
-      padding: 4px 12px;
-      border-radius: 999px;
+    footer {
+      text-align: center; padding: 40px 0 20px;
       font-family: 'DM Mono', monospace;
-      font-size: 12px;
-      font-weight: 500;
-      margin: 4px 4px 4px 0;
+      font-size: 11px; color: var(--muted); opacity: 0.5;
     }
 
-    /* — FOOTER — */
-    footer {
-      text-align: center;
-      padding: 40px 0 20px;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      color: var(--muted);
-      opacity: 0.5;
+    @media (max-width: 580px) {
+      .provider-tabs { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -502,20 +471,110 @@
   <header>
     <div class="logo-tag">⚡ Workshop Intel</div>
     <h1>Transcript <em>Summarizer</em></h1>
-    <p class="subtitle">Upload your workshop VTT files and get a structured 5-section intelligence report — powered by Google Gemini, 100% free, no credit card.</p>
+    <p class="subtitle">Upload workshop VTT files → get a 5-section intelligence report. Choose your AI provider below.</p>
   </header>
 
-  <!-- API KEY -->
-  <div class="api-section">
-    <div class="field">
-      <label>Google Gemini API Key — <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent);text-decoration:none;">Get it free at aistudio.google.com ↗</a></label>
-      <input type="password" id="apiKey" placeholder="AIza..." autocomplete="off" />
-      <div id="keyStatus" class="key-status none">No key saved · Free, no credit card needed</div>
+  <!-- STEP 1: PROVIDER -->
+  <div class="provider-section">
+    <span class="step-label">Step 1 — Choose AI Provider</span>
+    <div class="provider-tabs">
+
+      <button class="provider-tab active" onclick="selectProvider('gemini')" id="tab-gemini">
+        <div class="p-icon">🟦</div>
+        <div class="p-name">Google Gemini</div>
+        <div class="p-model">gemini-2.5-flash</div>
+        <span class="p-badge badge-free">FREE · No credit card</span>
+      </button>
+
+      <button class="provider-tab" onclick="selectProvider('openrouter')" id="tab-openrouter">
+        <div class="p-icon">🔀</div>
+        <div class="p-name">OpenRouter</div>
+        <div class="p-model">100+ models</div>
+        <span class="p-badge badge-mixed">FREE models available</span>
+      </button>
+
+      <button class="provider-tab" onclick="selectProvider('claude')" id="tab-claude">
+        <div class="p-icon">🟠</div>
+        <div class="p-name">Claude (Anthropic)</div>
+        <div class="p-model">claude-haiku-4-5</div>
+        <span class="p-badge badge-paid">Paid · Best quality</span>
+      </button>
+
     </div>
-    <button class="save-btn" onclick="saveKey()">Save Key</button>
   </div>
 
-  <!-- UPLOAD -->
+  <!-- STEP 2: API KEY -->
+  <div class="api-section">
+    <span class="step-label">Step 2 — Enter API Key</span>
+
+    <!-- Gemini -->
+    <div id="fields-gemini" class="provider-fields">
+      <div class="api-row">
+        <div class="field">
+          <span class="field-label">Gemini API Key</span>
+          <input type="password" id="key-gemini" placeholder="AIza..." autocomplete="off" oninput="updateRunBtn()" />
+        </div>
+        <button class="save-btn" onclick="saveKey('gemini')">Save</button>
+      </div>
+      <div class="provider-hint" style="margin-top:12px">
+        🆓 Completely free — no credit card needed.<br>
+        Get key → <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> (sign in with Google)
+      </div>
+    </div>
+
+    <!-- OpenRouter -->
+    <div id="fields-openrouter" class="provider-fields" style="display:none">
+      <div class="api-row">
+        <div class="field">
+          <span class="field-label">OpenRouter API Key</span>
+          <input type="password" id="key-openrouter" placeholder="sk-or-v1-..." autocomplete="off" oninput="updateRunBtn()" />
+        </div>
+        <button class="save-btn" onclick="saveKey('openrouter')">Save</button>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <span class="field-label">Select Model</span>
+        <select id="model-openrouter">
+          <optgroup label="── FREE Models ──">
+            <option value="meta-llama/llama-3.3-8b-instruct:free">Llama 3.3 8B Instruct — FREE</option>
+            <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B Instruct — FREE</option>
+            <option value="mistralai/mistral-7b-instruct:free">Mistral 7B Instruct — FREE</option>
+            <option value="google/gemma-3-12b-it:free">Gemma 3 12B — FREE</option>
+            <option value="deepseek/deepseek-r1:free">DeepSeek R1 — FREE</option>
+            <option value="deepseek/deepseek-v3:free">DeepSeek V3 — FREE</option>
+          </optgroup>
+          <optgroup label="── Paid Models ──">
+            <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5 — Paid</option>
+            <option value="openai/gpt-4o-mini">GPT-4o Mini — Paid</option>
+            <option value="google/gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash — Paid</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="provider-hint" style="margin-top:12px">
+        🆓 Pick any FREE model above and pay nothing.<br>
+        Get key → <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> (sign up free)
+      </div>
+    </div>
+
+    <!-- Claude -->
+    <div id="fields-claude" class="provider-fields" style="display:none">
+      <div class="api-row">
+        <div class="field">
+          <span class="field-label">Anthropic API Key</span>
+          <input type="password" id="key-claude" placeholder="sk-ant-..." autocomplete="off" oninput="updateRunBtn()" />
+        </div>
+        <button class="save-btn" onclick="saveKey('claude')">Save</button>
+      </div>
+      <div class="provider-hint" style="margin-top:12px">
+        🟠 Paid API — best accuracy on long transcripts.<br>
+        Get key → <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+      </div>
+    </div>
+
+    <div id="keyStatus" class="key-status none" style="margin-top:4px">No key saved yet</div>
+  </div>
+
+  <!-- STEP 3: UPLOAD -->
+  <span class="step-label">Step 3 — Upload Transcripts</span>
   <div class="upload-zone" id="dropZone">
     <input type="file" id="fileInput" accept=".vtt,.txt,.srt" multiple />
     <div class="upload-icon">📂</div>
@@ -543,89 +602,104 @@
       <button class="copy-all-btn" onclick="copyAll()">Copy All ↗</button>
     </div>
 
-    <div class="section-card card-1" id="card1">
+    <div class="section-card card-1">
       <div class="section-meta">
         <span class="section-icon">📚</span>
-        <span class="section-label">Section 01</span>
+        <span class="card-label">Section 01</span>
       </div>
       <div class="section-title">What They Taught</div>
       <div class="section-content" id="content1">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content1', this)">Copy</button></div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content1',this)">Copy</button></div>
     </div>
 
-    <div class="section-card card-2" id="card2">
+    <div class="section-card card-2">
       <div class="section-meta">
         <span class="section-icon">🛠️</span>
-        <span class="section-label">Section 02</span>
+        <span class="card-label">Section 02</span>
       </div>
       <div class="section-title">Tools Used</div>
       <div class="section-content" id="content2">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content2', this)">Copy</button></div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content2',this)">Copy</button></div>
     </div>
 
-    <div class="section-card card-3" id="card3">
+    <div class="section-card card-3">
       <div class="section-meta">
         <span class="section-icon">🎓</span>
-        <span class="section-label">Section 03</span>
+        <span class="card-label">Section 03</span>
       </div>
       <div class="section-title">Courses Being Sold</div>
       <div class="section-content" id="content3">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content3', this)">Copy</button></div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content3',this)">Copy</button></div>
     </div>
 
-    <div class="section-card card-4" id="card4">
+    <div class="section-card card-4">
       <div class="section-meta">
         <span class="section-icon">💰</span>
-        <span class="section-label">Section 04</span>
+        <span class="card-label">Section 04</span>
       </div>
       <div class="section-title">Upsell Prices</div>
       <div class="section-content" id="content4">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content4', this)">Copy</button></div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content4',this)">Copy</button></div>
     </div>
 
-    <div class="section-card card-5" id="card5">
+    <div class="section-card card-5">
       <div class="section-meta">
         <span class="section-icon">🎣</span>
-        <span class="section-label">Section 05</span>
+        <span class="card-label">Section 05</span>
       </div>
       <div class="section-title">Important Hook Points</div>
       <div class="section-content" id="content5">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content5', this)">Copy</button></div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content5',this)">Copy</button></div>
     </div>
   </div>
 
 </div>
 
-<footer>Workshop Intel · Powered by Google Gemini (Free) · v2.0</footer>
+<footer>Workshop Intel v3.0 · Gemini (free) · OpenRouter (free models) · Claude API</footer>
 
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
   let uploadedFiles = [];
+  let currentProvider = 'gemini';
 
-  // ── API Key ────────────────────────────────────────────────────────────────
-  function saveKey() {
-    const key = document.getElementById('apiKey').value.trim();
-    if (!key) return;
-    sessionStorage.setItem('wk_gemini_key', key);
-    document.getElementById('keyStatus').textContent = '✓ Key saved for this session';
-    document.getElementById('keyStatus').className = 'key-status ok';
+  // ── Provider Switcher ──────────────────────────────────────────────────────
+  function selectProvider(p) {
+    currentProvider = p;
+
+    ['gemini','openrouter','claude'].forEach(id => {
+      document.getElementById('tab-' + id).classList.toggle('active', id === p);
+      document.getElementById('fields-' + id).style.display = id === p ? 'block' : 'none';
+    });
+
+    const stored = sessionStorage.getItem('wk_key_' + p);
+    if (stored) {
+      document.getElementById('key-' + p).value = stored;
+      setKeyStatus('✓ Key loaded from session', 'ok');
+    } else {
+      setKeyStatus('No key saved yet for this provider', 'none');
+    }
+
     updateRunBtn();
   }
 
-  function getKey() {
-    const stored = sessionStorage.getItem('wk_gemini_key');
-    if (stored) {
-      document.getElementById('apiKey').value = stored;
-      document.getElementById('keyStatus').textContent = '✓ Key loaded from session';
-      document.getElementById('keyStatus').className = 'key-status ok';
-    }
-    return stored;
+  function setKeyStatus(msg, cls) {
+    const el = document.getElementById('keyStatus');
+    el.textContent = msg;
+    el.className = 'key-status ' + cls;
+  }
+
+  function saveKey(p) {
+    const key = document.getElementById('key-' + p).value.trim();
+    if (!key) return;
+    sessionStorage.setItem('wk_key_' + p, key);
+    setKeyStatus('✓ Key saved for this session', 'ok');
+    updateRunBtn();
   }
 
   function updateRunBtn() {
-    const hasKey = !!sessionStorage.getItem('wk_gemini_key');
-    const hasFiles = uploadedFiles.length > 0;
-    document.getElementById('runBtn').disabled = !(hasKey && hasFiles);
+    const keyEl = document.getElementById('key-' + currentProvider);
+    const hasKey = !!(keyEl && keyEl.value.trim());
+    document.getElementById('runBtn').disabled = !(hasKey && uploadedFiles.length > 0);
   }
 
   // ── File Handling ──────────────────────────────────────────────────────────
@@ -639,25 +713,22 @@
     dropZone.classList.remove('dragover');
     handleFiles([...e.dataTransfer.files]);
   });
-
   fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
 
   function handleFiles(files) {
-    files.forEach(f => {
-      if (!uploadedFiles.find(x => x.name === f.name)) uploadedFiles.push(f);
-    });
+    files.forEach(f => { if (!uploadedFiles.find(x => x.name === f.name)) uploadedFiles.push(f); });
     renderFileList();
     updateRunBtn();
   }
 
   function renderFileList() {
-    const container = document.getElementById('fileList');
-    container.innerHTML = '';
+    const c = document.getElementById('fileList');
+    c.innerHTML = '';
     uploadedFiles.forEach((f, i) => {
       const chip = document.createElement('div');
       chip.className = 'file-chip';
-      chip.innerHTML = `<span class="dot"></span>${f.name}<button class="remove" title="Remove" onclick="removeFile(${i})">×</button>`;
-      container.appendChild(chip);
+      chip.innerHTML = '<span class="dot"></span>' + f.name + '<button class="remove" onclick="removeFile(' + i + ')">×</button>';
+      c.appendChild(chip);
     });
   }
 
@@ -669,42 +740,32 @@
 
   // ── VTT Parser ─────────────────────────────────────────────────────────────
   function parseVTT(text) {
-    const lines = text.split('\n');
-    const words = [];
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed === 'WEBVTT' || /^\d+$/.test(trimmed) || /-->/.test(trimmed)) continue;
-      words.push(trimmed);
-    }
-    return words.join(' ');
+    return text.split('\n')
+      .map(l => l.trim())
+      .filter(l => l && l !== 'WEBVTT' && !/^\d+$/.test(l) && !l.includes('-->'))
+      .join(' ');
   }
 
   async function readFile(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.onerror = reject;
-      reader.readAsText(file);
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = e => res(e.target.result);
+      r.onerror = rej;
+      r.readAsText(file);
     });
   }
 
-  // ── Loaders ────────────────────────────────────────────────────────────────
-  const loaderMessages = [
-    'Parsing transcripts…',
-    'Extracting workshop content…',
-    'Identifying tools & offers…',
-    'Hunting for hook points…',
-    'Composing your report…'
-  ];
+  // ── Loader ─────────────────────────────────────────────────────────────────
+  const loaderMsgs = ['Parsing transcripts…','Extracting workshop content…','Identifying tools & offers…','Hunting hook points…','Composing your report…'];
   let loaderInterval;
 
   function startLoader() {
     let i = 0;
     document.getElementById('loader').classList.add('active');
-    document.getElementById('loaderText').textContent = loaderMessages[0];
+    document.getElementById('loaderText').textContent = loaderMsgs[0];
     loaderInterval = setInterval(() => {
-      i = (i + 1) % loaderMessages.length;
-      document.getElementById('loaderText').textContent = loaderMessages[i];
+      i = (i + 1) % loaderMsgs.length;
+      document.getElementById('loaderText').textContent = loaderMsgs[i];
     }, 2200);
   }
 
@@ -714,20 +775,93 @@
   }
 
   function showError(msg) {
-    const box = document.getElementById('errorBox');
-    box.textContent = '⚠ ' + msg;
-    box.classList.add('active');
+    const b = document.getElementById('errorBox');
+    b.textContent = '⚠ ' + msg;
+    b.classList.add('active');
   }
 
-  function clearError() {
-    document.getElementById('errorBox').classList.remove('active');
+  function clearError() { document.getElementById('errorBox').classList.remove('active'); }
+
+  // ── Prompt ─────────────────────────────────────────────────────────────────
+  function buildPrompt(transcript) {
+    return 'You are an expert workshop analyst. Analyze the following workshop transcript(s) and produce a structured report.\n\n' +
+      'Return ONLY a raw JSON object with exactly these 5 keys (no markdown, no code fences, no extra text):\n\n' +
+      '{"taught":"...","tools":"...","courses":"...","upsell":"...","hooks":"..."}\n\n' +
+      'KEY INSTRUCTIONS:\n' +
+      '"taught" — Main lessons, concepts, workflows and skills taught. Use bullet points starting with "• " separated by newlines.\n' +
+      '"tools" — Every tool, software, platform, API, service mentioned. Use "• " bullets.\n' +
+      '"courses" — Courses, programs, memberships being promoted/sold. Describe each. Use "• " bullets.\n' +
+      '"upsell" — All prices, tiers, payment plans, discounts mentioned (include exact numbers). Use "• " bullets.\n' +
+      '"hooks" — Compelling hooks, pain points, promises, urgency/scarcity tactics used. Use "• " bullets.\n\n' +
+      'If a section has no info, write: "Not mentioned in this transcript."\n\n' +
+      'TRANSCRIPT(S):\n' + transcript.substring(0, 900000);
   }
 
-  // ── Main Summary ───────────────────────────────────────────────────────────
+  // ── API Calls ──────────────────────────────────────────────────────────────
+  async function callGemini(apiKey, prompt) {
+    const model = 'gemini-2.5-flash-preview-05-20';
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini API error ' + res.status); }
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  }
+
+  async function callOpenRouter(apiKey, prompt) {
+    const model = document.getElementById('model-openrouter').value;
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Workshop Intel'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 4096
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'OpenRouter API error ' + res.status); }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  async function callClaude(apiKey, prompt) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Claude API error ' + res.status); }
+    const data = await res.json();
+    return data.content?.[0]?.text || '';
+  }
+
+  // ── Main ───────────────────────────────────────────────────────────────────
   async function runSummary() {
-    const apiKey = sessionStorage.getItem('wk_gemini_key');
-    if (!apiKey) { showError('Please enter and save your Gemini API key first.'); return; }
-    if (!uploadedFiles.length) { showError('Please upload at least one VTT file.'); return; }
+    const keyEl = document.getElementById('key-' + currentProvider);
+    const apiKey = keyEl?.value.trim();
+    if (!apiKey) { showError('Please enter your API key for the selected provider.'); return; }
+    if (!uploadedFiles.length) { showError('Please upload at least one transcript file.'); return; }
 
     clearError();
     document.getElementById('results').classList.remove('active');
@@ -735,107 +869,55 @@
     startLoader();
 
     try {
-      // Read & parse all files
       const transcripts = [];
       for (const file of uploadedFiles) {
         const raw = await readFile(file);
-        const text = parseVTT(raw);
-        transcripts.push(`=== FILE: ${file.name} ===\n${text}`);
+        transcripts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
       }
 
-      const combined = transcripts.join('\n\n');
-      const prompt = buildPrompt(combined);
+      const prompt = buildPrompt(transcripts.join('\n\n'));
+      let text = '';
 
-      // Google Gemini API (free, no credit card)
-      const model = 'gemini-2.5-flash-preview-05-20';
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      if (currentProvider === 'gemini')      text = await callGemini(apiKey, prompt);
+      else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
+      else if (currentProvider === 'claude') text = await callClaude(apiKey, prompt);
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 4096
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API error ${response.status}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text) throw new Error('Empty response from Gemini. Check your API key.');
-
+      if (!text) throw new Error('Empty response from API. Please try again.');
       parseAndDisplay(text);
+
     } catch (err) {
-      showError(err.message || 'Something went wrong. Please check your API key and try again.');
+      showError(err.message || 'Something went wrong. Check your API key and try again.');
     } finally {
       stopLoader();
       document.getElementById('runBtn').disabled = false;
     }
   }
 
-  function buildPrompt(transcript) {
-    return `You are an expert workshop analyst. Analyze the following workshop transcript(s) carefully and produce a structured intelligence report.
-
-Return ONLY a JSON object with exactly these 5 keys. No markdown, no code fences, just raw JSON.
-
-{
-  "taught": "...",
-  "tools": "...",
-  "courses": "...",
-  "upsell": "...",
-  "hooks": "..."
-}
-
-INSTRUCTIONS PER KEY:
-
-"taught" — What was actually taught in this workshop? Summarize the main lessons, concepts, workflows, and skills demonstrated. Be specific and detailed. Use bullet points separated by newlines starting with "• ".
-
-"tools" — List every tool, software, platform, API, or technology mentioned or used. Include AI tools, coding tools, browser tools, services, etc. Use bullet points separated by newlines starting with "• ".
-
-"courses" — What courses, programs, memberships, or training offerings are being promoted or sold? Describe what each one includes. Use bullet points starting with "• ".
-
-"upsell" — Extract any and all prices, pricing tiers, payment plans, discounts, or special offers mentioned. Include exact numbers if stated. Use bullet points starting with "• ".
-
-"hooks" — What are the most compelling hook statements, pain points, promises, or emotional triggers used to sell? What reasons did they give for why people should buy? What urgency or scarcity tactics were used? Use bullet points starting with "• ".
-
-If a section has no relevant info in the transcript, say "Not mentioned in this transcript."
-
-TRANSCRIPT(S):
-${transcript.substring(0, 900000)}`;
-  }
-
   function parseAndDisplay(text) {
     let data;
     try {
       const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      data = JSON.parse(clean);
-    } catch (e) {
-      showError('Could not parse AI response. Raw output logged to console.');
+      const match = clean.match(/\{[\s\S]*\}/);
+      data = JSON.parse(match ? match[0] : clean);
+    } catch(e) {
+      showError('Could not parse AI response. See console for raw output.');
       console.error('Raw output:', text);
       return;
     }
 
-    document.getElementById('content1').textContent = data.taught || '—';
-    document.getElementById('content2').textContent = data.tools || '—';
-    document.getElementById('content3').textContent = data.courses || '—';
-    document.getElementById('content4').textContent = data.upsell || '—';
-    document.getElementById('content5').textContent = data.hooks || '—';
+    document.getElementById('content1').textContent = data.taught   || '—';
+    document.getElementById('content2').textContent = data.tools    || '—';
+    document.getElementById('content3').textContent = data.courses  || '—';
+    document.getElementById('content4').textContent = data.upsell   || '—';
+    document.getElementById('content5').textContent = data.hooks    || '—';
 
     document.getElementById('results').classList.add('active');
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ── Copy Helpers ───────────────────────────────────────────────────────────
+  // ── Copy ───────────────────────────────────────────────────────────────────
   function copySection(id, btn) {
-    const text = document.getElementById(id).textContent;
-    navigator.clipboard.writeText(text).then(() => {
+    navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
       btn.textContent = 'Copied ✓';
       btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
@@ -843,16 +925,14 @@ ${transcript.substring(0, 900000)}`;
   }
 
   function copyAll() {
-    const sections = [
-      { title: '1. WHAT THEY TAUGHT', id: 'content1' },
-      { title: '2. TOOLS USED', id: 'content2' },
-      { title: '3. COURSES BEING SOLD', id: 'content3' },
-      { title: '4. UPSELL PRICES', id: 'content4' },
+    const secs = [
+      { title: '1. WHAT THEY TAUGHT',      id: 'content1' },
+      { title: '2. TOOLS USED',            id: 'content2' },
+      { title: '3. COURSES BEING SOLD',    id: 'content3' },
+      { title: '4. UPSELL PRICES',         id: 'content4' },
       { title: '5. IMPORTANT HOOK POINTS', id: 'content5' },
     ];
-    const full = sections.map(s =>
-      `${s.title}\n${'─'.repeat(40)}\n${document.getElementById(s.id).textContent}`
-    ).join('\n\n');
+    const full = secs.map(s => s.title + '\n' + '─'.repeat(40) + '\n' + document.getElementById(s.id).textContent).join('\n\n');
     navigator.clipboard.writeText(full).then(() => {
       const btn = document.querySelector('.copy-all-btn');
       btn.textContent = 'Copied ✓';
@@ -861,7 +941,16 @@ ${transcript.substring(0, 900000)}`;
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
-  getKey();
+  // Restore any previously saved keys in this session
+  ['gemini','openrouter','claude'].forEach(p => {
+    const stored = sessionStorage.getItem('wk_key_' + p);
+    if (stored) document.getElementById('key-' + p).value = stored;
+  });
+
+  // Show status for default provider
+  if (sessionStorage.getItem('wk_key_gemini')) {
+    setKeyStatus('✓ Key loaded from session', 'ok');
+  }
 </script>
 </body>
 </html>
