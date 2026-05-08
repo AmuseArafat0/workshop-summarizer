@@ -873,7 +873,7 @@
       '',
       'FIELD DEFINITIONS:',
       'summary = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Plain prose, no bullets.',
-      'details = A thorough bullet-point intelligence report organized under these 10 category headers in this exact order:',
+      'details = A detailed intelligence report organized under these 10 category headers in this exact order. For each category write 2-4 sentences in plain prose (NO bullet points, NO dashes, NO list formatting — flowing paragraph text only). Separate each category with its label in ALL CAPS followed by a colon on its own line, then the paragraph on the next line.',
       '  BUSINESS MOAT: — What makes this business defensible? Unique positioning, brand authority, proprietary systems, exclusive access, expertise.',
       '  SALES FUNNEL: — How do they attract and convert leads? Entry points, lead magnets, free content, webinars, email sequences, calls-to-action.',
       '  UPSELL COURSE & PRICING: — Every course, program, membership, or offer mentioned. Include exact prices, tiers, payment plans, discounts.',
@@ -1095,54 +1095,67 @@
 
     document.getElementById('content1').textContent = data.summary || '—';
 
-    // Parse details into 10 sub-cards
     const detailsRaw = data.details || '';
     const categoryMeta = [
-      { key: 'BUSINESS MOAT',               icon: '🏰', color: 'var(--card-1)', border: 'rgba(124,109,255,0.25)' },
-      { key: 'SALES FUNNEL',                icon: '🔻', color: 'var(--card-2)', border: 'rgba(200,255,0,0.18)'   },
-      { key: 'UPSELL COURSE & PRICING',     icon: '💰', color: 'var(--card-3)', border: 'rgba(255,107,53,0.22)'  },
-      { key: 'ENGAGEMENT STRATEGY',         icon: '⚡', color: 'var(--card-4)', border: 'rgba(124,109,255,0.2)'  },
-      { key: 'COMMUNITY STRENGTH',          icon: '🤝', color: 'var(--card-5)', border: 'rgba(255,107,53,0.18)'  },
-      { key: 'TESTIMONIALS & TRUST',        icon: '⭐', color: 'var(--card-1)', border: 'rgba(124,109,255,0.22)' },
-      { key: 'MARKETING ANGLE',             icon: '🎯', color: 'var(--card-2)', border: 'rgba(200,255,0,0.15)'   },
-      { key: 'CUSTOMER RETENTION',          icon: '🔄', color: 'var(--card-3)', border: 'rgba(255,107,53,0.2)'   },
-      { key: 'PRACTICAL LEARNING QUALITY',  icon: '📚', color: 'var(--card-4)', border: 'rgba(124,109,255,0.18)' },
-      { key: 'WEAKNESSES/GAPS YOU CAN EXPLOIT', icon: '🔍', color: 'var(--card-5)', border: 'rgba(255,107,53,0.25)' },
+      { key: 'BUSINESS MOAT',                   icon: '🏰' },
+      { key: 'SALES FUNNEL',                    icon: '🔻' },
+      { key: 'UPSELL COURSE & PRICING',         icon: '💰' },
+      { key: 'ENGAGEMENT STRATEGY',             icon: '⚡' },
+      { key: 'COMMUNITY STRENGTH',              icon: '🤝' },
+      { key: 'TESTIMONIALS & TRUST',            icon: '⭐' },
+      { key: 'MARKETING ANGLE',                 icon: '🎯' },
+      { key: 'CUSTOMER RETENTION',              icon: '🔄' },
+      { key: 'PRACTICAL LEARNING QUALITY',      icon: '📚' },
+      { key: 'WEAKNESSES/GAPS YOU CAN EXPLOIT', icon: '🔍' },
     ];
 
-    // Split raw details text by category headers
+    // Parse raw text into {key: paragraph} map
     const parsed = {};
     let currentKey = null;
     detailsRaw.split('\n').forEach(line => {
       const trimmed = line.trim();
-      const headerMatch = categoryMeta.find(c => trimmed.toUpperCase().startsWith(c.key + ':') || trimmed.toUpperCase() === c.key + ':');
+      const headerMatch = categoryMeta.find(c =>
+        trimmed.toUpperCase().startsWith(c.key + ':') || trimmed.toUpperCase() === c.key + ':'
+      );
       if (headerMatch) {
         currentKey = headerMatch.key;
-        if (!parsed[currentKey]) parsed[currentKey] = [];
+        // grab inline text after the colon if any
+        const afterColon = trimmed.substring(trimmed.indexOf(':') + 1).trim();
+        if (!parsed[currentKey]) parsed[currentKey] = afterColon;
+        else parsed[currentKey] += ' ' + afterColon;
       } else if (currentKey && trimmed) {
-        parsed[currentKey].push(trimmed);
+        parsed[currentKey] = parsed[currentKey] ? parsed[currentKey] + ' ' + trimmed : trimmed;
       }
     });
 
+    // Build single card HTML
     const container = document.getElementById('detailsCards');
     container.innerHTML = '';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.gap = '12px';
+    container.style.display = 'block';
 
+    let innerHtml = '';
     categoryMeta.forEach((cat, i) => {
-      const bullets = parsed[cat.key] || ['• Not mentioned.'];
-      const card = document.createElement('div');
-      card.className = 'section-card';
-      card.style.cssText = 'background:' + cat.color + ';border:1px solid ' + cat.border + ';animation-delay:' + (i * 0.05) + 's';
-      card.innerHTML =
-        '<div class="section-meta"><span class="section-icon">' + cat.icon + '</span>' +
-        '<span class="card-label">Detail ' + String(i + 1).padStart(2, '0') + '</span></div>' +
-        '<div class="section-title">' + cat.key.replace(/\b\w/g, c => c.toUpperCase()).replace(/\bYou\b/, 'You') + '</div>' +
-        '<div class="section-content" id="detail-' + i + '" style="white-space:pre-wrap">' + bullets.join('\n') + '</div>' +
-        '<div class="card-action"><button class="copy-btn" onclick="copySection(\'detail-' + i + '\',this)">Copy</button></div>';
-      container.appendChild(card);
+      const text = (parsed[cat.key] || 'Not mentioned in this transcript.').replace(/^•\s*/gm, '').trim();
+      const title = cat.key.split(' ').map(w => w[0].toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+        .replace('&amp;', '&').replace(/\bAnd\b/, 'and');
+      innerHtml +=
+        '<div style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin-top:20px;' : '') + '">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+        '<span style="font-size:18px">' + cat.icon + '</span>' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted)">' + cat.key + '</span>' +
+        '</div>' +
+        '<div id="detail-' + i + '" style="font-size:14.5px;line-height:1.78;color:#c0c0d0;">' + text + '</div>' +
+        '</div>';
     });
+
+    const card = document.createElement('div');
+    card.className = 'section-card card-2';
+    card.innerHTML =
+      '<div class="section-meta"><span class="section-icon">📄</span><span class="card-label">Section 02</span></div>' +
+      '<div class="section-title">Details Report</div>' +
+      '<div id="detailsInner">' + innerHtml + '</div>' +
+      '<div class="card-action"><button class="copy-btn" onclick="copyDetails(this)">Copy</button></div>';
+    container.appendChild(card);
 
     document.getElementById('detailsReport').style.display = 'flex';
 
@@ -1175,17 +1188,15 @@
     });
   }
 
-  function copyDetails() {
-    const detailCards = document.querySelectorAll('[id^="detail-"]');
-    let full = 'DETAILS REPORT\n' + '─'.repeat(40) + '\n';
-    detailCards.forEach(el => {
-      const title = el.previousElementSibling?.textContent || '';
-      full += '\n' + title.toUpperCase() + '\n' + el.textContent + '\n';
-    });
+  function copyDetails(btn) {
+    const items = document.querySelectorAll('[id^="detail-"]');
+    const labels = ['BUSINESS MOAT','SALES FUNNEL','UPSELL COURSE & PRICING','ENGAGEMENT STRATEGY','COMMUNITY STRENGTH','TESTIMONIALS & TRUST','MARKETING ANGLE','CUSTOMER RETENTION','PRACTICAL LEARNING QUALITY','WEAKNESSES/GAPS YOU CAN EXPLOIT'];
+    let full = 'DETAILS REPORT\n' + '─'.repeat(40) + '\n\n';
+    items.forEach((el, i) => { full += (labels[i] || '') + '\n' + el.textContent + '\n\n'; });
     navigator.clipboard.writeText(full).then(() => {
-      const btn = document.querySelector('#detailsReport .copy-all-btn');
       btn.textContent = 'Copied ✓';
-      setTimeout(() => btn.textContent = 'Copy Report ↗', 2000);
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
     });
   }
 
@@ -1196,7 +1207,7 @@
     btn.disabled = true;
 
     try {
-      const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, BorderStyle } = docx;
+      const { Document, Packer, Paragraph, TextRun, AlignmentType } = docx;
 
       const children = [];
 
@@ -1213,10 +1224,10 @@
         spacing: { after: 480 },
       }));
 
+      // Divider paragraph (using underline trick instead of BorderStyle)
       children.push(new Paragraph({
-        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'CCCCCC', space: 1 } },
+        children: [new TextRun({ text: '─'.repeat(60), size: 20, color: 'CCCCCC' })],
         spacing: { after: 480 },
-        children: [],
       }));
 
       // Section 1: Summary
@@ -1232,9 +1243,8 @@
 
       // Divider
       children.push(new Paragraph({
-        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'EEEEEE', space: 1 } },
+        children: [new TextRun({ text: '─'.repeat(60), size: 16, color: 'EEEEEE' })],
         spacing: { before: 360, after: 480 },
-        children: [],
       }));
 
       // Section 2: Details Report heading
@@ -1244,26 +1254,20 @@
       }));
 
       // Each of the 10 detail sub-sections
-      const detailCards = document.querySelectorAll('[id^="detail-"]');
-      detailCards.forEach((el, idx) => {
-        const titleEl = el.previousElementSibling;
-        const titleText = titleEl ? titleEl.textContent : ('Detail ' + (idx + 1));
-        const rawText = el.textContent || '—';
+      const detailEls = document.querySelectorAll('[id^="detail-"]');
+      const detailLabels = ['BUSINESS MOAT','SALES FUNNEL','UPSELL COURSE & PRICING','ENGAGEMENT STRATEGY','COMMUNITY STRENGTH','TESTIMONIALS & TRUST','MARKETING ANGLE','CUSTOMER RETENTION','PRACTICAL LEARNING QUALITY','WEAKNESSES/GAPS YOU CAN EXPLOIT'];
+      detailEls.forEach((el, idx) => {
+        const titleText = detailLabels[idx] || ('Detail ' + (idx + 1));
+        const paraText = el.textContent || '—';
 
         children.push(new Paragraph({
           children: [new TextRun({ text: titleText, bold: true, size: 24, font: 'Arial', color: '222222' })],
           spacing: { before: idx === 0 ? 0 : 320, after: 120 },
         }));
-
-        rawText.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
-          const isBullet = line.startsWith('•');
-          const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
-          children.push(new Paragraph({
-            numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
-            children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '444444' })],
-            spacing: { after: 60 },
-          }));
-        });
+        children.push(new Paragraph({
+          children: [new TextRun({ text: paraText, size: 22, font: 'Arial', color: '444444' })],
+          spacing: { after: 80 },
+        }));
       });
 
       // Footer note
@@ -1274,18 +1278,6 @@
       }));
 
       const doc = new Document({
-        numbering: {
-          config: [{
-            reference: 'bullets',
-            levels: [{
-              level: 0,
-              format: LevelFormat.BULLET,
-              text: '\u2022',
-              alignment: AlignmentType.LEFT,
-              style: { paragraph: { indent: { left: 720, hanging: 360 } } }
-            }]
-          }]
-        },
         sections: [{
           properties: {
             page: {
@@ -1302,8 +1294,13 @@
       const a = document.createElement('a');
       a.href = url;
       a.download = 'workshop-intel-report.docx';
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
 
       btn.textContent = 'Downloaded ✓';
       setTimeout(() => { btn.textContent = '⬇ Download .docx'; btn.disabled = false; }, 2500);
