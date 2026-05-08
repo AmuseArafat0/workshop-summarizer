@@ -732,9 +732,9 @@
     <!-- ANALYSE BUTTON -->
     <div id="analyseWrap" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:8px 0;">
       <button class="run-btn" id="analyseBtn" onclick="runAnalysis()" style="max-width:400px;margin-bottom:0;background:var(--surface2);color:var(--accent);border:1.5px solid rgba(200,255,0,0.35);font-size:15px;">
-        <span>🔍</span> Analyse & Verify Report
+        <span>⚡</span> Generate Competitive Growth Report
       </button>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;">Removes fluff · Flags weak points · Makes it crisp</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;">Extracts actionable intelligence · Spots gaps to exploit · Builds your growth playbook</div>
     </div>
 
     <div class="loader" id="analyseLoader" style="display:none;">
@@ -747,7 +747,7 @@
 
       <!-- Refined header -->
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title" style="color:var(--accent);letter-spacing:0.12em;">⚡ Refined Intelligence Report</div>
+        <div class="results-title" style="color:var(--accent);letter-spacing:0.12em;">⚡ Competitive Growth Report</div>
         <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">Copy All ↗</button>
       </div>
 
@@ -755,9 +755,9 @@
       <div class="section-card card-1" style="border-color:rgba(200,255,0,0.15);">
         <div class="section-meta">
           <span class="section-icon">📋</span>
-          <span class="card-label">Refined · Section 01</span>
+          <span class="card-label">Competitive Intelligence · Section 01</span>
         </div>
-        <div class="section-title">Crisp Summary</div>
+        <div class="section-title">Strategic Overview</div>
         <div class="section-content" id="analysisRewrite">—</div>
         <div class="card-action" style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="copy-btn" onclick="copySection('analysisRewrite',this)">Copy</button>
@@ -769,9 +769,9 @@
         <div class="section-card card-2" style="border-color:rgba(200,255,0,0.10);">
           <div class="section-meta">
             <span class="section-icon">📄</span>
-            <span class="card-label">Refined · Section 02</span>
+            <span class="card-label">Competitive Intelligence · Section 02</span>
           </div>
-          <div class="section-title">Crisp Details</div>
+          <div class="section-title">Growth Playbook</div>
           <div id="analysisGrid"><!-- filled by JS --></div>
           <div class="card-action" style="display:flex;gap:8px;justify-content:flex-end;">
             <button class="copy-btn" onclick="copyAnalysisDetails(this)">Copy</button>
@@ -1394,21 +1394,27 @@ ${bodyHtml}
     document.getElementById('analysisCard').style.display = 'none';
 
     const analysePrompt = [
-      'You are a sharp business intelligence editor. You will review a workshop intelligence report and rewrite it — keeping ONLY what is genuinely useful for a company trying to compete with and outperform this workshop creator.',
+      'You are a senior competitive intelligence strategist. Your job is to read a workshop intelligence report and produce a second-pass COMPETITIVE GROWTH REPORT — a practical playbook for someone who wants to enter the same market, compete directly, and grow their own business.',
       '',
-      'YOUR TASK:',
-      '1. Remove anything vague, generic, or obvious (e.g. "they use social proof" with no specifics).',
-      '2. Remove anything that is repeated across sections.',
-      '3. Keep only concrete, specific, actionable intelligence — exact prices, named tools, real tactics, specific weaknesses.',
-      '4. For each of the 7 sections, rewrite the bullets to be crisp and competition-focused.',
-      '5. Flag any section as "⚠ Weak" if there is not enough concrete data from the transcript.',
+      'YOUR MINDSET: You are advising the reader as if they are launching a competing offer in the same niche. Every bullet must answer: "What does this mean for MY business and what should I DO about it?"',
+      '',
+      'YOUR TASK FOR EACH OF THE 7 SECTIONS:',
+      '1. Extract the most meaningful, specific intelligence (exact prices, named tools, real tactics, named weaknesses).',
+      '2. For every key finding, add a concrete "→ Action" or "→ Opportunity" that the reader can act on.',
+      '3. Remove anything vague, obvious, or non-actionable. Never write a bullet without a clear implication.',
+      '4. If a section lacks enough data to draw competitive conclusions, mark it weak:true.',
+      '5. Write 3-5 bullets per section. Each bullet max 40 words.',
+      '',
+      'FOR THE VERDICT (summary field):',
+      'Write 3-5 bullet points covering: (1) overall competitive threat level and why, (2) the top 2-3 specific gaps or weaknesses you can exploit, (3) the single most important action to take first.',
+      'Each verdict bullet must be specific — name prices, tools, or tactics from the report.',
       '',
       'STRICT OUTPUT FORMAT — reply with ONLY valid JSON, no markdown, no code fences:',
-      '{"sections":[{"label":"HOOK & TARGET AUDIENCE","bullets":["crisp bullet","crisp bullet"],"weak":false},...],"verdict":"2-3 sentence overall verdict on how strong this competitor is and the top 1-2 opportunities to beat them."}',
+      '{"sections":[{"label":"HOOK & TARGET AUDIENCE","bullets":["finding → what to do about it"],"weak":false},...],"verdict":"bullet 1\\nbullet 2\\nbullet 3"}',
       '',
       'The JSON must have exactly 7 sections in this order: HOOK & TARGET AUDIENCE, SALES & CONVERSION STRATEGY, OFFER & MONETIZATION, TRUST & ENGAGEMENT, AI TOOLS & PRACTICAL VALUE, BUSINESS MOAT & COMPETITIVE ADVANTAGE, WEAKNESSES & GROWTH OPPORTUNITIES.',
       '',
-      'CURRENT REPORT TO REVIEW:',
+      'REPORT TO ANALYSE:',
       '=== SUMMARY ===',
       summaryText,
       '',
@@ -1494,7 +1500,7 @@ ${bodyHtml}
 
   function copyAnalysisDetails(btn) {
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let out = 'CRISP DETAILS\n' + '─'.repeat(40) + '\n\n';
+    let out = 'GROWTH PLAYBOOK\n' + '─'.repeat(40) + '\n\n';
     labels.forEach((label, i) => {
       const el = document.getElementById('refined-detail-' + i);
       if (!el) return;
@@ -1517,8 +1523,8 @@ ${bodyHtml}
       ? Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
       : summaryEl.textContent.trim();
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let out = 'CRISP SUMMARY\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
-    out += 'CRISP DETAILS\n' + '─'.repeat(40) + '\n\n';
+    let out = 'STRATEGIC OVERVIEW\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
+    out += 'GROWTH PLAYBOOK\n' + '─'.repeat(40) + '\n\n';
     labels.forEach((label, i) => {
       const el = document.getElementById('refined-detail-' + i);
       if (!el) return;
