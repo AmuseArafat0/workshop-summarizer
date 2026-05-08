@@ -734,7 +734,7 @@
       <button class="run-btn" id="analyseBtn" onclick="runAnalysis()" style="max-width:400px;margin-bottom:0;background:var(--surface2);color:var(--accent);border:1.5px solid rgba(200,255,0,0.35);font-size:15px;">
         <span>⚡</span> Generate Competitive Growth Report
       </button>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;">Extracts actionable intelligence · Spots gaps to exploit · Builds your growth playbook</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;">Deep strategic analysis · Global market gaps · Actionable growth playbook</div>
     </div>
 
     <div class="loader" id="analyseLoader" style="display:none;">
@@ -747,15 +747,15 @@
 
       <!-- Refined header -->
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title" style="color:var(--accent);letter-spacing:0.12em;">⚡ Competitive Growth Report</div>
+        <div class="results-title" style="color:var(--accent);letter-spacing:0.12em;">⚡ Global Competitive Growth Report</div>
         <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">Copy All ↗</button>
       </div>
 
-      <!-- Refined Summary card (Section 01 style) -->
+      <!-- Strategic Verdict card -->
       <div class="section-card card-1" style="border-color:rgba(200,255,0,0.15);">
         <div class="section-meta">
-          <span class="section-icon">📋</span>
-          <span class="card-label">Competitive Intelligence · Section 01</span>
+          <span class="section-icon">🌐</span>
+          <span class="card-label">Strategic Intelligence · Executive Verdict</span>
         </div>
         <div class="section-title">Strategic Overview</div>
         <div class="section-content" id="analysisRewrite">—</div>
@@ -764,14 +764,14 @@
         </div>
       </div>
 
-      <!-- Refined Details card (Section 02 style) -->
+      <!-- Competitive Playbook Details card -->
       <div style="display:flex;flex-direction:column;gap:14px;" id="analysisDetailsWrap">
         <div class="section-card card-2" style="border-color:rgba(200,255,0,0.10);">
           <div class="section-meta">
-            <span class="section-icon">📄</span>
-            <span class="card-label">Competitive Intelligence · Section 02</span>
+            <span class="section-icon">📊</span>
+            <span class="card-label">Strategic Intelligence · Deep Analysis</span>
           </div>
-          <div class="section-title">Growth Playbook</div>
+          <div class="section-title">Global Growth Playbook</div>
           <div id="analysisGrid"><!-- filled by JS --></div>
           <div class="card-action" style="display:flex;gap:8px;justify-content:flex-end;">
             <button class="copy-btn" onclick="copyAnalysisDetails(this)">Copy</button>
@@ -1394,31 +1394,47 @@ ${bodyHtml}
     document.getElementById('analysisCard').style.display = 'none';
 
     const analysePrompt = [
-      'You are a senior competitive intelligence strategist. Your job is to read a workshop intelligence report and produce a second-pass COMPETITIVE GROWTH REPORT — a practical playbook for someone who wants to enter the same market, compete directly, and grow their own business.',
+      'You are a world-class global business strategist and competitive intelligence expert. You have been given a Workshop Intelligence Report extracted from a competitor\'s workshop transcript.',
       '',
-      'YOUR MINDSET: You are advising the reader as if they are launching a competing offer in the same niche. Every bullet must answer: "What does this mean for MY business and what should I DO about it?"',
+      'Your mission is to produce a GLOBAL COMPETITIVE GROWTH REPORT — a senior-level strategic document that helps the reader build a stronger, smarter business that can compete and win internationally.',
       '',
-      'YOUR TASK FOR EACH OF THE 7 SECTIONS:',
-      '1. Extract the most meaningful, specific intelligence (exact prices, named tools, real tactics, named weaknesses).',
-      '2. For every key finding, add a concrete "→ Action" or "→ Opportunity" that the reader can act on.',
-      '3. Remove anything vague, obvious, or non-actionable. Never write a bullet without a clear implication.',
-      '4. If a section lacks enough data to draw competitive conclusions, mark it weak:true.',
-      '5. Write 3-5 bullets per section. Each bullet max 40 words.',
+      'CORE PHILOSOPHY:',
+      'Do NOT compress or summarise what was already said. Instead, go DEEPER. Read between the lines. Extract implications, patterns, and second-order insights that are not obvious from the raw data. Every point must add NEW strategic value that was not explicitly stated in the first report.',
       '',
-      'FOR THE VERDICT (summary field):',
-      'Write 3-5 bullet points covering: (1) overall competitive threat level and why, (2) the top 2-3 specific gaps or weaknesses you can exploit, (3) the single most important action to take first.',
-      'Each verdict bullet must be specific — name prices, tools, or tactics from the report.',
+      'FOR EACH OF THE 7 SECTIONS, produce 4-6 deep strategic insights following this structure:',
+      '- State the specific intelligence found (exact price, tool name, tactic, or gap)',
+      '- Explain WHY this matters strategically in a global market context',
+      '- Provide a concrete, specific action the reader can take to leverage or counter it',
+      'Each point should be 2-3 sentences. Write with the precision of a McKinsey report and the clarity of a great business advisor.',
+      '',
+      'FOR THE STRATEGIC VERDICT (summary field):',
+      'Write a 5-7 point executive-level verdict that covers:',
+      '(1) The competitor\'s true market position and global reach potential',
+      '(2) The 2-3 most exploitable structural weaknesses in their business model',
+      '(3) The exact pricing and offer gaps you can undercut or outflank',
+      '(4) Which global markets or audience segments they are ignoring that you can own',
+      '(5) The single highest-leverage move to make in the next 90 days to gain competitive advantage',
+      'Be specific. Reference actual prices, tools, tactics, and audience details from the report.',
+      '',
+      'SECTION GUIDANCE:',
+      'HOOK & TARGET AUDIENCE: Analyse the depth of their audience targeting. Are they going broad or niche? What underserved sub-segments exist globally that they are missing? What emotional or aspirational angles are they NOT addressing?',
+      'SALES & CONVERSION STRATEGY: Evaluate the sophistication of their sales system. What conversion levers are weak or missing? How can you build a superior sales architecture that converts better across different cultures and markets?',
+      'OFFER & MONETIZATION: Dissect every offer, price point, and monetization layer. Where are the pricing gaps? What offer structures (subscription, licensing, white-label, certification) are they leaving on the table globally?',
+      'TRUST & ENGAGEMENT: How durable is their authority and community? What trust signals are absent? How can you build deeper credibility faster in markets they have not penetrated?',
+      'AI TOOLS & PRACTICAL VALUE: Assess how advanced their AI and tool stack is versus what is now available. Where can you deliver measurably more practical value using better tools or workflows?',
+      'BUSINESS MOAT & COMPETITIVE ADVANTAGE: How defensible is their position, really? What would make YOUR moat stronger — proprietary data, certifications, partnerships, exclusive frameworks, or community network effects?',
+      'WEAKNESSES & GROWTH OPPORTUNITIES: Go beyond surface gaps. Identify systemic weaknesses in their delivery, positioning, and scalability. Map these directly to global growth opportunities you can execute.',
       '',
       'STRICT OUTPUT FORMAT — reply with ONLY valid JSON, no markdown, no code fences:',
-      '{"sections":[{"label":"HOOK & TARGET AUDIENCE","bullets":["finding → what to do about it"],"weak":false},...],"verdict":"bullet 1\\nbullet 2\\nbullet 3"}',
+      '{"sections":[{"label":"HOOK & TARGET AUDIENCE","bullets":["Deep insight with strategic implication and specific action."],"weak":false},...],"verdict":"Point 1\\nPoint 2\\nPoint 3\\nPoint 4\\nPoint 5"}',
       '',
       'The JSON must have exactly 7 sections in this order: HOOK & TARGET AUDIENCE, SALES & CONVERSION STRATEGY, OFFER & MONETIZATION, TRUST & ENGAGEMENT, AI TOOLS & PRACTICAL VALUE, BUSINESS MOAT & COMPETITIVE ADVANTAGE, WEAKNESSES & GROWTH OPPORTUNITIES.',
       '',
       'REPORT TO ANALYSE:',
-      '=== SUMMARY ===',
+      '=== WORKSHOP SUMMARY ===',
       summaryText,
       '',
-      '=== DETAILS ===',
+      '=== DETAILED INTELLIGENCE ===',
       detailsText
     ].join('\n');
 
@@ -1437,22 +1453,25 @@ ${bodyHtml}
       if (s === -1 || e === -1) throw new Error('Invalid response');
       const data = JSON.parse(clean.substring(s, e+1));
 
-      // ── Render Crisp Summary (Section 01 style) ──────────────────────────
+      // ── Render Strategic Verdict ──────────────────────────────────────────
       const verdictText = (data.verdict || '').trim();
-      const verdictBullets = verdictText.split(/\n|(?<=\.)\s+/).map(l => l.trim().replace(/^[•\-\*]\s*/,'')).filter(l => l.length > 2);
+      const verdictPoints = verdictText.split('\n').map(l => l.trim().replace(/^[•\-\*\d\.]+\s*/,'')).filter(l => l.length > 4);
       const rewriteEl = document.getElementById('analysisRewrite');
-      if (verdictBullets.length > 1) {
-        rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
-          verdictBullets.map(b =>
-            '<li style="margin-bottom:8px;line-height:1.6;color:#c0c0d0;padding-left:16px;position:relative;">' +
-            '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>'
-          ).join('') + '</ul>';
+      const verdictNums = ['①','②','③','④','⑤','⑥','⑦'];
+      if (verdictPoints.length > 1) {
+        rewriteEl.innerHTML = '<div style="display:flex;flex-direction:column;gap:16px;">' +
+          verdictPoints.map((b, i) =>
+            '<div style="display:flex;gap:14px;align-items:flex-start;">' +
+            '<span style="flex-shrink:0;font-size:15px;color:var(--accent);margin-top:1px;">' + (verdictNums[i] || '▸') + '</span>' +
+            '<p style="margin:0;font-size:14px;line-height:1.75;color:#d0d0e0;">' + b.replace(/</g,'&lt;') + '</p>' +
+            '</div>'
+          ).join('') + '</div>';
       } else {
         rewriteEl.innerHTML =
-          '<p style="font-size:14px;line-height:1.75;color:#c0c0d0;">' + verdictText.replace(/</g,'&lt;') + '</p>';
+          '<p style="font-size:14px;line-height:1.8;color:#d0d0e0;">' + verdictText.replace(/</g,'&lt;') + '</p>';
       }
 
-      // ── Render Crisp Details (Section 02 style) ──────────────────────────
+      // ── Render Strategic Playbook Details ────────────────────────────────
       const categoryIcons = {
         'HOOK & TARGET AUDIENCE': '🎯',
         'SALES & CONVERSION STRATEGY': '🔻',
@@ -1469,20 +1488,22 @@ ${bodyHtml}
         const isWeak = sec.weak === true;
         const icon = categoryIcons[sec.label] || '📌';
         const weakBadge = isWeak
-          ? '<span style="font-family:DM Mono,monospace;font-size:9px;background:rgba(255,107,53,0.15);color:var(--accent2);padding:2px 8px;border-radius:999px;margin-left:8px;">⚠ Weak</span>'
+          ? '<span style="font-family:DM Mono,monospace;font-size:9px;background:rgba(255,107,53,0.15);color:var(--accent2);padding:2px 8px;border-radius:999px;margin-left:8px;">⚠ Insufficient Data</span>'
           : '';
-        const liItems = (sec.bullets || []).map(b =>
-          '<li style="margin-bottom:7px;line-height:1.6;color:' + (isWeak ? '#777' : '#c0c0d0') + ';padding-left:16px;position:relative;">' +
-          '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>'
+        const insightItems = (sec.bullets || []).map((b, bi) =>
+          '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;">' +
+          '<span style="flex-shrink:0;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:rgba(200,255,0,0.1);border-radius:50%;font-family:DM Mono,monospace;font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">' + (bi+1) + '</span>' +
+          '<p style="margin:0;font-size:13.5px;line-height:1.75;color:' + (isWeak ? '#666' : '#ccc') + ';">' + b.replace(/</g,'&lt;') + '</p>' +
+          '</div>'
         ).join('');
         innerHtml +=
-          '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin-top:20px;' : '') + '">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-          '<span style="font-size:18px">' + icon + '</span>' +
-          '<span style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted)">' + sec.label + '</span>' +
+          '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:24px;' : '') + '">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">' +
+          '<span style="font-size:20px">' + icon + '</span>' +
+          '<span style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);font-weight:600;">' + sec.label + '</span>' +
           weakBadge +
           '</div>' +
-          '<ul style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
+          '<div style="display:flex;flex-direction:column;">' + insightItems + '</div>' +
           '</div>';
       });
       grid.innerHTML = innerHtml;
