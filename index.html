@@ -479,7 +479,7 @@
   <header>
     <div class="logo-tag">⚡ Workshop Intel</div>
     <h1>Transcript <em>Summarizer</em></h1>
-    <p class="subtitle">Upload workshop VTT files → get a 2-part report: a full paragraph summary and a one-line quick reference. Choose your AI provider below.</p>
+    <p class="subtitle">Upload workshop VTT files → get a paragraph summary + a full bullet-point details report. Choose your AI provider below.</p>
   </header>
 
   <!-- STEP 1: PROVIDER -->
@@ -719,10 +719,10 @@
 
     <div class="section-card card-2">
       <div class="section-meta">
-        <span class="section-icon">🔖</span>
+        <span class="section-icon">📄</span>
         <span class="card-label">Section 02</span>
       </div>
-      <div class="section-title">Quick Reference</div>
+      <div class="section-title">Details Report</div>
       <div class="section-content" id="content2">—</div>
       <div class="card-action"><button class="copy-btn" onclick="copySection('content2',this)">Copy</button></div>
     </div>
@@ -866,14 +866,15 @@
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. Both keys must exist. Values are plain strings.',
-      '4. If a field has no relevant info, use: "Not mentioned in this transcript."',
+      '4. Use the bullet character \u2022 followed by a space at the start of each bullet point, separated by newline (\\n).',
+      '5. If a field has no relevant info, use: "Not mentioned in this transcript."',
       '',
-      'OUTPUT FORMAT (replace placeholder text with real content):',
-      '{"summary":"A single paragraph summarizing the entire workshop.","reference":"One concise line referencing the key details: topics, tools, offers, and price."}',
+      'OUTPUT FORMAT:',
+      '{"summary":"A single paragraph summarizing the entire workshop.","details":"\u2022 bullet point 1\\n\u2022 bullet point 2\\n\u2022 bullet point 3"}',
       '',
       'FIELD DEFINITIONS:',
-      'summary   = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Write in plain prose, no bullets.',
-      'reference = Exactly one line (under 30 words) that acts as a quick-reference note capturing the most important facts: main topic, standout tools/methods, and any price or offer mentioned.',
+      'summary = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Write in plain prose, no bullets.',
+      'details = A comprehensive bullet-point report covering ALL of the following categories (include a bold category label on its own line before each group, using ALL CAPS like "WHAT WAS TAUGHT:", "TOOLS USED:", "COURSES & OFFERS:", "PRICES & PLANS:", "KEY HOOK POINTS:"). Under each category list every relevant detail as individual bullet points. Be thorough — include every tool, every price, every hook mentioned. If a category has nothing, write \u2022 Not mentioned.',
       '',
       'TRANSCRIPT:',
       transcript.substring(0, 900000)
@@ -1081,8 +1082,8 @@
       return;
     }
 
-    document.getElementById('content1').textContent = data.summary   || '—';
-    document.getElementById('content2').textContent = data.reference || '—';
+    document.getElementById('content1').textContent = data.summary || '—';
+    document.getElementById('content2').textContent = data.details || '—';
 
     document.getElementById('results').classList.add('active');
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1100,7 +1101,7 @@
   function copyAll() {
     const secs = [
       { title: '1. SUMMARY OF WORKSHOP', id: 'content1' },
-      { title: '2. QUICK REFERENCE',     id: 'content2' },
+      { title: '2. DETAILS REPORT',      id: 'content2' },
     ];
     const full = secs.map(s => s.title + '\n' + '─'.repeat(40) + '\n' + document.getElementById(s.id).textContent).join('\n\n');
     navigator.clipboard.writeText(full).then(() => {
@@ -1121,7 +1122,7 @@
 
       const sections = [
         { title: '01 — Summary of Workshop', id: 'content1', emoji: '📋' },
-        { title: '02 — Quick Reference',     id: 'content2', emoji: '🔖' },
+        { title: '02 — Details Report',      id: 'content2', emoji: '📄' },
       ];
 
       const children = [];
@@ -1156,17 +1157,34 @@
           spacing: { before: idx === 0 ? 0 : 480, after: 200 },
         }));
 
-        // Parse bullet lines
         const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-        lines.forEach(line => {
-          const isBullet = line.startsWith('•');
-          const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
+
+        if (idx === 0) {
+          // Summary: plain paragraph
           children.push(new Paragraph({
-            numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
-            children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '333333' })],
+            children: [new TextRun({ text: rawText, size: 22, font: 'Arial', color: '333333' })],
             spacing: { after: 80 },
           }));
-        });
+        } else {
+          // Details: category headers (ALL CAPS ending with :) and bullet points
+          lines.forEach(line => {
+            const isBullet = line.startsWith('•');
+            const isCategoryHeader = !isBullet && /^[A-Z][A-Z\s&]+:$/.test(line);
+            if (isCategoryHeader) {
+              children.push(new Paragraph({
+                children: [new TextRun({ text: line, bold: true, size: 24, font: 'Arial', color: '111111' })],
+                spacing: { before: 280, after: 100 },
+              }));
+            } else {
+              const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
+              children.push(new Paragraph({
+                numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
+                children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '333333' })],
+                spacing: { after: 80 },
+              }));
+            }
+          });
+        }
 
         // Divider between sections (not after last)
         if (idx < sections.length - 1) {
