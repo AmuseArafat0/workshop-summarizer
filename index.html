@@ -703,7 +703,6 @@
       <div class="results-title">Workshop Intelligence Report</div>
       <div style="display:flex;gap:8px;">
         <button class="copy-all-btn" onclick="copyAll()">Copy All ↗</button>
-        <button class="copy-all-btn" id="downloadDocBtn" onclick="downloadDoc()" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">⬇ Download .docx</button>
       </div>
     </div>
 
@@ -714,13 +713,19 @@
       </div>
       <div class="section-title">Summary of Workshop</div>
       <div class="section-content" id="content1">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content1',this)">Copy</button></div>
+      <div class="card-action" style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="copy-btn" onclick="copySection('content1',this)">Copy</button>
+        <button class="copy-btn" id="downloadSummaryBtn" onclick="downloadSummaryDoc()" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">⬇ Download Summary</button>
+      </div>
     </div>
 
     <div id="detailsReport" style="display:none;flex-direction:column;gap:14px;">
       <div class="results-header" style="margin-bottom:0;">
         <div class="results-title">Details Report</div>
-        <button class="copy-all-btn" onclick="copyDetails()">Copy Report ↗</button>
+        <div style="display:flex;gap:8px;">
+          <button class="copy-all-btn" onclick="copyDetails()">Copy Report ↗</button>
+          <button class="copy-all-btn" id="downloadDetailsBtn" onclick="downloadDetailsDoc()" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">⬇ Download Details</button>
+        </div>
       </div>
       <div id="detailsCards"></div>
     </div>
@@ -873,14 +878,14 @@
       '',
       'FIELD DEFINITIONS:',
       'summary = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Plain prose, no bullets.',
-      'details = A detailed intelligence report organized under these 7 category headers in this exact order. For each category write 3-5 sentences in plain flowing prose (ABSOLUTELY NO bullet points, NO dashes, NO hyphens at line starts, NO list formatting of any kind — pure paragraph text only). Separate each category with its label in ALL CAPS followed by a colon on its own line, then the paragraph on the next line.',
-      '  HOOK & TARGET AUDIENCE: — Describe the main promise made to the audience, the core pain point being addressed, and exactly who this workshop targets. What transformation or outcome is being sold?',
-      '  SALES & CONVERSION STRATEGY: — How do they pitch and close? Cover emotional triggers used, urgency and scarcity tactics, how objections are handled, the CTA flow, and when in the session the pitch happens.',
-      '  OFFER & MONETIZATION: — Every offer, course, program, or membership mentioned. Include exact prices, payment plans, discounts, bonuses, upsells, mentorship tiers, and certifications offered.',
-      '  TRUST & ENGAGEMENT: — What social proof do they use? Cover testimonials, student success stories, income claims, how they interact with the live audience, and any community-building tactics.',
-      '  AI TOOLS & PRACTICAL VALUE: — What AI tools, workflows, prompts, or templates are shown or recommended? How actionable and implementable is the content for attendees?',
-      '  BUSINESS MOAT & COMPETITIVE ADVANTAGE: — What makes this business hard to replicate? Cover unique systems, founder personal brand, exclusive community, proprietary frameworks, or network/hiring advantages.',
-      '  WEAKNESSES & GROWTH OPPORTUNITIES: — What is missing, overpromised, weakly delivered, or overpriced? Where are the gaps a competitor could exploit to outperform them?',
+      'details = A sharp intelligence report with exactly 7 category headers. For each category write exactly 2-3 SHORT sentences — be concise, specific, and punchy. No fluff, no filler, no bullet points, no dashes. Pure paragraph prose only. Separate each category with its label in ALL CAPS followed by a colon on its own line, then the paragraph on the next line.',
+      '  HOOK & TARGET AUDIENCE: — Who is the target, what pain point is addressed, what transformation is promised.',
+      '  SALES & CONVERSION STRATEGY: — Key emotional triggers, urgency tactics, objection handling, and when/how the pitch lands.',
+      '  OFFER & MONETIZATION: — Every offer with exact price, payment plan, discount, bonus, or upsell mentioned.',
+      '  TRUST & ENGAGEMENT: — Top testimonials or social proof used, and how audience interaction is handled.',
+      '  AI TOOLS & PRACTICAL VALUE: — Specific AI tools, prompts, or templates shown and how actionable the content is.',
+      '  BUSINESS MOAT & COMPETITIVE ADVANTAGE: — What makes this hard to copy — unique systems, brand, community, or frameworks.',
+      '  WEAKNESSES & GROWTH OPPORTUNITIES: — Key gaps, overpromises, or weak spots a competitor could exploit.',
       '',
       'TRANSCRIPT:',
       transcript.substring(0, 900000)
@@ -1194,114 +1199,107 @@
     });
   }
 
-  // ── Download .docx ─────────────────────────────────────────────────────────
-  async function downloadDoc() {
-    const btn = document.getElementById('downloadDocBtn');
+  // ── Shared docx helper ────────────────────────────────────────────────────
+  function makeDocHeader(children, title) {
+    const { Paragraph, TextRun, AlignmentType } = docx;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    children.push(new Paragraph({
+      children: [new TextRun({ text: title, bold: true, size: 48, font: 'Arial', color: '111111' })],
+      spacing: { after: 120 },
+    }));
+    children.push(new Paragraph({
+      children: [new TextRun({ text: 'Generated ' + dateStr + ' · Workshop Intel', size: 20, font: 'Arial', color: '888888' })],
+      spacing: { after: 400 },
+    }));
+    children.push(new Paragraph({
+      children: [new TextRun({ text: '─'.repeat(60), size: 18, color: 'CCCCCC' })],
+      spacing: { after: 400 },
+    }));
+  }
+
+  function triggerDocxDownload(doc, filename, btn, originalLabel) {
+    const { Packer } = docx;
+    Packer.toBlob(doc).then(buffer => {
+      const url = URL.createObjectURL(buffer);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      btn.textContent = 'Downloaded ✓';
+      setTimeout(() => { btn.textContent = originalLabel; btn.disabled = false; }, 2500);
+    }).catch(err => {
+      console.error('docx error:', err);
+      btn.textContent = '⚠ Failed';
+      setTimeout(() => { btn.textContent = originalLabel; btn.disabled = false; }, 2500);
+    });
+  }
+
+  // ── Download Summary .docx ─────────────────────────────────────────────────
+  async function downloadSummaryDoc() {
+    const btn = document.getElementById('downloadSummaryBtn');
     btn.textContent = 'Building…';
     btn.disabled = true;
-
     try {
-      const { Document, Packer, Paragraph, TextRun, AlignmentType } = docx;
-
+      const { Document, Paragraph, TextRun, AlignmentType } = docx;
       const children = [];
-
-      // Title
-      children.push(new Paragraph({
-        children: [new TextRun({ text: 'Workshop Intelligence Report', bold: true, size: 48, font: 'Arial', color: '111111' })],
-        spacing: { after: 120 },
-      }));
-
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-      children.push(new Paragraph({
-        children: [new TextRun({ text: 'Generated ' + dateStr + ' · Workshop Intel', size: 20, font: 'Arial', color: '888888' })],
-        spacing: { after: 480 },
-      }));
-
-      // Divider paragraph (using underline trick instead of BorderStyle)
-      children.push(new Paragraph({
-        children: [new TextRun({ text: '─'.repeat(60), size: 20, color: 'CCCCCC' })],
-        spacing: { after: 480 },
-      }));
-
-      // Section 1: Summary
-      children.push(new Paragraph({
-        children: [new TextRun({ text: '01 — Summary of Workshop', bold: true, size: 28, font: 'Arial', color: '111111' })],
-        spacing: { before: 0, after: 200 },
-      }));
+      makeDocHeader(children, 'Workshop Summary');
       const summaryText = document.getElementById('content1').textContent || '—';
       children.push(new Paragraph({
         children: [new TextRun({ text: summaryText, size: 22, font: 'Arial', color: '333333' })],
         spacing: { after: 80 },
       }));
-
-      // Divider
       children.push(new Paragraph({
-        children: [new TextRun({ text: '─'.repeat(60), size: 16, color: 'EEEEEE' })],
-        spacing: { before: 360, after: 480 },
+        children: [new TextRun({ text: 'Generated by Workshop Intel · workshopintel.app', size: 18, font: 'Arial', color: 'AAAAAA', italics: true })],
+        spacing: { before: 600 },
+        alignment: AlignmentType.CENTER,
       }));
+      const doc = new Document({ sections: [{ properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children }] });
+      triggerDocxDownload(doc, 'workshop-summary.docx', btn, '⬇ Download Summary');
+    } catch (err) {
+      console.error('docx error:', err);
+      btn.textContent = '⚠ Failed';
+      setTimeout(() => { btn.textContent = '⬇ Download Summary'; btn.disabled = false; }, 2500);
+    }
+  }
 
-      // Section 2: Details Report heading
-      children.push(new Paragraph({
-        children: [new TextRun({ text: '02 — Details Report', bold: true, size: 28, font: 'Arial', color: '111111' })],
-        spacing: { before: 0, after: 320 },
-      }));
-
-      // Each of the 10 detail sub-sections
+  // ── Download Details .docx ─────────────────────────────────────────────────
+  async function downloadDetailsDoc() {
+    const btn = document.getElementById('downloadDetailsBtn');
+    btn.textContent = 'Building…';
+    btn.disabled = true;
+    try {
+      const { Document, Paragraph, TextRun, AlignmentType } = docx;
+      const children = [];
+      makeDocHeader(children, 'Workshop Details Report');
       const detailEls = document.querySelectorAll('[id^="detail-"]');
       const detailLabels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
       detailEls.forEach((el, idx) => {
         const titleText = detailLabels[idx] || ('Detail ' + (idx + 1));
         const paraText = el.textContent || '—';
-
         children.push(new Paragraph({
           children: [new TextRun({ text: titleText, bold: true, size: 24, font: 'Arial', color: '222222' })],
-          spacing: { before: idx === 0 ? 0 : 320, after: 120 },
+          spacing: { before: idx === 0 ? 0 : 360, after: 120 },
         }));
         children.push(new Paragraph({
           children: [new TextRun({ text: paraText, size: 22, font: 'Arial', color: '444444' })],
           spacing: { after: 80 },
         }));
       });
-
-      // Footer note
       children.push(new Paragraph({
         children: [new TextRun({ text: 'Generated by Workshop Intel · workshopintel.app', size: 18, font: 'Arial', color: 'AAAAAA', italics: true })],
         spacing: { before: 600 },
         alignment: AlignmentType.CENTER,
       }));
-
-      const doc = new Document({
-        sections: [{
-          properties: {
-            page: {
-              size: { width: 12240, height: 15840 },
-              margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
-            }
-          },
-          children
-        }]
-      });
-
-      const buffer = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(buffer);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'workshop-intel-report.docx';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
-
-      btn.textContent = 'Downloaded ✓';
-      setTimeout(() => { btn.textContent = '⬇ Download .docx'; btn.disabled = false; }, 2500);
+      const doc = new Document({ sections: [{ properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } }, children }] });
+      triggerDocxDownload(doc, 'workshop-details.docx', btn, '⬇ Download Details');
     } catch (err) {
       console.error('docx error:', err);
       btn.textContent = '⚠ Failed';
-      setTimeout(() => { btn.textContent = '⬇ Download .docx'; btn.disabled = false; }, 2500);
+      setTimeout(() => { btn.textContent = '⬇ Download Details'; btn.disabled = false; }, 2500);
     }
   }
 
