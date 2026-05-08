@@ -751,6 +751,9 @@
         <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">Copy All ↗</button>
       </div>
 
+      <!-- Charts Dashboard -->
+      <div id="analysisCharts"></div>
+
       <!-- Strategic Verdict card -->
       <div class="section-card card-1" style="border-color:rgba(200,255,0,0.15);">
         <div class="section-meta">
@@ -1116,6 +1119,12 @@
     }
   }
 
+  function truncateTo30Words(str) {
+    const words = str.trim().split(/\s+/);
+    if (words.length <= 30) return str.trim();
+    return words.slice(0, 30).join(' ') + '…';
+  }
+
   function parseAndDisplay(text) {
     let data;
     try {
@@ -1164,7 +1173,7 @@
       summaryEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
         summaryBullets.map(b =>
           '<li style="margin-bottom:8px;line-height:1.6;color:#c0c0d0;padding-left:16px;position:relative;">' +
-          '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>'
+          '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + truncateTo30Words(b) + '</li>'
         ).join('') + '</ul>';
     } else {
       summaryEl.textContent = summaryRaw;
@@ -1207,7 +1216,7 @@
     let innerHtml = '';
     categoryMeta.forEach((cat, i) => {
       const bullets = parsed[cat.key] && parsed[cat.key].length ? parsed[cat.key] : ['Not mentioned in this transcript.'];
-      const liItems = bullets.map(b => '<li style="margin-bottom:7px;line-height:1.6;color:#c0c0d0;padding-left:16px;position:relative;"><span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>').join('');
+      const liItems = bullets.map(b => '<li style="margin-bottom:7px;line-height:1.6;color:#c0c0d0;padding-left:16px;position:relative;"><span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + truncateTo30Words(b) + '</li>').join('');
       innerHtml +=
         '<div style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin-top:20px;' : '') + '">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
@@ -1394,41 +1403,43 @@ ${bodyHtml}
     document.getElementById('analysisCard').style.display = 'none';
 
     const analysePrompt = [
-      'You are a world-class global business strategist and competitive intelligence expert. You have been given a Workshop Intelligence Report extracted from a competitor\'s workshop transcript.',
+      'You are a world-class competitive intelligence researcher AND quantitative business analyst. You have been given a Workshop Intelligence Report extracted from a competitor\'s workshop transcript.',
       '',
-      'Your mission is to produce a GLOBAL COMPETITIVE GROWTH REPORT — a senior-level strategic document that helps the reader build a stronger, smarter business that can compete and win internationally.',
+      'Your mission: produce a GLOBAL COMPETITIVE GROWTH REPORT with both deep qualitative insights AND precise numeric scores so the reader can visualise the competitive landscape at a glance.',
       '',
       'CORE PHILOSOPHY:',
-      'Do NOT compress or summarise what was already said. Instead, go DEEPER. Read between the lines. Extract implications, patterns, and second-order insights that are not obvious from the raw data. Every point must add NEW strategic value that was not explicitly stated in the first report.',
+      'Do NOT compress or summarise what was already said. Go DEEPER. Read between the lines. Extract implications, patterns, and second-order insights that are not obvious from the raw data. Every point must add NEW strategic value not explicitly stated in the first report.',
       '',
-      'FOR EACH OF THE 7 SECTIONS, produce 4-6 deep strategic insights following this structure:',
-      '- State the specific intelligence found (exact price, tool name, tactic, or gap)',
-      '- Explain WHY this matters strategically in a global market context',
-      '- Provide a concrete, specific action the reader can take to leverage or counter it',
-      'Each point should be 2-3 sentences. Write with the precision of a McKinsey report and the clarity of a great business advisor.',
+      'SCORING METHODOLOGY (apply rigorous analytical thinking):',
+      'For each of the 7 sections you must produce TWO scores (integers 0-100):',
+      '  competitorStrength: How strong/advanced is the COMPETITOR in this dimension? (0=very weak, 100=world-class)',
+      '  yourOpportunity: How large is YOUR opportunity to outperform them here? (0=no gap, 100=massive untapped gap)',
+      'These scores must be mathematically consistent: a competitor with strength=90 should have opportunity=10-30 (small gap), while strength=40 means opportunity=60-80 (big gap). Show your analyst reasoning.',
       '',
-      'FOR THE STRATEGIC VERDICT (summary field):',
-      'Write a 5-7 point executive-level verdict that covers:',
-      '(1) The competitor\'s true market position and global reach potential',
-      '(2) The 2-3 most exploitable structural weaknesses in their business model',
-      '(3) The exact pricing and offer gaps you can undercut or outflank',
-      '(4) Which global markets or audience segments they are ignoring that you can own',
-      '(5) The single highest-leverage move to make in the next 90 days to gain competitive advantage',
-      'Be specific. Reference actual prices, tools, tactics, and audience details from the report.',
+      'Also produce:',
+      '  overallThreatScore (0-100): Weighted average of their strengths — how dangerous is this competitor overall?',
+      '  marketMaturityScore (0-100): How saturated/mature is their market positioning? (high = crowded, low = early/blue ocean)',
+      '  revenueConcentrationScore (0-100): How reliant are they on a single offer/channel? (high = concentrated = fragile)',
       '',
-      'SECTION GUIDANCE:',
-      'HOOK & TARGET AUDIENCE: Analyse the depth of their audience targeting. Are they going broad or niche? What underserved sub-segments exist globally that they are missing? What emotional or aspirational angles are they NOT addressing?',
-      'SALES & CONVERSION STRATEGY: Evaluate the sophistication of their sales system. What conversion levers are weak or missing? How can you build a superior sales architecture that converts better across different cultures and markets?',
-      'OFFER & MONETIZATION: Dissect every offer, price point, and monetization layer. Where are the pricing gaps? What offer structures (subscription, licensing, white-label, certification) are they leaving on the table globally?',
-      'TRUST & ENGAGEMENT: How durable is their authority and community? What trust signals are absent? How can you build deeper credibility faster in markets they have not penetrated?',
-      'AI TOOLS & PRACTICAL VALUE: Assess how advanced their AI and tool stack is versus what is now available. Where can you deliver measurably more practical value using better tools or workflows?',
-      'BUSINESS MOAT & COMPETITIVE ADVANTAGE: How defensible is their position, really? What would make YOUR moat stronger — proprietary data, certifications, partnerships, exclusive frameworks, or community network effects?',
-      'WEAKNESSES & GROWTH OPPORTUNITIES: Go beyond surface gaps. Identify systemic weaknesses in their delivery, positioning, and scalability. Map these directly to global growth opportunities you can execute.',
+      'FOR EACH OF THE 7 SECTIONS, produce 4-6 deep strategic bullets:',
+      '- State the specific intelligence (exact price, tool name, tactic, or gap)',
+      '- Explain WHY this matters and the strategic edge it gives you',
+      '- End with a concrete action: what to build, launch, undercut, or exploit',
+      'Each bullet 1-2 sentences, dense with meaning, referencing specific facts. No vague generalities.',
       '',
-      'STRICT OUTPUT FORMAT — reply with ONLY valid JSON, no markdown, no code fences:',
-      '{"sections":[{"label":"HOOK & TARGET AUDIENCE","bullets":["Deep insight with strategic implication and specific action."],"weak":false},...],"verdict":"Point 1\\nPoint 2\\nPoint 3\\nPoint 4\\nPoint 5"}',
+      'FOR THE STRATEGIC VERDICT:',
+      'Write 5-7 executive-level points covering:',
+      '(1) Competitor\'s true market position and global reach potential',
+      '(2) The 2-3 most exploitable structural weaknesses',
+      '(3) Exact pricing and offer gaps to undercut or outflank',
+      '(4) Global markets or audience segments they are ignoring',
+      '(5) The single highest-leverage move in the next 90 days',
+      'Be specific. Reference actual prices, tools, tactics, audience details.',
       '',
-      'The JSON must have exactly 7 sections in this order: HOOK & TARGET AUDIENCE, SALES & CONVERSION STRATEGY, OFFER & MONETIZATION, TRUST & ENGAGEMENT, AI TOOLS & PRACTICAL VALUE, BUSINESS MOAT & COMPETITIVE ADVANTAGE, WEAKNESSES & GROWTH OPPORTUNITIES.',
+      'STRICT OUTPUT FORMAT — ONLY valid JSON, no markdown, no code fences:',
+      '{"overallThreatScore":72,"marketMaturityScore":65,"revenueConcentrationScore":80,"sections":[{"label":"HOOK & TARGET AUDIENCE","competitorStrength":75,"yourOpportunity":45,"bullets":["insight with action."],"weak":false},...],"verdict":"Point 1\\nPoint 2\\nPoint 3\\nPoint 4\\nPoint 5"}',
+      '',
+      'Sections must be exactly 7 in this order: HOOK & TARGET AUDIENCE, SALES & CONVERSION STRATEGY, OFFER & MONETIZATION, TRUST & ENGAGEMENT, AI TOOLS & PRACTICAL VALUE, BUSINESS MOAT & COMPETITIVE ADVANTAGE, WEAKNESSES & GROWTH OPPORTUNITIES.',
       '',
       'REPORT TO ANALYSE:',
       '=== WORKSHOP SUMMARY ===',
@@ -1453,19 +1464,192 @@ ${bodyHtml}
       if (s === -1 || e === -1) throw new Error('Invalid response');
       const data = JSON.parse(clean.substring(s, e+1));
 
+      // ── Render Charts Dashboard ───────────────────────────────────────────
+      const chartsWrap = document.getElementById('analysisCharts');
+      chartsWrap.innerHTML = '';
+
+      const sections = data.sections || [];
+      const labels = sections.map(s => s.label.replace(' & ', ' &\n').replace(' COMPETITIVE ADVANTAGE',''));
+      const strengths = sections.map(s => s.competitorStrength || 0);
+      const opps = sections.map(s => s.yourOpportunity || 0);
+      const threatScore = data.overallThreatScore || 0;
+      const maturityScore = data.marketMaturityScore || 0;
+      const concentrationScore = data.revenueConcentrationScore || 0;
+
+      // ── Radar Chart (SVG) ──────────────────────────────────────────────────
+      function buildRadar(vals, color, cx, cy, r) {
+        const n = vals.length;
+        const pts = vals.map((v, i) => {
+          const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+          const dist = (v / 100) * r;
+          return [cx + dist * Math.cos(angle), cy + dist * Math.sin(angle)];
+        });
+        return pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') + 'Z';
+      }
+
+      function radarAxisPoints(i, n, cx, cy, r) {
+        const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+        return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+      }
+
+      const shortLabels = ['Hook', 'Sales', 'Offers', 'Trust', 'AI Tools', 'Moat', 'Gaps'];
+      const n = 7, cx = 200, cy = 185, R = 140;
+
+      let radarGridLines = '', radarAxes = '', radarAxisLabels = '';
+      [20,40,60,80,100].forEach(pct => {
+        const r2 = (pct/100)*R;
+        const pts2 = Array.from({length:n},(_,i)=>radarAxisPoints(i,n,cx,cy,r2));
+        radarGridLines += '<polygon points="' + pts2.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ') + '" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>';
+        radarGridLines += '<text x="' + (cx+4).toFixed(1) + '" y="' + (cy - r2 + 3).toFixed(1) + '" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.2)">' + pct + '</text>';
+      });
+      for(let i=0;i<n;i++){
+        const p = radarAxisPoints(i,n,cx,cy,R);
+        radarAxes += '<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x.toFixed(1)+'" y2="'+p.y.toFixed(1)+'" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>';
+        const lp = radarAxisPoints(i,n,cx,cy,R+22);
+        const anchor = lp.x < cx-5 ? 'end' : lp.x > cx+5 ? 'start' : 'middle';
+        radarAxisLabels += '<text x="'+lp.x.toFixed(1)+'" y="'+lp.y.toFixed(1)+'" text-anchor="'+anchor+'" dominant-baseline="middle" font-family="DM Mono,monospace" font-size="9" fill="rgba(200,255,0,0.7)">'+shortLabels[i]+'</text>';
+      }
+
+      const radarSVG = `<svg viewBox="0 0 400 370" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:400px;">
+        ${radarGridLines}${radarAxes}
+        <path d="${buildRadar(strengths,null,cx,cy,R)}" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="2"/>
+        <path d="${buildRadar(opps,null,cx,cy,R)}" fill="rgba(200,255,0,0.10)" stroke="#c8ff00" stroke-width="2" stroke-dasharray="4,3"/>
+        ${radarAxisLabels}
+        <circle cx="${cx}" cy="${cy}" r="3" fill="rgba(255,255,255,0.3)"/>
+        <g transform="translate(20,330)">
+          <rect width="12" height="3" y="4" fill="#ff6b35" rx="1"/>
+          <text x="17" y="9" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,107,53,0.9)">Competitor Strength</text>
+          <rect x="140" width="12" height="3" y="4" fill="#c8ff00" rx="1" stroke="#c8ff00" stroke-dasharray="3,2" stroke-width="1" fill-opacity="0.5"/>
+          <text x="157" y="9" font-family="DM Mono,monospace" font-size="9" fill="rgba(200,255,0,0.9)">Your Opportunity</text>
+        </g>
+        <text x="${cx}" y="16" text-anchor="middle" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="rgba(255,255,255,0.5)" letter-spacing="0.15em">COMPETITIVE RADAR</text>
+      </svg>`;
+
+      // ── Gauge SVG helper ───────────────────────────────────────────────────
+      function buildGauge(value, label, color, subtitle) {
+        const pct = Math.min(100, Math.max(0, value)) / 100;
+        const startAngle = Math.PI * 0.75;
+        const endAngle = Math.PI * 2.25;
+        const totalArc = endAngle - startAngle;
+        const valueAngle = startAngle + totalArc * pct;
+        const gx = 80, gy = 80, gr = 58;
+        function polarToXY(angle, radius) {
+          return { x: gx + radius * Math.cos(angle), y: gy + radius * Math.sin(angle) };
+        }
+        const arcStart = polarToXY(startAngle, gr);
+        const arcValue = polarToXY(valueAngle, gr);
+        const largeArc = (totalArc * pct) > Math.PI ? 1 : 0;
+        const needleEnd = polarToXY(valueAngle, gr - 12);
+        const colorMap = { threat:'#ff6b35', maturity:'#7c6dff', concentration:'#c8ff00' };
+        const c = colorMap[color] || '#c8ff00';
+        const bgColor = color === 'threat' ? 'rgba(255,107,53,0.08)' : color === 'maturity' ? 'rgba(124,109,255,0.08)' : 'rgba(200,255,0,0.08)';
+        return `<svg viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:160px;">
+          <circle cx="${gx}" cy="${gy}" r="${gr+6}" fill="${bgColor}"/>
+          <path d="M${arcStart.x.toFixed(1)},${arcStart.y.toFixed(1)} A${gr},${gr} 0 1 1 ${polarToXY(endAngle-0.01,gr).x.toFixed(1)},${polarToXY(endAngle-0.01,gr).y.toFixed(1)}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M${arcStart.x.toFixed(1)},${arcStart.y.toFixed(1)} A${gr},${gr} 0 ${largeArc} 1 ${arcValue.x.toFixed(1)},${arcValue.y.toFixed(1)}" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>
+          <line x1="${gx}" y1="${gy}" x2="${needleEnd.x.toFixed(1)}" y2="${needleEnd.y.toFixed(1)}" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+          <circle cx="${gx}" cy="${gy}" r="4" fill="${c}"/>
+          <text x="${gx}" y="${gy+24}" text-anchor="middle" font-family="Syne,sans-serif" font-size="20" font-weight="800" fill="${c}">${value}</text>
+          <text x="${gx}" y="${gy+38}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.5)" letter-spacing="0.1em">/100</text>
+          <text x="${gx}" y="106" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" font-weight="600" fill="rgba(255,255,255,0.6)" letter-spacing="0.08em">${label}</text>
+          <text x="${gx}" y="96" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.3)">${subtitle}</text>
+        </svg>`;
+      }
+
+      // ── Bar Chart SVG ──────────────────────────────────────────────────────
+      const barW = 560, barH = 260, barPadL = 10, barPadT = 20, barPadB = 50;
+      const slotW = (barW - barPadL) / n;
+      const bw = slotW * 0.3;
+      let bars = '';
+      sections.forEach((sec, i) => {
+        const x = barPadL + i * slotW + slotW * 0.1;
+        const maxH = barH - barPadT - barPadB;
+        const sh = (sec.competitorStrength / 100) * maxH;
+        const oh = (sec.yourOpportunity / 100) * maxH;
+        const sy = barPadT + maxH - sh;
+        const oy = barPadT + maxH - oh;
+        bars += `<rect x="${x.toFixed(1)}" y="${sy.toFixed(1)}" width="${bw.toFixed(1)}" height="${sh.toFixed(1)}" fill="rgba(255,107,53,0.7)" rx="3"/>`;
+        bars += `<rect x="${(x+bw+3).toFixed(1)}" y="${oy.toFixed(1)}" width="${bw.toFixed(1)}" height="${oh.toFixed(1)}" fill="rgba(200,255,0,0.7)" rx="3"/>`;
+        bars += `<text x="${(x+bw).toFixed(1)}" y="${(barH-barPadB+14).toFixed(1)}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,255,255,0.45)">${shortLabels[i]}</text>`;
+        bars += `<text x="${(x+bw/2).toFixed(1)}" y="${(sy-4).toFixed(1)}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,107,53,0.9)">${sec.competitorStrength}</text>`;
+        bars += `<text x="${(x+bw*1.5+3).toFixed(1)}" y="${(oy-4).toFixed(1)}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="rgba(200,255,0,0.9)">${sec.yourOpportunity}</text>`;
+      });
+      // grid lines
+      let barGrid = '';
+      [25,50,75,100].forEach(pct => {
+        const y = barPadT + (barH-barPadT-barPadB) * (1 - pct/100);
+        barGrid += `<line x1="${barPadL}" y1="${y.toFixed(1)}" x2="${barW}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+        barGrid += `<text x="${(barPadL-2)}" y="${(y+3).toFixed(1)}" text-anchor="end" font-family="DM Mono,monospace" font-size="7" fill="rgba(255,255,255,0.2)">${pct}</text>`;
+      });
+
+      const barSVG = `<svg viewBox="0 0 ${barW} ${barH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
+        ${barGrid}${bars}
+        <line x1="${barPadL}" y1="${barPadT}" x2="${barPadL}" y2="${barH-barPadB}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <line x1="${barPadL}" y1="${barH-barPadB}" x2="${barW}" y2="${barH-barPadB}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <g transform="translate(${barW/2-130},${barH-14})">
+          <rect width="10" height="8" fill="rgba(255,107,53,0.7)" rx="2"/>
+          <text x="14" y="7" font-family="DM Mono,monospace" font-size="8" fill="rgba(255,107,53,0.9)">Competitor Strength</text>
+          <rect x="130" width="10" height="8" fill="rgba(200,255,0,0.7)" rx="2"/>
+          <text x="144" y="7" font-family="DM Mono,monospace" font-size="8" fill="rgba(200,255,0,0.9)">Your Opportunity</text>
+        </g>
+        <text x="${barW/2}" y="12" text-anchor="middle" font-family="Syne,sans-serif" font-size="11" font-weight="700" fill="rgba(255,255,255,0.5)" letter-spacing="0.15em">STRENGTH vs OPPORTUNITY BY DIMENSION</text>
+      </svg>`;
+
+      chartsWrap.innerHTML = `
+        <div style="background:var(--surface);border:1px solid rgba(200,255,0,0.12);border-radius:18px;padding:24px 28px;margin-bottom:4px;">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(200,255,0,0.6);margin-bottom:18px;">📊 Quantitative Intelligence Dashboard</div>
+
+          <!-- Gauges row -->
+          <div style="display:flex;justify-content:center;gap:24px;margin-bottom:28px;flex-wrap:wrap;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              ${buildGauge(threatScore,'THREAT LEVEL','threat','How dangerous are they?')}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              ${buildGauge(maturityScore,'MARKET MATURITY','maturity','How crowded is their niche?')}
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              ${buildGauge(concentrationScore,'REVENUE RISK','concentration','How fragile is their model?')}
+            </div>
+          </div>
+
+          <!-- Radar + Bar side by side -->
+          <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:20px;align-items:center;">
+            <div>${radarSVG}</div>
+            <div>${barSVG}</div>
+          </div>
+
+          <!-- Key insight strip -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;">
+            ${(() => {
+              const topOpp = [...sections].sort((a,b)=>(b.yourOpportunity||0)-(a.yourOpportunity||0))[0];
+              const topStr = [...sections].sort((a,b)=>(b.competitorStrength||0)-(a.competitorStrength||0))[0];
+              const avgGap = Math.round(sections.reduce((sum,s)=>(sum+(s.yourOpportunity||0)-(s.competitorStrength||0)),0)/sections.length);
+              return [
+                {icon:'🎯', label:'Biggest Opportunity', value: topOpp ? topOpp.label.split(' ')[0]+' '+topOpp.label.split(' ')[1] : '—', sub: topOpp ? topOpp.yourOpportunity+'/100 opp score' : ''},
+                {icon:'⚠', label:'Strongest Threat Area', value: topStr ? topStr.label.split(' ')[0]+' '+topStr.label.split(' ')[1] : '—', sub: topStr ? topStr.competitorStrength+'/100 strength' : ''},
+                {icon:'📐', label:'Avg Gap (Opp − Threat)', value: (avgGap >= 0 ? '+' : '') + avgGap, sub: avgGap > 0 ? 'Overall advantage to you' : 'Competitor has the edge'}
+              ].map(item =>
+                `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px 16px;">
+                  <div style="font-size:18px;margin-bottom:6px;">${item.icon}</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">${item.label}</div>
+                  <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;">${item.value}</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(200,255,0,0.6);margin-top:3px;">${item.sub}</div>
+                </div>`
+              ).join('');
+            })()}
+          </div>
+        </div>`;
+
       // ── Render Strategic Verdict ──────────────────────────────────────────
       const verdictText = (data.verdict || '').trim();
       const verdictPoints = verdictText.split('\n').map(l => l.trim().replace(/^[•\-\*\d\.]+\s*/,'')).filter(l => l.length > 4);
       const rewriteEl = document.getElementById('analysisRewrite');
-      const verdictNums = ['①','②','③','④','⑤','⑥','⑦'];
       if (verdictPoints.length > 1) {
-        rewriteEl.innerHTML = '<div style="display:flex;flex-direction:column;gap:16px;">' +
-          verdictPoints.map((b, i) =>
-            '<div style="display:flex;gap:14px;align-items:flex-start;">' +
-            '<span style="flex-shrink:0;font-size:15px;color:var(--accent);margin-top:1px;">' + (verdictNums[i] || '▸') + '</span>' +
-            '<p style="margin:0;font-size:14px;line-height:1.75;color:#d0d0e0;">' + b.replace(/</g,'&lt;') + '</p>' +
-            '</div>'
-          ).join('') + '</div>';
+        rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
+          verdictPoints.map(b =>
+            '<li style="margin-bottom:10px;line-height:1.7;color:#d0d0e0;padding-left:18px;position:relative;">' +
+            '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b.replace(/</g,'&lt;') + '</li>'
+          ).join('') + '</ul>';
       } else {
         rewriteEl.innerHTML =
           '<p style="font-size:14px;line-height:1.8;color:#d0d0e0;">' + verdictText.replace(/</g,'&lt;') + '</p>';
@@ -1487,23 +1671,24 @@ ${bodyHtml}
       (data.sections || []).forEach((sec, i) => {
         const isWeak = sec.weak === true;
         const icon = categoryIcons[sec.label] || '📌';
+        const str = sec.competitorStrength || 0;
+        const opp = sec.yourOpportunity || 0;
         const weakBadge = isWeak
           ? '<span style="font-family:DM Mono,monospace;font-size:9px;background:rgba(255,107,53,0.15);color:var(--accent2);padding:2px 8px;border-radius:999px;margin-left:8px;">⚠ Insufficient Data</span>'
           : '';
-        const insightItems = (sec.bullets || []).map((b, bi) =>
-          '<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;">' +
-          '<span style="flex-shrink:0;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:rgba(200,255,0,0.1);border-radius:50%;font-family:DM Mono,monospace;font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;">' + (bi+1) + '</span>' +
-          '<p style="margin:0;font-size:13.5px;line-height:1.75;color:' + (isWeak ? '#666' : '#ccc') + ';">' + b.replace(/</g,'&lt;') + '</p>' +
-          '</div>'
+        const scoreBadges = `<span style="font-family:'DM Mono',monospace;font-size:9px;background:rgba(255,107,53,0.12);color:#ff6b35;padding:2px 8px;border-radius:999px;margin-left:8px;">⚔ ${str}</span><span style="font-family:'DM Mono',monospace;font-size:9px;background:rgba(200,255,0,0.10);color:var(--accent);padding:2px 8px;border-radius:999px;margin-left:6px;">🚀 ${opp}</span>`;
+        const liItems = (sec.bullets || []).map(b =>
+          '<li style="margin-bottom:10px;line-height:1.7;color:' + (isWeak ? '#666' : '#ccc') + ';padding-left:18px;position:relative;">' +
+          '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b.replace(/</g,'&lt;') + '</li>'
         ).join('');
         innerHtml +=
           '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.07);padding-top:24px;margin-top:24px;' : '') + '">' +
-          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">' +
           '<span style="font-size:20px">' + icon + '</span>' +
           '<span style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);font-weight:600;">' + sec.label + '</span>' +
-          weakBadge +
+          weakBadge + scoreBadges +
           '</div>' +
-          '<div style="display:flex;flex-direction:column;">' + insightItems + '</div>' +
+          '<ul style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
           '</div>';
       });
       grid.innerHTML = innerHtml;
