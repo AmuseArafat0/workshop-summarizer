@@ -864,26 +864,23 @@
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. Both keys must exist. Values are plain strings.',
-      '4. Use the bullet character \u2022 followed by a space at the start of each bullet point, separated by \\n.',
+      '4. Write ALL detail category content as flowing paragraph prose. No bullet points, no dashes, no hyphens at line starts.',
       '5. For category headers use the exact label in ALL CAPS followed by a colon, on its own line.',
       '6. If a category has nothing relevant, write \u2022 Not mentioned.',
       '',
       'OUTPUT FORMAT:',
-      '{"summary":"A single paragraph...","details":"BUSINESS MOAT:\\n\u2022 point\\nSALES FUNNEL:\\n\u2022 point"}',
+      '{"summary":"A single paragraph...","details":"HOOK & TARGET AUDIENCE:\\nParagraph text...\\nSALES & CONVERSION STRATEGY:\\nParagraph text..."}',
       '',
       'FIELD DEFINITIONS:',
       'summary = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Plain prose, no bullets.',
-      'details = A detailed intelligence report organized under these 10 category headers in this exact order. For each category write 2-4 sentences in plain prose (NO bullet points, NO dashes, NO list formatting — flowing paragraph text only). Separate each category with its label in ALL CAPS followed by a colon on its own line, then the paragraph on the next line.',
-      '  BUSINESS MOAT: — What makes this business defensible? Unique positioning, brand authority, proprietary systems, exclusive access, expertise.',
-      '  SALES FUNNEL: — How do they attract and convert leads? Entry points, lead magnets, free content, webinars, email sequences, calls-to-action.',
-      '  UPSELL COURSE & PRICING: — Every course, program, membership, or offer mentioned. Include exact prices, tiers, payment plans, discounts.',
-      '  ENGAGEMENT STRATEGY: — How do they keep the audience engaged during and after the workshop? Polls, Q&A, challenges, homework, live calls.',
-      '  COMMUNITY STRENGTH: — Any community, group, forum, or network they have built. Size, platform, activity level, exclusivity.',
-      '  TESTIMONIALS & TRUST: — Social proof used. Student results, case studies, screenshots, income claims, endorsements, credentials shown.',
-      '  MARKETING ANGLE: — Core message, promise, or transformation they sell. Pain points targeted, dream outcome framed, unique mechanism claimed.',
-      '  CUSTOMER RETENTION: — How do they keep customers long-term? Continuity programs, re-engagement, alumni groups, lifetime access, renewals.',
-      '  PRACTICAL LEARNING QUALITY: — How actionable and valuable is the actual teaching? Frameworks, templates, tools given, depth of instruction.',
-      '  WEAKNESSES/GAPS YOU CAN EXPLOIT: — What is missing, weak, overpriced, unclear, or poorly delivered? Opportunities a competitor could use.',
+      'details = A detailed intelligence report organized under these 7 category headers in this exact order. For each category write 3-5 sentences in plain flowing prose (ABSOLUTELY NO bullet points, NO dashes, NO hyphens at line starts, NO list formatting of any kind — pure paragraph text only). Separate each category with its label in ALL CAPS followed by a colon on its own line, then the paragraph on the next line.',
+      '  HOOK & TARGET AUDIENCE: — Describe the main promise made to the audience, the core pain point being addressed, and exactly who this workshop targets. What transformation or outcome is being sold?',
+      '  SALES & CONVERSION STRATEGY: — How do they pitch and close? Cover emotional triggers used, urgency and scarcity tactics, how objections are handled, the CTA flow, and when in the session the pitch happens.',
+      '  OFFER & MONETIZATION: — Every offer, course, program, or membership mentioned. Include exact prices, payment plans, discounts, bonuses, upsells, mentorship tiers, and certifications offered.',
+      '  TRUST & ENGAGEMENT: — What social proof do they use? Cover testimonials, student success stories, income claims, how they interact with the live audience, and any community-building tactics.',
+      '  AI TOOLS & PRACTICAL VALUE: — What AI tools, workflows, prompts, or templates are shown or recommended? How actionable and implementable is the content for attendees?',
+      '  BUSINESS MOAT & COMPETITIVE ADVANTAGE: — What makes this business hard to replicate? Cover unique systems, founder personal brand, exclusive community, proprietary frameworks, or network/hiring advantages.',
+      '  WEAKNESSES & GROWTH OPPORTUNITIES: — What is missing, overpromised, weakly delivered, or overpriced? Where are the gaps a competitor could exploit to outperform them?',
       '',
       'TRANSCRIPT:',
       transcript.substring(0, 900000)
@@ -1097,16 +1094,13 @@
 
     const detailsRaw = data.details || '';
     const categoryMeta = [
-      { key: 'BUSINESS MOAT',                   icon: '🏰' },
-      { key: 'SALES FUNNEL',                    icon: '🔻' },
-      { key: 'UPSELL COURSE & PRICING',         icon: '💰' },
-      { key: 'ENGAGEMENT STRATEGY',             icon: '⚡' },
-      { key: 'COMMUNITY STRENGTH',              icon: '🤝' },
-      { key: 'TESTIMONIALS & TRUST',            icon: '⭐' },
-      { key: 'MARKETING ANGLE',                 icon: '🎯' },
-      { key: 'CUSTOMER RETENTION',              icon: '🔄' },
-      { key: 'PRACTICAL LEARNING QUALITY',      icon: '📚' },
-      { key: 'WEAKNESSES/GAPS YOU CAN EXPLOIT', icon: '🔍' },
+      { key: 'HOOK & TARGET AUDIENCE',                 icon: '🎯' },
+      { key: 'SALES & CONVERSION STRATEGY',            icon: '🔻' },
+      { key: 'OFFER & MONETIZATION',                   icon: '💰' },
+      { key: 'TRUST & ENGAGEMENT',                     icon: '⭐' },
+      { key: 'AI TOOLS & PRACTICAL VALUE',             icon: '🤖' },
+      { key: 'BUSINESS MOAT & COMPETITIVE ADVANTAGE',  icon: '🏰' },
+      { key: 'WEAKNESSES & GROWTH OPPORTUNITIES',      icon: '🔍' },
     ];
 
     // Parse raw text into {key: paragraph} map
@@ -1190,7 +1184,7 @@
 
   function copyDetails(btn) {
     const items = document.querySelectorAll('[id^="detail-"]');
-    const labels = ['BUSINESS MOAT','SALES FUNNEL','UPSELL COURSE & PRICING','ENGAGEMENT STRATEGY','COMMUNITY STRENGTH','TESTIMONIALS & TRUST','MARKETING ANGLE','CUSTOMER RETENTION','PRACTICAL LEARNING QUALITY','WEAKNESSES/GAPS YOU CAN EXPLOIT'];
+    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
     let full = 'DETAILS REPORT\n' + '─'.repeat(40) + '\n\n';
     items.forEach((el, i) => { full += (labels[i] || '') + '\n' + el.textContent + '\n\n'; });
     navigator.clipboard.writeText(full).then(() => {
@@ -1255,7 +1249,7 @@
 
       // Each of the 10 detail sub-sections
       const detailEls = document.querySelectorAll('[id^="detail-"]');
-      const detailLabels = ['BUSINESS MOAT','SALES FUNNEL','UPSELL COURSE & PRICING','ENGAGEMENT STRATEGY','COMMUNITY STRENGTH','TESTIMONIALS & TRUST','MARKETING ANGLE','CUSTOMER RETENTION','PRACTICAL LEARNING QUALITY','WEAKNESSES/GAPS YOU CAN EXPLOIT'];
+      const detailLabels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
       detailEls.forEach((el, idx) => {
         const titleText = detailLabels[idx] || ('Detail ' + (idx + 1));
         const paraText = el.textContent || '—';
