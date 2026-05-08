@@ -411,6 +411,10 @@
     }
 
     .section-card:nth-child(2) { animation-delay: 0.05s; }
+    .section-card:nth-child(3) { animation-delay: 0.10s; }
+    .section-card:nth-child(4) { animation-delay: 0.15s; }
+    .section-card:nth-child(5) { animation-delay: 0.20s; }
+    .section-card:nth-child(6) { animation-delay: 0.25s; }
 
     .card-1 { background: var(--card-1); border-color: rgba(124,109,255,0.18); }
     .card-2 { background: var(--card-2); border-color: rgba(200,255,0,0.12); }
@@ -420,6 +424,9 @@
 
     .card-1::before { content: '01'; }
     .card-2::before { content: '02'; }
+    .card-3::before { content: '03'; }
+    .card-4::before { content: '04'; }
+    .card-5::before { content: '05'; }
 
     .section-card::before {
       position: absolute; top: 20px; right: 28px;
@@ -703,22 +710,52 @@
 
     <div class="section-card card-1">
       <div class="section-meta">
-        <span class="section-icon">📝</span>
+        <span class="section-icon">📚</span>
         <span class="card-label">Section 01</span>
       </div>
-      <div class="section-title">Workshop Summary</div>
+      <div class="section-title">What They Taught</div>
       <div class="section-content" id="content1">—</div>
       <div class="card-action"><button class="copy-btn" onclick="copySection('content1',this)">Copy</button></div>
     </div>
 
     <div class="section-card card-2">
       <div class="section-meta">
-        <span class="section-icon">🔖</span>
+        <span class="section-icon">🛠️</span>
         <span class="card-label">Section 02</span>
       </div>
-      <div class="section-title">Quick Reference Line</div>
+      <div class="section-title">Tools Used</div>
       <div class="section-content" id="content2">—</div>
       <div class="card-action"><button class="copy-btn" onclick="copySection('content2',this)">Copy</button></div>
+    </div>
+
+    <div class="section-card card-3">
+      <div class="section-meta">
+        <span class="section-icon">🎓</span>
+        <span class="card-label">Section 03</span>
+      </div>
+      <div class="section-title">Courses Being Sold</div>
+      <div class="section-content" id="content3">—</div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content3',this)">Copy</button></div>
+    </div>
+
+    <div class="section-card card-4">
+      <div class="section-meta">
+        <span class="section-icon">💰</span>
+        <span class="card-label">Section 04</span>
+      </div>
+      <div class="section-title">Upsell Prices</div>
+      <div class="section-content" id="content4">—</div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content4',this)">Copy</button></div>
+    </div>
+
+    <div class="section-card card-5">
+      <div class="section-meta">
+        <span class="section-icon">🎣</span>
+        <span class="card-label">Section 05</span>
+      </div>
+      <div class="section-title">Important Hook Points</div>
+      <div class="section-content" id="content5">—</div>
+      <div class="card-action"><button class="copy-btn" onclick="copySection('content5',this)">Copy</button></div>
     </div>
   </div>
 
@@ -854,26 +891,29 @@
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
     var lines = [
-      'You are a workshop analyst. Read the transcript and fill in the 2 JSON fields.',
+      'You are a workshop analyst. Read the transcript and fill in the 5 JSON fields.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
-      '3. Both keys must exist. Values are plain strings.',
-      '4. No bullet points — write in plain prose.',
+      '3. All 5 keys must exist. Values are plain strings.',
+      '4. Use bullet character (u2022) at start of each point, separated by newline character.',
       '5. If a field has no relevant info, use: "Not mentioned in this transcript."',
       '',
       'OUTPUT FORMAT (replace placeholder text with real content):',
-      '{"summary":"A concise single paragraph summarising the entire workshop.","reference":"One line capturing the key detail — what was taught, tools used, offers made, prices, and hook tactics."}',
+      '{"taught":"u2022 lesson1\nu2022 lesson2","tools":"u2022 tool1\nu2022 tool2","courses":"u2022 course details","upsell":"u2022 price info","hooks":"u2022 hook statement"}',
       '',
       'FIELD DEFINITIONS:',
-      'summary   = A single, well-written paragraph (4-6 sentences) summarising what the workshop was about, the main topics covered, who it is for, and the key takeaways.',
-      'reference = One compact sentence (max 30 words) that serves as a quick-reference line mentioning the core subject, notable tools/platforms, any courses or offers, and standout hook tactics.',
+      'taught  = Main lessons, concepts, workflows and skills demonstrated.',
+      'tools   = Every tool, software, platform, API, or service mentioned.',
+      'courses = Any courses, programs, memberships being promoted or sold.',
+      'upsell  = All prices, tiers, discounts, payment plans (include exact numbers).',
+      'hooks   = Sales hooks, pain points, promises, urgency or scarcity tactics.',
       '',
       'TRANSCRIPT:',
       transcript.substring(0, 900000)
     ];
-    return lines.join('\n');
+    return lines.join('\n').replace(/u2022/g, '\u2022');
   }
 
   // ── API Calls ──────────────────────────────────────────────────────────────
@@ -1076,8 +1116,11 @@
       return;
     }
 
-    document.getElementById('content1').textContent = data.summary   || '—';
-    document.getElementById('content2').textContent = data.reference || '—';
+    document.getElementById('content1').textContent = data.taught   || '—';
+    document.getElementById('content2').textContent = data.tools    || '—';
+    document.getElementById('content3').textContent = data.courses  || '—';
+    document.getElementById('content4').textContent = data.upsell   || '—';
+    document.getElementById('content5').textContent = data.hooks    || '—';
 
     document.getElementById('results').classList.add('active');
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1094,8 +1137,11 @@
 
   function copyAll() {
     const secs = [
-      { title: '1. WORKSHOP SUMMARY',    id: 'content1' },
-      { title: '2. QUICK REFERENCE LINE', id: 'content2' },
+      { title: '1. WHAT THEY TAUGHT',      id: 'content1' },
+      { title: '2. TOOLS USED',            id: 'content2' },
+      { title: '3. COURSES BEING SOLD',    id: 'content3' },
+      { title: '4. UPSELL PRICES',         id: 'content4' },
+      { title: '5. IMPORTANT HOOK POINTS', id: 'content5' },
     ];
     const full = secs.map(s => s.title + '\n' + '─'.repeat(40) + '\n' + document.getElementById(s.id).textContent).join('\n\n');
     navigator.clipboard.writeText(full).then(() => {
@@ -1115,15 +1161,18 @@
       const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, BorderStyle } = docx;
 
       const sections = [
-        { title: '01 — Workshop Summary',      id: 'content1', emoji: '📝' },
-        { title: '02 — Quick Reference Line',  id: 'content2', emoji: '🔖' },
+        { title: '01 — What They Taught',      id: 'content1', emoji: '📚' },
+        { title: '02 — Tools Used',            id: 'content2', emoji: '🛠️' },
+        { title: '03 — Courses Being Sold',    id: 'content3', emoji: '🎓' },
+        { title: '04 — Upsell Prices',         id: 'content4', emoji: '💰' },
+        { title: '05 — Important Hook Points', id: 'content5', emoji: '🎣' },
       ];
 
       const children = [];
 
       // Title
       children.push(new Paragraph({
-        children: [new TextRun({ text: 'Workshop Intelligence Report', bold: true, size: 48, font: 'Arial', color: '111111' })],
+        children: [new TextRun({ text: 'Workshop Intelligence Report', bold: true, size: 48, font: { name: 'Arial' }, color: '111111' })],
         spacing: { after: 120 },
       }));
 
@@ -1131,7 +1180,7 @@
       const now = new Date();
       const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
       children.push(new Paragraph({
-        children: [new TextRun({ text: 'Generated ' + dateStr + ' · Workshop Intel', size: 20, font: 'Arial', color: '888888' })],
+        children: [new TextRun({ text: 'Generated ' + dateStr + ' · Workshop Intel', size: 20, font: { name: 'Arial' }, color: '888888' })],
         spacing: { after: 480 },
       }));
 
@@ -1147,7 +1196,7 @@
 
         // Section heading
         children.push(new Paragraph({
-          children: [new TextRun({ text: sec.title, bold: true, size: 28, font: 'Arial', color: '111111' })],
+          children: [new TextRun({ text: sec.title, bold: true, size: 28, font: { name: 'Arial' }, color: '111111' })],
           spacing: { before: idx === 0 ? 0 : 480, after: 200 },
         }));
 
@@ -1158,7 +1207,7 @@
           const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
           children.push(new Paragraph({
             numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
-            children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '333333' })],
+            children: [new TextRun({ text: lineText, size: 22, font: { name: 'Arial' }, color: '333333' })],
             spacing: { after: 80 },
           }));
         });
@@ -1175,7 +1224,7 @@
 
       // Footer note
       children.push(new Paragraph({
-        children: [new TextRun({ text: 'Generated by Workshop Intel · workshopintel.app', size: 18, font: 'Arial', color: 'AAAAAA', italics: true })],
+        children: [new TextRun({ text: 'Generated by Workshop Intel · workshopintel.app', size: 18, font: { name: 'Arial' }, color: 'AAAAAA', italics: true })],
         spacing: { before: 600 },
         alignment: AlignmentType.CENTER,
       }));
