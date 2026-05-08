@@ -743,27 +743,42 @@
     </div>
 
     <!-- ANALYSIS RESULT CARD -->
-    <div id="analysisCard" style="display:none;">
-      <div class="section-card" style="background:#13131e;border:1.5px solid rgba(200,255,0,0.18);">
+    <div id="analysisCard" style="display:none;flex-direction:column;gap:20px;">
+
+      <!-- Refined header -->
+      <div class="results-header" style="margin-bottom:0;">
+        <div class="results-title" style="color:var(--accent);letter-spacing:0.12em;">⚡ Refined Intelligence Report</div>
+        <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--accent);border-color:rgba(200,255,0,0.3);">Copy All ↗</button>
+      </div>
+
+      <!-- Refined Summary card (Section 01 style) -->
+      <div class="section-card card-1" style="border-color:rgba(200,255,0,0.15);">
         <div class="section-meta">
-          <span class="section-icon">🔍</span>
-          <span class="card-label" style="color:var(--accent);">Analysis</span>
+          <span class="section-icon">📋</span>
+          <span class="card-label">Refined · Section 01</span>
         </div>
-        <div class="section-title">Report Verification</div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:4px;" id="analysisGrid">
-          <!-- filled by JS -->
-        </div>
-
-        <div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.07);">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">✏️ Crisp Rewrite</div>
-          <div id="analysisRewrite" style="font-size:14px;line-height:1.75;color:#c0c0d0;"></div>
-        </div>
-
-        <div class="card-action" style="margin-top:16px;">
-          <button class="copy-btn" onclick="copyAnalysis(this)">Copy Analysis</button>
+        <div class="section-title">Crisp Summary</div>
+        <div class="section-content" id="analysisRewrite">—</div>
+        <div class="card-action" style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="copy-btn" onclick="copySection('analysisRewrite',this)">Copy</button>
         </div>
       </div>
+
+      <!-- Refined Details card (Section 02 style) -->
+      <div style="display:flex;flex-direction:column;gap:14px;" id="analysisDetailsWrap">
+        <div class="section-card card-2" style="border-color:rgba(200,255,0,0.10);">
+          <div class="section-meta">
+            <span class="section-icon">📄</span>
+            <span class="card-label">Refined · Section 02</span>
+          </div>
+          <div class="section-title">Crisp Details</div>
+          <div id="analysisGrid"><!-- filled by JS --></div>
+          <div class="card-action" style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="copy-btn" onclick="copyAnalysisDetails(this)">Copy</button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -1416,29 +1431,57 @@ ${bodyHtml}
       if (s === -1 || e === -1) throw new Error('Invalid response');
       const data = JSON.parse(clean.substring(s, e+1));
 
-      // Render analysis card
+      // ── Render Crisp Summary (Section 01 style) ──────────────────────────
+      const verdictText = (data.verdict || '').trim();
+      const verdictBullets = verdictText.split(/\n|(?<=\.)\s+/).map(l => l.trim().replace(/^[•\-\*]\s*/,'')).filter(l => l.length > 2);
+      const rewriteEl = document.getElementById('analysisRewrite');
+      if (verdictBullets.length > 1) {
+        rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
+          verdictBullets.map(b =>
+            '<li style="margin-bottom:8px;line-height:1.6;color:#c0c0d0;padding-left:16px;position:relative;">' +
+            '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>'
+          ).join('') + '</ul>';
+      } else {
+        rewriteEl.innerHTML =
+          '<p style="font-size:14px;line-height:1.75;color:#c0c0d0;">' + verdictText.replace(/</g,'&lt;') + '</p>';
+      }
+
+      // ── Render Crisp Details (Section 02 style) ──────────────────────────
+      const categoryIcons = {
+        'HOOK & TARGET AUDIENCE': '🎯',
+        'SALES & CONVERSION STRATEGY': '🔻',
+        'OFFER & MONETIZATION': '💰',
+        'TRUST & ENGAGEMENT': '⭐',
+        'AI TOOLS & PRACTICAL VALUE': '🤖',
+        'BUSINESS MOAT & COMPETITIVE ADVANTAGE': '🏰',
+        'WEAKNESSES & GROWTH OPPORTUNITIES': '🔍'
+      };
       const grid = document.getElementById('analysisGrid');
       grid.innerHTML = '';
-      (data.sections || []).forEach(sec => {
+      let innerHtml = '';
+      (data.sections || []).forEach((sec, i) => {
         const isWeak = sec.weak === true;
-        const bulletHtml = (sec.bullets || []).map(b =>
-          '<li style="margin-bottom:7px;line-height:1.6;color:' + (isWeak ? '#888' : '#c0c0d0') + ';padding-left:16px;position:relative;">' +
+        const icon = categoryIcons[sec.label] || '📌';
+        const weakBadge = isWeak
+          ? '<span style="font-family:DM Mono,monospace;font-size:9px;background:rgba(255,107,53,0.15);color:var(--accent2);padding:2px 8px;border-radius:999px;margin-left:8px;">⚠ Weak</span>'
+          : '';
+        const liItems = (sec.bullets || []).map(b =>
+          '<li style="margin-bottom:7px;line-height:1.6;color:' + (isWeak ? '#777' : '#c0c0d0') + ';padding-left:16px;position:relative;">' +
           '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>'
         ).join('');
-        const weakBadge = isWeak ? '<span style="font-family:DM Mono,monospace;font-size:9px;background:rgba(255,107,53,0.15);color:var(--accent2);padding:2px 8px;border-radius:999px;margin-left:8px;">⚠ Weak</span>' : '';
-        grid.innerHTML +=
-          '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;">' +
-          '<div style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">' + sec.label + weakBadge + '</div>' +
-          '<ul style="list-style:none;padding:0;margin:0;font-size:13px;">' + bulletHtml + '</ul>' +
+        innerHtml +=
+          '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(255,255,255,0.07);padding-top:20px;margin-top:20px;' : '') + '">' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+          '<span style="font-size:18px">' + icon + '</span>' +
+          '<span style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted)">' + sec.label + '</span>' +
+          weakBadge +
+          '</div>' +
+          '<ul style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
           '</div>';
       });
+      grid.innerHTML = innerHtml;
 
-      // Verdict
-      document.getElementById('analysisRewrite').innerHTML =
-        '<div style="background:rgba(200,255,0,0.04);border:1px solid rgba(200,255,0,0.15);border-radius:10px;padding:14px 18px;font-size:14px;line-height:1.75;color:#d0d0e0;">' +
-        (data.verdict || '').replace(/</g,'&lt;') + '</div>';
-
-      document.getElementById('analysisCard').style.display = 'block';
+      document.getElementById('analysisCard').style.display = 'flex';
       document.getElementById('analysisCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     } catch(err) {
@@ -1449,22 +1492,44 @@ ${bodyHtml}
     }
   }
 
-  function copyAnalysis(btn) {
-    const grid = document.getElementById('analysisGrid');
-    const verdict = document.getElementById('analysisRewrite').textContent.trim();
-    const sections = grid.querySelectorAll('div[style*="border-radius:12px"]');
-    let out = 'REPORT ANALYSIS\n' + '─'.repeat(40) + '\n\n';
-    sections.forEach(sec => {
-      const label = sec.querySelector('div').textContent.trim();
-      const lis = sec.querySelectorAll('li');
+  function copyAnalysisDetails(btn) {
+    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
+    let out = 'CRISP DETAILS\n' + '─'.repeat(40) + '\n\n';
+    labels.forEach((label, i) => {
+      const el = document.getElementById('refined-detail-' + i);
+      if (!el) return;
+      const lis = el.querySelectorAll('li');
       out += label + '\n';
       lis.forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
       out += '\n';
     });
-    out += 'VERDICT\n' + '─'.repeat(40) + '\n' + verdict;
     navigator.clipboard.writeText(out).then(() => {
       btn.textContent = 'Copied ✓';
-      setTimeout(() => btn.textContent = 'Copy Analysis', 2000);
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function copyAnalysisFull(btn) {
+    const summaryEl = document.getElementById('analysisRewrite');
+    const lis = summaryEl.querySelectorAll('li');
+    const summaryText = lis.length
+      ? Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
+      : summaryEl.textContent.trim();
+    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
+    let out = 'CRISP SUMMARY\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
+    out += 'CRISP DETAILS\n' + '─'.repeat(40) + '\n\n';
+    labels.forEach((label, i) => {
+      const el = document.getElementById('refined-detail-' + i);
+      if (!el) return;
+      const detailLis = el.querySelectorAll('li');
+      out += label + '\n';
+      detailLis.forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
+      out += '\n';
+    });
+    navigator.clipboard.writeText(out).then(() => {
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = 'Copy All ↗', 2000);
     });
   }
 
