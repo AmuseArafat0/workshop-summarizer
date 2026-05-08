@@ -717,14 +717,12 @@
       <div class="card-action"><button class="copy-btn" onclick="copySection('content1',this)">Copy</button></div>
     </div>
 
-    <div class="section-card card-2">
-      <div class="section-meta">
-        <span class="section-icon">📄</span>
-        <span class="card-label">Section 02</span>
+    <div id="detailsReport" style="display:none;flex-direction:column;gap:14px;">
+      <div class="results-header" style="margin-bottom:0;">
+        <div class="results-title">Details Report</div>
+        <button class="copy-all-btn" onclick="copyDetails()">Copy Report ↗</button>
       </div>
-      <div class="section-title">Details Report</div>
-      <div class="section-content" id="content2">—</div>
-      <div class="card-action"><button class="copy-btn" onclick="copySection('content2',this)">Copy</button></div>
+      <div id="detailsCards"></div>
     </div>
   </div>
 
@@ -860,21 +858,32 @@
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
     var lines = [
-      'You are a workshop analyst. Read the transcript and fill in the 2 JSON fields.',
+      'You are a competitive workshop intelligence analyst. Read the transcript and fill in the 2 JSON fields.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. Both keys must exist. Values are plain strings.',
-      '4. Use the bullet character \u2022 followed by a space at the start of each bullet point, separated by newline (\\n).',
-      '5. If a field has no relevant info, use: "Not mentioned in this transcript."',
+      '4. Use the bullet character \u2022 followed by a space at the start of each bullet point, separated by \\n.',
+      '5. For category headers use the exact label in ALL CAPS followed by a colon, on its own line.',
+      '6. If a category has nothing relevant, write \u2022 Not mentioned.',
       '',
       'OUTPUT FORMAT:',
-      '{"summary":"A single paragraph summarizing the entire workshop.","details":"\u2022 bullet point 1\\n\u2022 bullet point 2\\n\u2022 bullet point 3"}',
+      '{"summary":"A single paragraph...","details":"BUSINESS MOAT:\\n\u2022 point\\nSALES FUNNEL:\\n\u2022 point"}',
       '',
       'FIELD DEFINITIONS:',
-      'summary = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Write in plain prose, no bullets.',
-      'details = A comprehensive bullet-point report covering ALL of the following categories (include a bold category label on its own line before each group, using ALL CAPS like "WHAT WAS TAUGHT:", "TOOLS USED:", "COURSES & OFFERS:", "PRICES & PLANS:", "KEY HOOK POINTS:"). Under each category list every relevant detail as individual bullet points. Be thorough — include every tool, every price, every hook mentioned. If a category has nothing, write \u2022 Not mentioned.',
+      'summary = A single, well-written paragraph (5-8 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Plain prose, no bullets.',
+      'details = A thorough bullet-point intelligence report organized under these 10 category headers in this exact order:',
+      '  BUSINESS MOAT: — What makes this business defensible? Unique positioning, brand authority, proprietary systems, exclusive access, expertise.',
+      '  SALES FUNNEL: — How do they attract and convert leads? Entry points, lead magnets, free content, webinars, email sequences, calls-to-action.',
+      '  UPSELL COURSE & PRICING: — Every course, program, membership, or offer mentioned. Include exact prices, tiers, payment plans, discounts.',
+      '  ENGAGEMENT STRATEGY: — How do they keep the audience engaged during and after the workshop? Polls, Q&A, challenges, homework, live calls.',
+      '  COMMUNITY STRENGTH: — Any community, group, forum, or network they have built. Size, platform, activity level, exclusivity.',
+      '  TESTIMONIALS & TRUST: — Social proof used. Student results, case studies, screenshots, income claims, endorsements, credentials shown.',
+      '  MARKETING ANGLE: — Core message, promise, or transformation they sell. Pain points targeted, dream outcome framed, unique mechanism claimed.',
+      '  CUSTOMER RETENTION: — How do they keep customers long-term? Continuity programs, re-engagement, alumni groups, lifetime access, renewals.',
+      '  PRACTICAL LEARNING QUALITY: — How actionable and valuable is the actual teaching? Frameworks, templates, tools given, depth of instruction.',
+      '  WEAKNESSES/GAPS YOU CAN EXPLOIT: — What is missing, weak, overpriced, unclear, or poorly delivered? Opportunities a competitor could use.',
       '',
       'TRANSCRIPT:',
       transcript.substring(0, 900000)
@@ -1013,6 +1022,8 @@
 
     clearError();
     document.getElementById('results').classList.remove('active');
+    document.getElementById('detailsReport').style.display = 'none';
+    document.getElementById('detailsCards').innerHTML = '';
     document.getElementById('runBtn').disabled = true;
     startLoader();
 
@@ -1083,7 +1094,57 @@
     }
 
     document.getElementById('content1').textContent = data.summary || '—';
-    document.getElementById('content2').textContent = data.details || '—';
+
+    // Parse details into 10 sub-cards
+    const detailsRaw = data.details || '';
+    const categoryMeta = [
+      { key: 'BUSINESS MOAT',               icon: '🏰', color: 'var(--card-1)', border: 'rgba(124,109,255,0.25)' },
+      { key: 'SALES FUNNEL',                icon: '🔻', color: 'var(--card-2)', border: 'rgba(200,255,0,0.18)'   },
+      { key: 'UPSELL COURSE & PRICING',     icon: '💰', color: 'var(--card-3)', border: 'rgba(255,107,53,0.22)'  },
+      { key: 'ENGAGEMENT STRATEGY',         icon: '⚡', color: 'var(--card-4)', border: 'rgba(124,109,255,0.2)'  },
+      { key: 'COMMUNITY STRENGTH',          icon: '🤝', color: 'var(--card-5)', border: 'rgba(255,107,53,0.18)'  },
+      { key: 'TESTIMONIALS & TRUST',        icon: '⭐', color: 'var(--card-1)', border: 'rgba(124,109,255,0.22)' },
+      { key: 'MARKETING ANGLE',             icon: '🎯', color: 'var(--card-2)', border: 'rgba(200,255,0,0.15)'   },
+      { key: 'CUSTOMER RETENTION',          icon: '🔄', color: 'var(--card-3)', border: 'rgba(255,107,53,0.2)'   },
+      { key: 'PRACTICAL LEARNING QUALITY',  icon: '📚', color: 'var(--card-4)', border: 'rgba(124,109,255,0.18)' },
+      { key: 'WEAKNESSES/GAPS YOU CAN EXPLOIT', icon: '🔍', color: 'var(--card-5)', border: 'rgba(255,107,53,0.25)' },
+    ];
+
+    // Split raw details text by category headers
+    const parsed = {};
+    let currentKey = null;
+    detailsRaw.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      const headerMatch = categoryMeta.find(c => trimmed.toUpperCase().startsWith(c.key + ':') || trimmed.toUpperCase() === c.key + ':');
+      if (headerMatch) {
+        currentKey = headerMatch.key;
+        if (!parsed[currentKey]) parsed[currentKey] = [];
+      } else if (currentKey && trimmed) {
+        parsed[currentKey].push(trimmed);
+      }
+    });
+
+    const container = document.getElementById('detailsCards');
+    container.innerHTML = '';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '12px';
+
+    categoryMeta.forEach((cat, i) => {
+      const bullets = parsed[cat.key] || ['• Not mentioned.'];
+      const card = document.createElement('div');
+      card.className = 'section-card';
+      card.style.cssText = 'background:' + cat.color + ';border:1px solid ' + cat.border + ';animation-delay:' + (i * 0.05) + 's';
+      card.innerHTML =
+        '<div class="section-meta"><span class="section-icon">' + cat.icon + '</span>' +
+        '<span class="card-label">Detail ' + String(i + 1).padStart(2, '0') + '</span></div>' +
+        '<div class="section-title">' + cat.key.replace(/\b\w/g, c => c.toUpperCase()).replace(/\bYou\b/, 'You') + '</div>' +
+        '<div class="section-content" id="detail-' + i + '" style="white-space:pre-wrap">' + bullets.join('\n') + '</div>' +
+        '<div class="card-action"><button class="copy-btn" onclick="copySection(\'detail-' + i + '\',this)">Copy</button></div>';
+      container.appendChild(card);
+    });
+
+    document.getElementById('detailsReport').style.display = 'flex';
 
     document.getElementById('results').classList.add('active');
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1099,15 +1160,32 @@
   }
 
   function copyAll() {
-    const secs = [
-      { title: '1. SUMMARY OF WORKSHOP', id: 'content1' },
-      { title: '2. DETAILS REPORT',      id: 'content2' },
-    ];
-    const full = secs.map(s => s.title + '\n' + '─'.repeat(40) + '\n' + document.getElementById(s.id).textContent).join('\n\n');
+    const summary = document.getElementById('content1').textContent;
+    const detailCards = document.querySelectorAll('[id^="detail-"]');
+    let full = 'SUMMARY OF WORKSHOP\n' + '─'.repeat(40) + '\n' + summary + '\n\n';
+    full += 'DETAILS REPORT\n' + '─'.repeat(40) + '\n';
+    detailCards.forEach(el => {
+      const title = el.previousElementSibling?.textContent || '';
+      full += '\n' + title.toUpperCase() + '\n' + el.textContent + '\n';
+    });
     navigator.clipboard.writeText(full).then(() => {
       const btn = document.querySelector('.copy-all-btn');
       btn.textContent = 'Copied ✓';
       setTimeout(() => btn.textContent = 'Copy All ↗', 2000);
+    });
+  }
+
+  function copyDetails() {
+    const detailCards = document.querySelectorAll('[id^="detail-"]');
+    let full = 'DETAILS REPORT\n' + '─'.repeat(40) + '\n';
+    detailCards.forEach(el => {
+      const title = el.previousElementSibling?.textContent || '';
+      full += '\n' + title.toUpperCase() + '\n' + el.textContent + '\n';
+    });
+    navigator.clipboard.writeText(full).then(() => {
+      const btn = document.querySelector('#detailsReport .copy-all-btn');
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => btn.textContent = 'Copy Report ↗', 2000);
     });
   }
 
@@ -1120,11 +1198,6 @@
     try {
       const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, LevelFormat, BorderStyle } = docx;
 
-      const sections = [
-        { title: '01 — Summary of Workshop', id: 'content1', emoji: '📋' },
-        { title: '02 — Details Report',      id: 'content2', emoji: '📄' },
-      ];
-
       const children = [];
 
       // Title
@@ -1133,7 +1206,6 @@
         spacing: { after: 120 },
       }));
 
-      // Subtitle with date
       const now = new Date();
       const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
       children.push(new Paragraph({
@@ -1141,59 +1213,57 @@
         spacing: { after: 480 },
       }));
 
-      // Divider
       children.push(new Paragraph({
         border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'CCCCCC', space: 1 } },
         spacing: { after: 480 },
         children: [],
       }));
 
-      sections.forEach((sec, idx) => {
-        const rawText = document.getElementById(sec.id).textContent || '—';
+      // Section 1: Summary
+      children.push(new Paragraph({
+        children: [new TextRun({ text: '01 — Summary of Workshop', bold: true, size: 28, font: 'Arial', color: '111111' })],
+        spacing: { before: 0, after: 200 },
+      }));
+      const summaryText = document.getElementById('content1').textContent || '—';
+      children.push(new Paragraph({
+        children: [new TextRun({ text: summaryText, size: 22, font: 'Arial', color: '333333' })],
+        spacing: { after: 80 },
+      }));
 
-        // Section heading
+      // Divider
+      children.push(new Paragraph({
+        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'EEEEEE', space: 1 } },
+        spacing: { before: 360, after: 480 },
+        children: [],
+      }));
+
+      // Section 2: Details Report heading
+      children.push(new Paragraph({
+        children: [new TextRun({ text: '02 — Details Report', bold: true, size: 28, font: 'Arial', color: '111111' })],
+        spacing: { before: 0, after: 320 },
+      }));
+
+      // Each of the 10 detail sub-sections
+      const detailCards = document.querySelectorAll('[id^="detail-"]');
+      detailCards.forEach((el, idx) => {
+        const titleEl = el.previousElementSibling;
+        const titleText = titleEl ? titleEl.textContent : ('Detail ' + (idx + 1));
+        const rawText = el.textContent || '—';
+
         children.push(new Paragraph({
-          children: [new TextRun({ text: sec.title, bold: true, size: 28, font: 'Arial', color: '111111' })],
-          spacing: { before: idx === 0 ? 0 : 480, after: 200 },
+          children: [new TextRun({ text: titleText, bold: true, size: 24, font: 'Arial', color: '222222' })],
+          spacing: { before: idx === 0 ? 0 : 320, after: 120 },
         }));
 
-        const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-
-        if (idx === 0) {
-          // Summary: plain paragraph
+        rawText.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+          const isBullet = line.startsWith('•');
+          const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
           children.push(new Paragraph({
-            children: [new TextRun({ text: rawText, size: 22, font: 'Arial', color: '333333' })],
-            spacing: { after: 80 },
+            numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
+            children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '444444' })],
+            spacing: { after: 60 },
           }));
-        } else {
-          // Details: category headers (ALL CAPS ending with :) and bullet points
-          lines.forEach(line => {
-            const isBullet = line.startsWith('•');
-            const isCategoryHeader = !isBullet && /^[A-Z][A-Z\s&]+:$/.test(line);
-            if (isCategoryHeader) {
-              children.push(new Paragraph({
-                children: [new TextRun({ text: line, bold: true, size: 24, font: 'Arial', color: '111111' })],
-                spacing: { before: 280, after: 100 },
-              }));
-            } else {
-              const lineText = isBullet ? line.replace(/^•\s*/, '') : line;
-              children.push(new Paragraph({
-                numbering: isBullet ? { reference: 'bullets', level: 0 } : undefined,
-                children: [new TextRun({ text: lineText, size: 22, font: 'Arial', color: '333333' })],
-                spacing: { after: 80 },
-              }));
-            }
-          });
-        }
-
-        // Divider between sections (not after last)
-        if (idx < sections.length - 1) {
-          children.push(new Paragraph({
-            border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'EEEEEE', space: 1 } },
-            spacing: { before: 360, after: 0 },
-            children: [],
-          }));
-        }
+        });
       });
 
       // Footer note
