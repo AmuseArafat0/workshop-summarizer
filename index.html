@@ -877,7 +877,7 @@
       '{"summary":"A single paragraph...","details":"HOOK & TARGET AUDIENCE:\\n\u2022 point one\\n\u2022 point two\\nSALES & CONVERSION STRATEGY:\\n\u2022 point one"}',
       '',
       'FIELD DEFINITIONS:',
-      'summary = A single, well-written paragraph (4-6 sentences) covering what was taught, who taught it, key concepts, tools used, and any offers made. Plain prose, no bullets.',
+      'summary = A bullet-point overview using the bullet character \u2022 followed by a space. Write 5-7 bullets covering: who taught it, what was taught, key tools/concepts shown, offers or prices mentioned, and the main takeaway. Each bullet max 30 words, specific, no repetition.',
       'details = Intelligence report with exactly 7 category headers. Under each header write 3-5 bullet points. Each bullet is concise (max 30 words), specific, and unique — never repeat the same fact in another bullet or category. No vague or generic statements.',
       '  HOOK & TARGET AUDIENCE: bullets covering → target audience, core pain point, promised transformation.',
       '  SALES & CONVERSION STRATEGY: bullets covering → emotional triggers used, urgency/scarcity tactics, objection handling, pitch timing.',
@@ -1095,7 +1095,21 @@
       return;
     }
 
-    document.getElementById('content1').textContent = data.summary || '—';
+    // Render summary as bullet list
+    const summaryRaw = data.summary || '—';
+    const summaryBullets = summaryRaw.split('\n')
+      .map(l => l.trim().replace(/^[•\-\*]\s*/, '').trim())
+      .filter(l => l.length > 0);
+    const summaryEl = document.getElementById('content1');
+    if (summaryBullets.length > 1) {
+      summaryEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
+        summaryBullets.map(b =>
+          '<li style="margin-bottom:8px;line-height:1.6;color:#c0c0d0;padding-left:16px;position:relative;">' +
+          '<span style="position:absolute;left:0;color:var(--accent);font-size:10px;top:5px;">▸</span>' + b + '</li>'
+        ).join('') + '</ul>';
+    } else {
+      summaryEl.textContent = summaryRaw;
+    }
 
     const detailsRaw = data.details || '';
     const categoryMeta = [
@@ -1162,7 +1176,12 @@
 
   // ── Copy ───────────────────────────────────────────────────────────────────
   function copySection(id, btn) {
-    navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    const el = document.getElementById(id);
+    const lis = el.querySelectorAll('li');
+    const text = lis.length
+      ? Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
+      : el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
       btn.textContent = 'Copied ✓';
       btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
@@ -1170,7 +1189,11 @@
   }
 
   function copyAll() {
-    const summary = document.getElementById('content1').textContent;
+    const summaryEl2 = document.getElementById('content1');
+    const summaryLis2 = summaryEl2.querySelectorAll('li');
+    const summary = summaryLis2.length
+      ? Array.from(summaryLis2).map(li => '• ' + li.textContent.trim()).join('\n')
+      : summaryEl2.textContent;
     const detailCards = document.querySelectorAll('[id^="detail-"]');
     let full = 'SUMMARY OF WORKSHOP\n' + '─'.repeat(40) + '\n' + summary + '\n\n';
     full += 'DETAILS REPORT\n' + '─'.repeat(40) + '\n';
@@ -1240,9 +1263,17 @@ ${bodyHtml}
   // ── Download Summary ───────────────────────────────────────────────────────
   function downloadSummaryDoc() {
     const btn = document.getElementById('downloadSummaryBtn');
-    const summaryText = (document.getElementById('content1').textContent || '').trim();
-    if (!summaryText || summaryText === '—') { btn.textContent = '⚠ No content'; setTimeout(() => btn.textContent = '⬇ Download Summary', 2000); return; }
-    const body = '<p>' + summaryText.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'</p><p>') + '</p>';
+    const summaryEl = document.getElementById('content1');
+    const summaryLis = summaryEl.querySelectorAll('li');
+    let body = '';
+    if (summaryLis.length) {
+      const liHtml = Array.from(summaryLis).map(li => '<li>' + (li.textContent || '').trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</li>').join('');
+      body = '<ul style="padding-left:20px;line-height:1.8;">' + liHtml + '</ul>';
+    } else {
+      const summaryText = (summaryEl.textContent || '').trim();
+      if (!summaryText || summaryText === '—') { btn.textContent = '⚠ No content'; setTimeout(() => btn.textContent = '⬇ Download Summary (.html)', 2000); return; }
+      body = '<p>' + summaryText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>';
+    }
     triggerDownload(reportHtmlShell('Workshop Summary', body), 'workshop-summary.html', 'text/html');
     btn.textContent = 'Downloaded ✓';
     setTimeout(() => btn.textContent = '⬇ Download Summary', 2500);
