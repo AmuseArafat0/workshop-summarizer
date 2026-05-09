@@ -1126,29 +1126,43 @@
         <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">Copy All ↗</button>
       </div>
 
-      <div id="analysisCharts"></div>
-
+      <!-- Executive Summary -->
       <div class="section-card card-2" style="border-color:rgba(196,122,58,0.22);">
         <div class="card-watermark">智</div>
         <div class="section-meta">
           <span class="section-icon">🌏</span>
-          <span class="card-label">Strategic Intelligence · Executive Verdict</span>
+          <span class="card-label">Strategic Intelligence · Executive Summary</span>
         </div>
-        <div class="section-title">Strategic Overview</div>
+        <div class="section-title">Executive Summary</div>
         <div class="section-content" id="analysisRewrite">—</div>
         <div class="card-action">
           <button class="copy-btn" onclick="copySection('analysisRewrite',this)">Copy</button>
         </div>
       </div>
 
+      <!-- Top Priorities -->
+      <div class="section-card card-2" style="border-color:rgba(122,155,106,0.28);">
+        <div class="card-watermark">先</div>
+        <div class="section-meta">
+          <span class="section-icon">🎯</span>
+          <span class="card-label">Strategic Intelligence · Action Items</span>
+        </div>
+        <div class="section-title">Top Priority Actions</div>
+        <div id="analysisPriorities">—</div>
+        <div class="card-action">
+          <button class="copy-btn" onclick="copySection('analysisPriorities',this)">Copy</button>
+        </div>
+      </div>
+
+      <!-- Deep Dimension Breakdown -->
       <div style="display:flex;flex-direction:column;gap:14px;" id="analysisDetailsWrap">
         <div class="section-card card-2" style="border-color:rgba(196,122,58,0.18);">
           <div class="card-watermark">策</div>
           <div class="section-meta">
             <span class="section-icon">📖</span>
-            <span class="card-label">Strategic Intelligence · Deep Analysis</span>
+            <span class="card-label">Strategic Intelligence · Dimension Breakdown</span>
           </div>
-          <div class="section-title">Global Growth Playbook</div>
+          <div class="section-title">Key Insights by Dimension</div>
           <div id="analysisGrid"></div>
           <div class="card-action">
             <button class="copy-btn" onclick="copyAnalysisDetails(this)">Copy</button>
@@ -1758,40 +1772,54 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
   // ── Analysis (Competitive Growth Report) ──────────────────────────────────
   function buildAnalysisPrompt(reportText) {
     return [
-      'You are a world-class competitive intelligence strategist. Based on the workshop intelligence report below, produce a deep competitive growth analysis.',
+      'You are a senior business strategist preparing a crisp competitive scorecard for an executive manager.',
+      'Based on the workshop intelligence report below, produce a focused, insight-driven scorecard.',
+      'Every sentence must deliver a concrete, specific finding — no filler, no generic advice.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown, no code fences, no preamble.',
       '2. Your entire reply must start with { and end with }.',
-      '3. All string values must be plain text (no HTML).',
+      '3. All string values must be plain text (no HTML, no bullet characters inside strings).',
+      '4. Be specific: use names, prices, tactics, and numbers found in the report. Never write vague statements.',
       '',
-      'OUTPUT FORMAT (fill every field with real data):',
+      'OUTPUT FORMAT:',
       '{',
-      '  "threatScore": <integer 0-100>,',
-      '  "maturityScore": <integer 0-100>,',
-      '  "concentrationScore": <integer 0-100>,',
-      '  "verdict": "<3-5 sentence strategic paragraph or bullet points>",',
+      '  "executiveSummary": "<2-3 sentences. What is the single most important competitive reality? What is the #1 risk and #1 opportunity?>",',
+      '  "priorityActions": [',
+      '    "<Specific action to take — what, why, expected outcome. Max 20 words.>",',
+      '    "<Second priority action>",',
+      '    "<Third priority action>"',
+      '  ],',
       '  "sections": [',
-      '    { "label": "HOOK & TARGET AUDIENCE", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": ["bullet1","bullet2","bullet3"] },',
-      '    { "label": "SALES & CONVERSION STRATEGY", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": [...] },',
-      '    { "label": "OFFER & MONETIZATION", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": [...] },',
-      '    { "label": "TRUST & ENGAGEMENT", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": [...] },',
-      '    { "label": "AI TOOLS & PRACTICAL VALUE", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": [...] },',
-      '    { "label": "BUSINESS MOAT & COMPETITIVE ADVANTAGE", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": [...] },',
-      '    { "label": "WEAKNESSES & GROWTH OPPORTUNITIES", "competitorStrength": <0-100>, "yourOpportunity": <0-100>, "weak": false, "bullets": [...] }',
+      '    {',
+      '      "label": "HOOK & TARGET AUDIENCE",',
+      '      "score": <integer 1 to 5 — how strong is the competitor in this area? 1=very weak, 5=excellent>,',
+      '      "scoreLabel": "<one word rating: e.g. Weak / Average / Strong / Excellent>",',
+      '      "verdict": "<One crisp sentence: the key competitive reality in this dimension>",',
+      '      "bullets": [',
+      '        "<Specific insight with a concrete detail from the report>",',
+      '        "<Another specific insight>",',
+      '        "<Actionable gap or opportunity you can exploit>"',
+      '      ]',
+      '    },',
+      '    { "label": "SALES & CONVERSION STRATEGY", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "OFFER & MONETIZATION", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "TRUST & ENGAGEMENT", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "AI TOOLS & PRACTICAL VALUE", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "BUSINESS MOAT & COMPETITIVE ADVANTAGE", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "WEAKNESSES & GROWTH OPPORTUNITIES", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] }',
       '  ]',
       '}',
       '',
       'FIELD DEFINITIONS:',
-      'threatScore = 0-100 integer: how strong/dangerous is this competitor overall?',
-      'maturityScore = 0-100: how saturated/mature is the market niche they operate in?',
-      'concentrationScore = 0-100: how fragile/risky is their revenue model (high = single point of failure)?',
-      'verdict = Strategic overview: 3-5 bullet points or sentences summarizing the key strategic insight, biggest threat, and top opportunity.',
-      'sections = Array of exactly 7 objects, one per dimension:',
-      '  competitorStrength: 0-100 integer score of how strong the competitor is in this dimension',
-      '  yourOpportunity: 0-100 integer score of your opportunity to outperform them in this dimension',
-      '  weak: boolean — set true only if there is insufficient data to score this dimension reliably',
-      '  bullets: array of 3-5 unique, specific, actionable insight strings (no bullet characters)',
+      'executiveSummary: 2-3 sentence bottom-line for a manager who has 30 seconds. Specific, direct, no fluff.',
+      'priorityActions: exactly 3 strings — the three most important moves. Each is one crisp sentence with a clear action and expected result.',
+      'sections: exactly 7 objects, one per dimension.',
+      '  score: integer 1–5. Rate how strong the competitor is in this area based on the report evidence.',
+      '    1 = Very Weak, 2 = Below Average, 3 = Average, 4 = Strong, 5 = Excellent.',
+      '  scoreLabel: one word capturing the rating (e.g. "Weak", "Average", "Strong", "Excellent").',
+      '  verdict: one sharp sentence summarizing the key competitive reality for that dimension.',
+      '  bullets: exactly 3 strings. Each must include a concrete detail (name, price, tactic, stat) from the report. Third bullet is always an actionable opportunity for you.',
       '',
       'WORKSHOP INTELLIGENCE REPORT:',
       reportText.substring(0, 60000)
@@ -1843,169 +1871,27 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
       );
       const data = JSON.parse(clean);
 
-      const threatScore        = Math.min(100, Math.max(0, parseInt(data.threatScore) || 50));
-      const maturityScore      = Math.min(100, Math.max(0, parseInt(data.maturityScore) || 50));
-      const concentrationScore = Math.min(100, Math.max(0, parseInt(data.concentrationScore) || 50));
-      const sections           = Array.isArray(data.sections) ? data.sections : [];
+      const sections = Array.isArray(data.sections) ? data.sections : [];
 
-      // ── Build Charts ──────────────────────────────────────────────────
-      const chartsWrap = document.getElementById('analysisCharts');
-
-      // Gauge builder
-      function buildGauge(score, label, type, desc) {
-        const angle = (score / 100) * 180;
-        const rad = (angle - 90) * Math.PI / 180;
-        const cx = 80, cy = 80, r = 55;
-        const nx = cx + r * Math.cos(rad);
-        const ny = cy + r * Math.sin(rad);
-        const colors = {
-          threat: score > 70 ? '#e07070' : score > 40 ? '#c47a3a' : '#7a9b6a',
-          maturity: score > 70 ? '#c47a3a' : score > 40 ? '#e8a05a' : '#7a9b6a',
-          concentration: score > 70 ? '#e07070' : score > 40 ? '#c47a3a' : '#7a9b6a'
-        };
-        const col = colors[type] || '#e8a0b0';
-        return `<svg viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg" style="width:150px;">
-          <defs>
-            <linearGradient id="g-${type}" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#7a9b6a" stop-opacity="0.7"/>
-              <stop offset="50%" stop-color="#c47a3a" stop-opacity="0.8"/>
-              <stop offset="100%" stop-color="#e07070" stop-opacity="0.9"/>
-            </linearGradient>
-          </defs>
-          <path d="M 25 80 A 55 55 0 0 1 135 80" fill="none" stroke="rgba(180,130,100,0.15)" stroke-width="10" stroke-linecap="round"/>
-          <path d="M 25 80 A 55 55 0 0 1 135 80" fill="none" stroke="url(#g-${type})" stroke-width="10" stroke-linecap="round"
-            stroke-dasharray="${(score/100)*172.8} 172.8"/>
-          <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="${cx}" cy="${cy}" r="4" fill="${col}"/>
-          <circle cx="${cx}" cy="${cy}" r="2" fill="rgba(255,255,255,0.9)"/>
-          <text x="${cx}" y="100" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="22" font-weight="700" fill="${col}">${score}</text>
-          <text x="${cx}" y="22" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="7.5" fill="rgba(58,40,24,0.6)" letter-spacing="0.1em">${label}</text>
-          <text x="${cx}" y="32" text-anchor="middle" font-family="sans-serif" font-size="6.5" fill="rgba(154,120,96,0.7)">${desc}</text>
-        </svg>`;
-      }
-
-      // Radar chart
-      const dims = sections.length > 0 ? sections : [];
-      const radarW = 200, radarH = 200;
-      const rcx = radarW/2, rcy = radarH/2, radarR = 72;
-      function polarPoint(i, n, val, r) {
-        const angle = (i/n) * Math.PI * 2 - Math.PI / 2;
-        return [rcx + (val/100) * r * Math.cos(angle), rcy + (val/100) * r * Math.sin(angle)];
-      }
-      const n = dims.length || 1;
-
-      let radarGridLines = '';
-      [25,50,75,100].forEach(pct => {
-        const pts = Array.from({length: n}, (_,i) => polarPoint(i, n, pct, radarR));
-        radarGridLines += `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="rgba(180,130,100,0.1)" stroke-width="1"/>`;
-      });
-
-      let radarAxes = '';
-      for(let i=0;i<n;i++){
-        const [px,py] = polarPoint(i, n, 100, radarR);
-        radarAxes += `<line x1="${rcx}" y1="${rcy}" x2="${px.toFixed(1)}" y2="${py.toFixed(1)}" stroke="rgba(180,130,100,0.12)" stroke-width="1"/>`;
-      }
-
-      const strPoints = dims.map((_,i)=>polarPoint(i, n, dims[i].competitorStrength||0, radarR).join(',')).join(' ');
-      const oppPoints = dims.map((_,i)=>polarPoint(i, n, dims[i].yourOpportunity||0, radarR).join(',')).join(' ');
-
-      const radarSVG = `<svg viewBox="0 0 ${radarW} ${radarH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:200px;">
-        ${radarGridLines}${radarAxes}
-        ${n>0?`<polygon points="${strPoints}" fill="rgba(224,112,112,0.15)" stroke="rgba(224,112,112,0.6)" stroke-width="1.5"/>
-        <polygon points="${oppPoints}" fill="rgba(122,155,106,0.15)" stroke="rgba(122,155,106,0.6)" stroke-width="1.5"/>`:''}
-        <circle cx="${rcx}" cy="${rcy}" r="3" fill="rgba(58,40,24,0.3)"/>
-        <text x="${rcx}" y="${radarH-4}" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="7" fill="rgba(154,120,96,0.7)" letter-spacing="0.12em">RADAR ANALYSIS</text>
-      </svg>`;
-
-      // Bar chart
-      const barW=420, barH=200, barPadL=28, barPadT=24, barPadB=36;
-      const barSlotW = (barW - barPadL) / Math.max(n, 1);
-      const bW = Math.min(barSlotW * 0.35, 20);
-      let bars = '';
-      dims.forEach((sec, i) => {
-        const str = sec.competitorStrength || 0;
-        const opp = sec.yourOpportunity || 0;
-        const x = barPadL + i * barSlotW + barSlotW * 0.15;
-        const barAvailH = barH - barPadT - barPadB;
-        const strH = (str/100) * barAvailH;
-        const oppH = (opp/100) * barAvailH;
-        bars += `<rect x="${x.toFixed(1)}" y="${(barH-barPadB-strH).toFixed(1)}" width="${bW}" height="${strH.toFixed(1)}" fill="rgba(224,112,112,0.65)" rx="3"/>`;
-        bars += `<rect x="${(x+bW+3).toFixed(1)}" y="${(barH-barPadB-oppH).toFixed(1)}" width="${bW}" height="${oppH.toFixed(1)}" fill="rgba(122,155,106,0.65)" rx="3"/>`;
-        const shortLabel = (sec.label||'').split(' ').slice(0,2).join(' ');
-        bars += `<text x="${(x+bW).toFixed(1)}" y="${barH-barPadB+12}" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="6" fill="rgba(58,40,24,0.45)">${shortLabel}</text>`;
-      });
-
-      let barGrid = '';
-      [25,50,75,100].forEach(pct => {
-        const y = barPadT + (barH-barPadT-barPadB) * (1 - pct/100);
-        barGrid += `<line x1="${barPadL}" y1="${y.toFixed(1)}" x2="${barW}" y2="${y.toFixed(1)}" stroke="rgba(180,130,100,0.08)" stroke-width="1"/>`;
-        barGrid += `<text x="${(barPadL-2)}" y="${(y+3).toFixed(1)}" text-anchor="end" font-family="sans-serif" font-size="7" fill="rgba(154,120,96,0.4)">${pct}</text>`;
-      });
-
-      const barSVG = `<svg viewBox="0 0 ${barW} ${barH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
-        ${barGrid}${bars}
-        <line x1="${barPadL}" y1="${barPadT}" x2="${barPadL}" y2="${barH-barPadB}" stroke="rgba(180,130,100,0.15)" stroke-width="1"/>
-        <line x1="${barPadL}" y1="${barH-barPadB}" x2="${barW}" y2="${barH-barPadB}" stroke="rgba(180,130,100,0.15)" stroke-width="1"/>
-        <g transform="translate(${barW/2-120},${barH-10})">
-          <rect width="10" height="7" fill="rgba(224,112,112,0.65)" rx="2"/>
-          <text x="13" y="6.5" font-family="'Noto Serif JP',serif" font-size="7.5" fill="rgba(224,112,112,0.85)">Competitor Strength</text>
-          <rect x="115" width="10" height="7" fill="rgba(122,155,106,0.65)" rx="2"/>
-          <text x="128" y="6.5" font-family="'Noto Serif JP',serif" font-size="7.5" fill="rgba(122,155,106,0.85)">Your Opportunity</text>
-        </g>
-        <text x="${barW/2}" y="12" text-anchor="middle" font-family="'Noto Serif JP',serif" font-size="9" font-weight="700" fill="rgba(58,40,24,0.35)" letter-spacing="0.14em">STRENGTH vs OPPORTUNITY</text>
-      </svg>`;
-
-      chartsWrap.innerHTML = `
-        <div style="background:rgba(255,255,255,0.65);border:1px solid rgba(180,130,100,0.2);border-radius:20px;padding:26px 28px;margin-bottom:4px;backdrop-filter:blur(10px);box-shadow:0 4px 24px rgba(100,50,20,0.06);">
-          <div style="font-family:'Noto Serif JP',serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;">✿ Quantitative Intelligence Dashboard</div>
-
-          <div style="display:flex;justify-content:center;gap:20px;margin-bottom:28px;flex-wrap:wrap;">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${buildGauge(threatScore,'THREAT LEVEL','threat','How dangerous are they?')}</div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${buildGauge(maturityScore,'MARKET MATURITY','maturity','How crowded is their niche?')}</div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">${buildGauge(concentrationScore,'REVENUE RISK','concentration','How fragile is their model?')}</div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:20px;align-items:center;">
-            <div style="display:flex;justify-content:center;">${radarSVG}</div>
-            <div>${barSVG}</div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;">
-            ${(() => {
-              const topOpp = [...sections].sort((a,b)=>(b.yourOpportunity||0)-(a.yourOpportunity||0))[0];
-              const topStr = [...sections].sort((a,b)=>(b.competitorStrength||0)-(a.competitorStrength||0))[0];
-              const avgGap = sections.length ? Math.round(sections.reduce((sum,s)=>sum+(s.yourOpportunity||0)-(s.competitorStrength||0),0)/sections.length) : 0;
-              return [
-                {icon:'🎯', label:'Biggest Opportunity', value: topOpp ? topOpp.label.split(' ').slice(0,2).join(' ') : '—', sub: topOpp ? topOpp.yourOpportunity+'/100 opp score' : ''},
-                {icon:'⚠', label:'Strongest Threat Area', value: topStr ? topStr.label.split(' ').slice(0,2).join(' ') : '—', sub: topStr ? topStr.competitorStrength+'/100 strength' : ''},
-                {icon:'🌸', label:'Avg Gap (Opp − Threat)', value: (avgGap >= 0 ? '+' : '') + avgGap, sub: avgGap > 0 ? 'Advantage is yours' : 'Competitor has the edge'}
-              ].map(item =>
-                `<div style="background:rgba(255,255,255,0.55);border:1px solid rgba(180,130,100,0.15);border-radius:14px;padding:14px 16px;">
-                  <div style="font-size:18px;margin-bottom:6px;">${item.icon}</div>
-                  <div style="font-family:'Noto Serif JP',serif;font-size:9px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;">${item.label}</div>
-                  <div style="font-family:'Noto Serif JP',serif;font-size:15px;font-weight:700;color:var(--text);">${item.value}</div>
-                  <div style="font-size:9px;color:var(--amber);margin-top:3px;letter-spacing:0.05em;">${item.sub}</div>
-                </div>`
-              ).join('');
-            })()}
-          </div>
-        </div>`;
-
-      // Strategic verdict
-      const verdictText = (data.verdict || '').trim();
-      const verdictPoints = verdictText.split('\n').map(l => l.trim().replace(/^[•\-\*\d\.]+\s*/,'')).filter(l => l.length > 4);
+      // ── Executive Summary ─────────────────────────────────────────────
+      const summaryText = (data.executiveSummary || '').trim();
       const rewriteEl = document.getElementById('analysisRewrite');
-      if (verdictPoints.length > 1) {
-        rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
-          verdictPoints.map(b =>
-            '<li style="margin-bottom:10px;line-height:1.78;color:var(--text2);padding-left:20px;position:relative;">' +
-            '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' + b.replace(/</g,'&lt;') + '</li>'
-          ).join('') + '</ul>';
-      } else {
-        rewriteEl.innerHTML = '<p style="font-size:14px;line-height:1.85;color:var(--text2);">' + verdictText.replace(/</g,'&lt;') + '</p>';
+      rewriteEl.innerHTML = '<p style="font-size:14.5px;line-height:1.9;color:var(--text2);">' + summaryText.replace(/</g,'&lt;') + '</p>';
+
+      // ── Top Priority Actions ──────────────────────────────────────────
+      const priorities = Array.isArray(data.priorityActions) ? data.priorityActions : [];
+      const prioritiesEl = document.getElementById('analysisPriorities');
+      if (priorities.length) {
+        prioritiesEl.innerHTML = '<ol style="list-style:none;padding:0;margin:0;">' +
+          priorities.map((p, i) =>
+            '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
+            '<span style="flex-shrink:0;width:24px;height:24px;background:var(--leaf);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:11px;font-weight:700;margin-top:1px;">' + (i+1) + '</span>' +
+            '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + p.replace(/</g,'&lt;') + '</span>' +
+            '</li>'
+          ).join('') + '</ol>';
       }
 
-      // Growth playbook
+      // ── Dimension Scorecard ───────────────────────────────────────────
       const categoryIcons = {
         'HOOK & TARGET AUDIENCE': '🎯',
         'SALES & CONVERSION STRATEGY': '🍂',
@@ -2015,29 +1901,55 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
         'BUSINESS MOAT & COMPETITIVE ADVANTAGE': '🏯',
         'WEAKNESSES & GROWTH OPPORTUNITIES': '🌱'
       };
+      const scoreLabelColor = { 1:'#c06060', 2:'#c47a3a', 3:'#b09040', 4:'#6a9a5a', 5:'#4a8a4a' };
+      const scoreBg = { 1:'rgba(200,80,80,0.08)', 2:'rgba(196,122,58,0.1)', 3:'rgba(180,160,60,0.09)', 4:'rgba(122,155,106,0.1)', 5:'rgba(80,140,80,0.1)' };
+      const scoreBorder = { 1:'rgba(200,80,80,0.2)', 2:'rgba(196,122,58,0.22)', 3:'rgba(180,160,60,0.2)', 4:'rgba(122,155,106,0.22)', 5:'rgba(80,140,80,0.22)' };
+
+      function renderStars(score) {
+        let html = '';
+        for (let s = 1; s <= 5; s++) {
+          html += '<span style="font-size:15px;color:' + (s <= score ? '#c47a3a' : 'rgba(180,130,100,0.2)') + ';line-height:1;">★</span>';
+        }
+        return html;
+      }
+
       const grid = document.getElementById('analysisGrid');
-      grid.innerHTML = '';
       let innerHtml = '';
-      (data.sections || []).forEach((sec, i) => {
-        const isWeak = sec.weak === true;
+      sections.forEach((sec, i) => {
         const icon = categoryIcons[sec.label] || '✿';
-        const str = sec.competitorStrength || 0;
-        const opp = sec.yourOpportunity || 0;
-        const weakBadge = isWeak
-          ? '<span style="font-size:9px;background:rgba(200,80,80,0.1);color:#b05050;padding:2px 8px;border-radius:999px;margin-left:8px;border:1px solid rgba(200,80,80,0.2);">⚠ Insufficient Data</span>'
-          : '';
-        const scoreBadges = `<span style="font-size:9px;background:rgba(224,112,112,0.12);color:#c06060;padding:2px 8px;border-radius:999px;margin-left:8px;border:1px solid rgba(224,112,112,0.2);">⚔ ${str}</span><span style="font-size:9px;background:rgba(122,155,106,0.12);color:var(--leaf);padding:2px 8px;border-radius:999px;margin-left:6px;border:1px solid rgba(122,155,106,0.2);">🌱 ${opp}</span>`;
+        const score = Math.min(5, Math.max(1, parseInt(sec.score) || 3));
+        const label = (sec.scoreLabel || '').replace(/</g,'&lt;');
+        const verdict = (sec.verdict || '').replace(/</g,'&lt;');
+        const col = scoreLabelColor[score] || '#c47a3a';
+        const bg = scoreBg[score] || 'rgba(196,122,58,0.08)';
+        const border = scoreBorder[score] || 'rgba(196,122,58,0.2)';
         const liItems = (sec.bullets || []).map(b =>
-          '<li style="margin-bottom:10px;line-height:1.75;color:' + (isWeak ? 'var(--muted)' : 'var(--text2)') + ';padding-left:20px;position:relative;">' +
-          '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' + b.replace(/</g,'&lt;') + '</li>'
+          '<li style="margin-bottom:9px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
+          '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' +
+          b.replace(/</g,'&lt;') + '</li>'
         ).join('');
+
         innerHtml +=
-          '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:24px;margin-top:24px;' : '') + '">' +
-          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">' +
-          '<span style="font-size:20px">' + icon + '</span>' +
-          '<span style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--amber);font-weight:600;">' + sec.label + '</span>' +
-          weakBadge + scoreBadges +
+          '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:22px;margin-top:22px;' : '') + '">' +
+
+          // Header row: icon + label + score badge
+          '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<span style="font-size:18px;">' + icon + '</span>' +
+              '<span style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--amber);font-weight:600;">' + sec.label + '</span>' +
+            '</div>' +
+            // Score pill
+            '<div style="display:flex;align-items:center;gap:8px;background:' + bg + ';border:1px solid ' + border + ';border-radius:999px;padding:5px 12px 5px 10px;">' +
+              renderStars(score) +
+              '<span style="font-size:11px;font-weight:700;color:' + col + ';font-family:\'Noto Serif JP\',serif;margin-left:4px;">' + score + '/5</span>' +
+              '<span style="font-size:10px;color:' + col + ';opacity:0.8;margin-left:2px;">· ' + label + '</span>' +
+            '</div>' +
           '</div>' +
+
+          // Verdict italic
+          (verdict ? '<p style="font-size:13px;font-style:italic;color:var(--text);margin:0 0 12px 0;padding:8px 12px;border-left:2.5px solid var(--sakura2);line-height:1.65;background:rgba(232,160,176,0.05);border-radius:0 8px 8px 0;">' + verdict + '</p>' : '') +
+
+          // Bullets
           '<ul style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
           '</div>';
       });
@@ -2075,18 +1987,29 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
   function copyAnalysisFull(btn) {
     const summaryEl = document.getElementById('analysisRewrite');
-    const lis = summaryEl.querySelectorAll('li');
-    const summaryText = lis.length
-      ? Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
-      : summaryEl.textContent.trim();
+    const summaryP = summaryEl.querySelector('p');
+    const summaryText = summaryP ? summaryP.textContent.trim() : summaryEl.textContent.trim();
+
+    const prioritiesEl = document.getElementById('analysisPriorities');
+    const priorityLis = prioritiesEl ? prioritiesEl.querySelectorAll('li') : [];
+    let priorityText = '';
+    priorityLis.forEach((li, i) => {
+      const spanText = li.querySelector('span:last-child');
+      priorityText += (i+1) + '. ' + (spanText ? spanText.textContent.trim() : li.textContent.trim()) + '\n';
+    });
+
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let out = 'STRATEGIC OVERVIEW\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
-    out += 'GROWTH PLAYBOOK\n' + '─'.repeat(40) + '\n\n';
+    let out = 'COMPETITIVE GROWTH REPORT\n' + '═'.repeat(50) + '\n\n';
+    out += 'EXECUTIVE SUMMARY\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
+    if (priorityText) out += 'TOP PRIORITY ACTIONS\n' + '─'.repeat(40) + '\n' + priorityText + '\n';
+    out += 'KEY INSIGHTS BY DIMENSION\n' + '─'.repeat(40) + '\n\n';
     labels.forEach((label, i) => {
       const el = document.getElementById('refined-detail-' + i);
       if (!el) return;
+      const scoreEl = el.querySelector('[data-score]');
+      const scoreTxt = scoreEl ? ' [' + scoreEl.dataset.score + '/5]' : '';
       const detailLis = el.querySelectorAll('li');
-      out += label + '\n';
+      out += label + scoreTxt + '\n';
       detailLis.forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
       out += '\n';
     });
