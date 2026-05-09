@@ -2101,7 +2101,7 @@ window.addEventListener('load', () => {
       '',
       'OUTPUT FORMAT:',
       '{',
-      '  "executiveSummary": "<Write a thorough, meaningful overview of the report. Cover: what this workshop was fundamentally about, the core ideas and frameworks presented, who it is for and what transformation it promises, and the most important takeaways. Write as many sentences as needed — do not cut short.>",',
+      '  "executiveSummary": ["<Key point 1 about what this workshop was fundamentally about — one clear sentence>", "<Key point 2 covering core ideas and frameworks presented>", "<Key point 3 about who it is for and the transformation it promises>", "<Key point 4 about a major tactic, tool, or offer detail>", "<Key point 5 about an important takeaway, strength, or weakness>"],',
       '  "priorityActions": [',
       '    "<Key learning or action to apply — what it is, why it matters, expected outcome. Max 25 words.>",',
       '    "<Second key learning or action>",',
@@ -2129,7 +2129,7 @@ window.addEventListener('load', () => {
       '}',
       '',
       'FIELD DEFINITIONS:',
-      'executiveSummary: A rich, complete narrative overview of the report. Write enough sentences to fully convey the essence of what was covered — do not artificially limit yourself. The reader depends on this to understand the whole report at a deeper level.',
+      'executiveSummary: An array of 5 to 8 strings. Each string is one clear, specific bullet point covering a distinct aspect of the workshop — what it was about, core frameworks, target audience, key tools/offers, tactics, and major strengths or weaknesses. Every bullet must be grounded in specific details from the report (names, prices, tools, numbers). No filler.',
       'priorityActions: exactly 3 strings — the three most important learnings or actions the reader should apply. Each is one clear sentence grounded in the report content.',
       'sections: exactly 7 objects, one per dimension.',
       '  score: integer 1–5. Rate how thoroughly and meaningfully this dimension is covered in the report.',
@@ -2220,9 +2220,23 @@ window.addEventListener('load', () => {
       const sections = Array.isArray(data.sections) ? data.sections : [];
 
       // ── Executive Summary ─────────────────────────────────────────────
-      const summaryText = (data.executiveSummary || '').trim();
       const rewriteEl = document.getElementById('analysisRewrite');
-      rewriteEl.innerHTML = '<p style="font-size:14.5px;line-height:1.9;color:var(--text2);">' + summaryText.replace(/</g,'&lt;') + '</p>';
+      const rawSummary = data.executiveSummary;
+      let summaryBullets = [];
+      if (Array.isArray(rawSummary) && rawSummary.length) {
+        summaryBullets = rawSummary.map(s => String(s).trim()).filter(Boolean);
+      } else if (typeof rawSummary === 'string' && rawSummary.trim()) {
+        // Fallback: split paragraph into sentences for bullet display
+        summaryBullets = rawSummary.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+      }
+      rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
+        summaryBullets.map(b =>
+          '<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:14.5px;line-height:1.8;color:var(--text2);">' +
+          '<span style="flex-shrink:0;color:var(--sakura);font-size:12px;margin-top:6px;">✿</span>' +
+          '<span>' + b.replace(/</g,'&lt;') + '</span>' +
+          '</li>'
+        ).join('') +
+        '</ul>';
 
       // ── Top Takeaways & Actions ──────────────────────────────────────────
       const priorities = Array.isArray(data.priorityActions) ? data.priorityActions : [];
