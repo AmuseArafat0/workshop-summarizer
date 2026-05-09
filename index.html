@@ -1095,9 +1095,9 @@
     <!-- ANALYSE BUTTON -->
     <div id="analyseWrap" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:10px 0;">
       <button class="analyse-btn" id="analyseBtn" onclick="runAnalysis()">
-        <span>🔍</span> Generate Deep Insight Report
+        <span>🍂</span> Generate Competitive Growth Report
       </button>
-      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:0.05em;">Re-reads the full transcript · Surfaces specific details, key moments & deeper findings</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:0.05em;">Deep strategic analysis · Global market gaps · Actionable growth playbook</div>
     </div>
 
     <!-- Analysis Loader -->
@@ -1122,47 +1122,47 @@
     <div id="analysisCard" style="display:none;flex-direction:column;gap:20px;">
 
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title analysis-accent-title">🔍 Deep Insight Report</div>
+        <div class="results-title analysis-accent-title">🍂 Global Competitive Growth Report</div>
         <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">Copy All ↗</button>
       </div>
 
-      <!-- Manager Summary -->
+      <!-- Executive Summary -->
       <div class="section-card card-2" style="border-color:rgba(196,122,58,0.22);">
         <div class="card-watermark">智</div>
         <div class="section-meta">
-          <span class="section-icon">📋</span>
-          <span class="card-label">Deep Insight · Manager Summary</span>
+          <span class="section-icon">🌏</span>
+          <span class="card-label">Strategic Intelligence · Executive Summary</span>
         </div>
-        <div class="section-title">What Your Manager Needs to Know</div>
+        <div class="section-title">Executive Summary</div>
         <div class="section-content" id="analysisRewrite">—</div>
         <div class="card-action">
           <button class="copy-btn" onclick="copySection('analysisRewrite',this)">Copy</button>
         </div>
       </div>
 
-      <!-- Key Moments -->
+      <!-- Top Priorities -->
       <div class="section-card card-2" style="border-color:rgba(122,155,106,0.28);">
-        <div class="card-watermark">瞬</div>
+        <div class="card-watermark">先</div>
         <div class="section-meta">
-          <span class="section-icon">⚡</span>
-          <span class="card-label">Deep Insight · High-Impact Moments</span>
+          <span class="section-icon">🎯</span>
+          <span class="card-label">Strategic Intelligence · Action Items</span>
         </div>
-        <div class="section-title">Key Moments From the Workshop</div>
+        <div class="section-title">Top Priority Actions</div>
         <div id="analysisPriorities">—</div>
         <div class="card-action">
           <button class="copy-btn" onclick="copySection('analysisPriorities',this)">Copy</button>
         </div>
       </div>
 
-      <!-- Area Breakdown -->
+      <!-- Deep Dimension Breakdown -->
       <div style="display:flex;flex-direction:column;gap:14px;" id="analysisDetailsWrap">
         <div class="section-card card-2" style="border-color:rgba(196,122,58,0.18);">
-          <div class="card-watermark">詳</div>
+          <div class="card-watermark">策</div>
           <div class="section-meta">
-            <span class="section-icon">🔍</span>
-            <span class="card-label">Deep Insight · Area-by-Area Findings</span>
+            <span class="section-icon">📖</span>
+            <span class="card-label">Strategic Intelligence · Dimension Breakdown</span>
           </div>
-          <div class="section-title">Detailed Findings by Area</div>
+          <div class="section-title">Key Insights by Dimension</div>
           <div id="analysisGrid"></div>
           <div class="card-action">
             <button class="copy-btn" onclick="copyAnalysisDetails(this)">Copy</button>
@@ -1288,7 +1288,6 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
   // ── State ──────────────────────────────────────────────────────────────────
   let uploadedFiles = [];
   let currentProvider = 'gemini';
-  let rawTranscriptCache = ''; // stores parsed transcript text after Report 1 runs
 
   // ── Provider Switcher ──────────────────────────────────────────────────────
   function selectProvider(p) {
@@ -1546,8 +1545,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
         const raw = await readFile(file);
         transcripts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
       }
-      rawTranscriptCache = transcripts.join('\n\n'); // cache for Report 2
-      const prompt = buildPrompt(rawTranscriptCache);
+      const prompt = buildPrompt(transcripts.join('\n\n'));
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
@@ -1771,69 +1769,60 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     triggerDownload(html, 'workshop-details.html', 'text/html');
   }
 
-  // ── Deep Insight Report ────────────────────────────────────────────────────
-  function buildAnalysisPrompt(rawTranscript, report1Text) {
+  // ── Analysis (Competitive Growth Report) ──────────────────────────────────
+  function buildAnalysisPrompt(reportText) {
     return [
-      'You are a senior business analyst creating a Deep Insight Report from a workshop transcript.',
-      'You have TWO inputs:',
-      '  1. ORIGINAL TRANSCRIPT — the full source of truth. This is what you extract from.',
-      '  2. REPORT 1 — a first-pass summary. Use it only to understand what was already captured so you do not repeat it.',
-      '',
-      'Your job: go back to the original transcript and extract the most meaningful, specific, and useful details a manager needs.',
-      'Focus on WHAT was actually taught, WHAT was shown, WHAT was said — not opinions about it.',
-      'Pull exact quotes, exact prices, exact tool names, exact step-by-step processes, exact objections raised, exact audience reactions.',
-      'Every bullet must contain a concrete specific detail. Never write vague or generic statements.',
+      'You are a senior business strategist preparing a crisp competitive scorecard for an executive manager.',
+      'Based on the workshop intelligence report below, produce a focused, insight-driven scorecard.',
+      'Every sentence must deliver a concrete, specific finding — no filler, no generic advice.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown, no code fences, no preamble.',
       '2. Your entire reply must start with { and end with }.',
-      '3. All string values must be plain text — no HTML, no bullet characters inside strings.',
-      '4. Do NOT repeat anything already said clearly in Report 1. Add new depth or new details.',
-      '5. Every bullet must include at least one specific fact: a name, number, price, quote, tool, step, or example.',
+      '3. All string values must be plain text (no HTML, no bullet characters inside strings).',
+      '4. Be specific: use names, prices, tactics, and numbers found in the report. Never write vague statements.',
       '',
       'OUTPUT FORMAT:',
       '{',
-      '  "managerSummary": "<2-3 sentences. The most important things about this workshop a manager must know. Include specific names, prices, or facts.>",',
-      '  "keyMoments": [',
-      '    "<A specific high-impact moment from the workshop — what happened, what was said, why it mattered>",',
-      '    "<Second key moment>",',
-      '    "<Third key moment>"',
+      '  "executiveSummary": "<2-3 sentences. What is the single most important competitive reality? What is the #1 risk and #1 opportunity?>",',
+      '  "priorityActions": [',
+      '    "<Specific action to take — what, why, expected outcome. Max 20 words.>",',
+      '    "<Second priority action>",',
+      '    "<Third priority action>"',
       '  ],',
       '  "sections": [',
       '    {',
       '      "label": "HOOK & TARGET AUDIENCE",',
-      '      "score": <integer 1-5: how effectively was this handled in the workshop? 1=Very Weak, 5=Excellent>,',
-      '      "scoreLabel": "<one word: Weak / Average / Strong / Excellent>",',
-      '      "insight": "<One sentence — the most specific and meaningful finding for this area from the transcript>",',
-      '      "details": [',
-      '        "<Specific detail with exact fact — e.g. exact audience segment named, exact pain point stated, exact transformation promised>",',
-      '        "<Another specific detail>",',
-      '        "<A detail Report 1 missed or was too vague about>"',
+      '      "score": <integer 1 to 5 — how strong is the competitor in this area? 1=very weak, 5=excellent>,',
+      '      "scoreLabel": "<one word rating: e.g. Weak / Average / Strong / Excellent>",',
+      '      "verdict": "<One crisp sentence: the key competitive reality in this dimension>",',
+      '      "bullets": [',
+      '        "<Specific insight with a concrete detail from the report>",',
+      '        "<Another specific insight>",',
+      '        "<Actionable gap or opportunity you can exploit>"',
       '      ]',
       '    },',
-      '    { "label": "SALES & CONVERSION STRATEGY", "score": <1-5>, "scoreLabel": "...", "insight": "...", "details": ["...","...","..."] },',
-      '    { "label": "OFFER & MONETIZATION", "score": <1-5>, "scoreLabel": "...", "insight": "...", "details": ["...","...","..."] },',
-      '    { "label": "TRUST & ENGAGEMENT", "score": <1-5>, "scoreLabel": "...", "insight": "...", "details": ["...","...","..."] },',
-      '    { "label": "AI TOOLS & PRACTICAL VALUE", "score": <1-5>, "scoreLabel": "...", "insight": "...", "details": ["...","...","..."] },',
-      '    { "label": "BUSINESS MOAT & COMPETITIVE ADVANTAGE", "score": <1-5>, "scoreLabel": "...", "insight": "...", "details": ["...","...","..."] },',
-      '    { "label": "WEAKNESSES & GROWTH OPPORTUNITIES", "score": <1-5>, "scoreLabel": "...", "insight": "...", "details": ["...","...","..."] }',
+      '    { "label": "SALES & CONVERSION STRATEGY", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "OFFER & MONETIZATION", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "TRUST & ENGAGEMENT", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "AI TOOLS & PRACTICAL VALUE", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "BUSINESS MOAT & COMPETITIVE ADVANTAGE", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
+      '    { "label": "WEAKNESSES & GROWTH OPPORTUNITIES", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] }',
       '  ]',
       '}',
       '',
       'FIELD DEFINITIONS:',
-      'managerSummary: 2-3 sentences a manager can act on immediately. Must name at least one specific person, tool, price, or tactic from the transcript.',
-      'keyMoments: Exactly 3 strings — specific pivotal moments from the workshop (a key pitch, a live demo, a surprising audience reaction, a price reveal, a story told). Each must describe what actually happened.',
-      'sections: Exactly 7 objects, one per area.',
-      '  score: 1–5. Rate how well-developed and effective this area was in the workshop based on transcript evidence.',
-      '  scoreLabel: One word rating matching the score.',
-      '  insight: The single most specific and meaningful sentence about this area — pulled directly from transcript evidence.',
-      '  details: Exactly 3 strings. Each must go deeper than Report 1. Include quotes, tool names, exact prices, step names, percentages, or specific examples found in the transcript.',
+      'executiveSummary: 2-3 sentence bottom-line for a manager who has 30 seconds. Specific, direct, no fluff.',
+      'priorityActions: exactly 3 strings — the three most important moves. Each is one crisp sentence with a clear action and expected result.',
+      'sections: exactly 7 objects, one per dimension.',
+      '  score: integer 1–5. Rate how strong the competitor is in this area based on the report evidence.',
+      '    1 = Very Weak, 2 = Below Average, 3 = Average, 4 = Strong, 5 = Excellent.',
+      '  scoreLabel: one word capturing the rating (e.g. "Weak", "Average", "Strong", "Excellent").',
+      '  verdict: one sharp sentence summarizing the key competitive reality for that dimension.',
+      '  bullets: exactly 3 strings. Each must include a concrete detail (name, price, tactic, stat) from the report. Third bullet is always an actionable opportunity for you.',
       '',
-      '════ REPORT 1 (already captured — do not repeat, only go deeper) ════',
-      report1Text.substring(0, 15000),
-      '',
-      '════ ORIGINAL TRANSCRIPT (extract all meaningful details from here) ════',
-      rawTranscript.substring(0, 60000)
+      'WORKSHOP INTELLIGENCE REPORT:',
+      reportText.substring(0, 60000)
     ].join('\n');
   }
 
@@ -1841,12 +1830,11 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const keyEl = document.getElementById('key-' + currentProvider);
     const apiKey = (keyEl?.value || '').trim();
     if (!apiKey) { alert('Please enter your API key first.'); return; }
-    if (!rawTranscriptCache) { alert('Please run Report 1 first — the transcript needs to be loaded.'); return; }
 
-    // Gather Report 1 text as context (what was already extracted)
+    // Gather report text
     const summaryEl = document.getElementById('content1');
     const detailsEl = document.getElementById('detailsInner');
-    const report1Text = (summaryEl?.textContent || '') + '\n\n' + (detailsEl?.textContent || '');
+    const reportText = (summaryEl?.textContent || '') + '\n\n' + (detailsEl?.textContent || '');
 
     const analyseBtn = document.getElementById('analyseBtn');
     analyseBtn.disabled = true;
@@ -1855,7 +1843,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const analyseLoaderText = document.getElementById('analyseLoaderText');
     analyseLoader.style.display = 'block';
 
-    const analyseMsgs = ['Re-reading the full transcript…','Finding what Report 1 missed…','Extracting specific details…','Writing your Deep Insight Report…'];
+    const analyseMsgs = ['Gathering autumn leaves of insight…','Tracing the patterns in the wind…','Consulting the light orbs…','Weaving your growth strategy…'];
     let ai = 0;
     analyseLoaderText.textContent = analyseMsgs[0];
     const analyseLoaderInterval = setInterval(() => {
@@ -1864,7 +1852,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     }, 2400);
 
     try {
-      const prompt = buildAnalysisPrompt(rawTranscriptCache, report1Text);
+      const prompt = buildAnalysisPrompt(reportText);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
@@ -1885,26 +1873,25 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
       const sections = Array.isArray(data.sections) ? data.sections : [];
 
-      // ── Manager Summary ───────────────────────────────────────────────
-      const summaryText = (data.managerSummary || '').trim();
+      // ── Executive Summary ─────────────────────────────────────────────
+      const summaryText = (data.executiveSummary || '').trim();
       const rewriteEl = document.getElementById('analysisRewrite');
       rewriteEl.innerHTML = '<p style="font-size:14.5px;line-height:1.9;color:var(--text2);">' + summaryText.replace(/</g,'&lt;') + '</p>';
 
-      // ── Key Moments ───────────────────────────────────────────────────
-      const moments = Array.isArray(data.keyMoments) ? data.keyMoments : [];
+      // ── Top Priority Actions ──────────────────────────────────────────
+      const priorities = Array.isArray(data.priorityActions) ? data.priorityActions : [];
       const prioritiesEl = document.getElementById('analysisPriorities');
-      if (moments.length) {
+      if (priorities.length) {
         prioritiesEl.innerHTML = '<ol style="list-style:none;padding:0;margin:0;">' +
-          moments.map((m, i) => {
-            const icons = ['⚡','💡','🎯'];
-            return '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
-              '<span style="flex-shrink:0;font-size:18px;margin-top:1px;">' + (icons[i] || '✿') + '</span>' +
-              '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + m.replace(/</g,'&lt;') + '</span>' +
-              '</li>';
-          }).join('') + '</ol>';
+          priorities.map((p, i) =>
+            '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
+            '<span style="flex-shrink:0;width:24px;height:24px;background:var(--leaf);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:11px;font-weight:700;margin-top:1px;">' + (i+1) + '</span>' +
+            '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + p.replace(/</g,'&lt;') + '</span>' +
+            '</li>'
+          ).join('') + '</ol>';
       }
 
-      // ── Area-by-Area Findings ─────────────────────────────────────────
+      // ── Dimension Scorecard ───────────────────────────────────────────
       const categoryIcons = {
         'HOOK & TARGET AUDIENCE': '🎯',
         'SALES & CONVERSION STRATEGY': '🍂',
@@ -1932,11 +1919,11 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
         const icon = categoryIcons[sec.label] || '✿';
         const score = Math.min(5, Math.max(1, parseInt(sec.score) || 3));
         const label = (sec.scoreLabel || '').replace(/</g,'&lt;');
-        const insight = (sec.insight || '').replace(/</g,'&lt;');
+        const verdict = (sec.verdict || '').replace(/</g,'&lt;');
         const col = scoreLabelColor[score] || '#c47a3a';
-        const bg  = scoreBg[score]  || 'rgba(196,122,58,0.08)';
-        const bdr = scoreBorder[score] || 'rgba(196,122,58,0.2)';
-        const detailItems = (sec.details || []).map(b =>
+        const bg = scoreBg[score] || 'rgba(196,122,58,0.08)';
+        const border = scoreBorder[score] || 'rgba(196,122,58,0.2)';
+        const liItems = (sec.bullets || []).map(b =>
           '<li style="margin-bottom:9px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
           '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' +
           b.replace(/</g,'&lt;') + '</li>'
@@ -1945,24 +1932,25 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
         innerHtml +=
           '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:22px;margin-top:22px;' : '') + '">' +
 
-          // Header: icon + label + star score pill
+          // Header row: icon + label + score badge
           '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
             '<div style="display:flex;align-items:center;gap:8px;">' +
               '<span style="font-size:18px;">' + icon + '</span>' +
               '<span style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--amber);font-weight:600;">' + sec.label + '</span>' +
             '</div>' +
-            '<div style="display:flex;align-items:center;gap:6px;background:' + bg + ';border:1px solid ' + bdr + ';border-radius:999px;padding:5px 12px 5px 10px;">' +
+            // Score pill
+            '<div style="display:flex;align-items:center;gap:8px;background:' + bg + ';border:1px solid ' + border + ';border-radius:999px;padding:5px 12px 5px 10px;">' +
               renderStars(score) +
               '<span style="font-size:11px;font-weight:700;color:' + col + ';font-family:\'Noto Serif JP\',serif;margin-left:4px;">' + score + '/5</span>' +
               '<span style="font-size:10px;color:' + col + ';opacity:0.8;margin-left:2px;">· ' + label + '</span>' +
             '</div>' +
           '</div>' +
 
-          // Insight line
-          (insight ? '<p style="font-size:13px;font-style:italic;color:var(--text);margin:0 0 12px 0;padding:8px 12px;border-left:2.5px solid var(--sakura2);line-height:1.65;background:rgba(232,160,176,0.05);border-radius:0 8px 8px 0;">' + insight + '</p>' : '') +
+          // Verdict italic
+          (verdict ? '<p style="font-size:13px;font-style:italic;color:var(--text);margin:0 0 12px 0;padding:8px 12px;border-left:2.5px solid var(--sakura2);line-height:1.65;background:rgba(232,160,176,0.05);border-radius:0 8px 8px 0;">' + verdict + '</p>' : '') +
 
-          // Detail bullets
-          '<ul style="list-style:none;padding:0;margin:0;font-size:14px;">' + detailItems + '</ul>' +
+          // Bullets
+          '<ul style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
           '</div>';
       });
       grid.innerHTML = innerHtml;
@@ -2002,24 +1990,26 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const summaryP = summaryEl.querySelector('p');
     const summaryText = summaryP ? summaryP.textContent.trim() : summaryEl.textContent.trim();
 
-    const momentsEl = document.getElementById('analysisPriorities');
-    const momentLis = momentsEl ? momentsEl.querySelectorAll('li') : [];
-    let momentsText = '';
-    momentLis.forEach((li, i) => {
-      const span = li.querySelector('span:last-child');
-      momentsText += (i+1) + '. ' + (span ? span.textContent.trim() : li.textContent.trim()) + '\n';
+    const prioritiesEl = document.getElementById('analysisPriorities');
+    const priorityLis = prioritiesEl ? prioritiesEl.querySelectorAll('li') : [];
+    let priorityText = '';
+    priorityLis.forEach((li, i) => {
+      const spanText = li.querySelector('span:last-child');
+      priorityText += (i+1) + '. ' + (spanText ? spanText.textContent.trim() : li.textContent.trim()) + '\n';
     });
 
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let out = 'DEEP INSIGHT REPORT\n' + '═'.repeat(50) + '\n\n';
-    out += 'WHAT YOUR MANAGER NEEDS TO KNOW\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
-    if (momentsText) out += 'KEY MOMENTS FROM THE WORKSHOP\n' + '─'.repeat(40) + '\n' + momentsText + '\n';
-    out += 'DETAILED FINDINGS BY AREA\n' + '─'.repeat(40) + '\n\n';
+    let out = 'COMPETITIVE GROWTH REPORT\n' + '═'.repeat(50) + '\n\n';
+    out += 'EXECUTIVE SUMMARY\n' + '─'.repeat(40) + '\n' + summaryText + '\n\n';
+    if (priorityText) out += 'TOP PRIORITY ACTIONS\n' + '─'.repeat(40) + '\n' + priorityText + '\n';
+    out += 'KEY INSIGHTS BY DIMENSION\n' + '─'.repeat(40) + '\n\n';
     labels.forEach((label, i) => {
       const el = document.getElementById('refined-detail-' + i);
       if (!el) return;
+      const scoreEl = el.querySelector('[data-score]');
+      const scoreTxt = scoreEl ? ' [' + scoreEl.dataset.score + '/5]' : '';
       const detailLis = el.querySelectorAll('li');
-      out += label + '\n';
+      out += label + scoreTxt + '\n';
       detailLis.forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
       out += '\n';
     });
