@@ -908,8 +908,7 @@
           <span class="field-label">Select Model</span>
           <select id="model-openrouter">
             <optgroup label="── FREE Models ──">
-              <option value="meta-llama/llama-3.3-70b-instruct:free">Auto / Best free model (recommended)</option>
-              <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B — FREE</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B — FREE (recommended)</option>
               <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B — FREE</option>
               <option value="nvidia/nemotron-super-49b-v1:free">NVIDIA Nemotron 49B — FREE</option>
               <option value="arcee-ai/trinity-large-preview:free">Arcee Trinity Large — FREE</option>
@@ -922,7 +921,7 @@
           </select>
         </div>
         <div class="provider-hint">
-          🌿 "Auto-select" always picks a working free model — never breaks.<br>
+          🌿 Llama 3.3 70B is recommended — fast, free, and reliable.<br>
           Get key → <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> (sign up free)
         </div>
       </div>
@@ -1538,16 +1537,50 @@ window.addEventListener('load', () => {
   }
   function clearError() { document.getElementById('errorBox').classList.remove('active'); }
 
-  // ── Context limits per provider (chars of transcript text) ──────────────────
-  // 1 token ≈ 4 chars. We reserve ~3000 tokens for instructions + ~4000 for output.
-  const PROVIDER_CHAR_LIMITS = {
-    gemini:     700000,  // gemini-2.5-flash: ~1M token context
-    openrouter: 160000,  // llama-3.3-70b: 128k ctx → safe at ~40k tokens of transcript
-    claude:     140000,  // haiku: 200k ctx, browser direct access is stable up to ~35k tokens
-    groq:        88000,  // llama-3.3-70b on groq: 32k ctx → ~20k tokens of transcript
-    mistral:    100000,  // mistral-small: 32k ctx
-    cohere:     120000,  // command-r+: 128k ctx
+  // ── Per-model context limits (chars of transcript text) ─────────────────────
+  // 1 token ≈ 4 chars. Formula: (ctx_tokens - 4096 output - 1500 prompt_overhead) * 4
+  const MODEL_CHAR_LIMITS = {
+    // OpenRouter free models — 65536 token context each
+    'meta-llama/llama-3.3-70b-instruct:free': 48000,
+    'qwen/qwen3-235b-a22b:free':              48000,
+    'nvidia/nemotron-super-49b-v1:free':      48000,
+    'arcee-ai/trinity-large-preview:free':    48000,
+    // OpenRouter paid models
+    'anthropic/claude-haiku-4-5':            600000,
+    'openai/gpt-4o-mini':                    480000,
+    'google/gemini-2.5-flash-preview-05-20': 700000,
+    // Groq models — 32768 token context
+    'llama-3.3-70b-versatile':  88000,
+    'llama-3.1-8b-instant':     88000,
+    'mixtral-8x7b-32768':       88000,
+    'gemma2-9b-it':             88000,
+    // Mistral
+    'mistral-small-latest':    100000,
+    'open-mistral-nemo':       100000,
+    'mistral-large-latest':    400000,
+    // Cohere
+    'command-r-plus':          480000,
+    'command-r':               480000,
+    'command-light':           480000,
   };
+
+  const PROVIDER_CHAR_LIMITS = {
+    gemini:  700000,
+    claude:  600000,
+    groq:     88000,
+    mistral: 100000,
+    cohere:  480000,
+  };
+
+  function getCharLimit() {
+    // For providers with model selectors, use the per-model limit
+    const modelEl = document.getElementById('model-' + currentProvider);
+    if (modelEl) {
+      const model = modelEl.value;
+      if (MODEL_CHAR_LIMITS[model]) return MODEL_CHAR_LIMITS[model];
+    }
+    return PROVIDER_CHAR_LIMITS[currentProvider] || 48000;
+  }
 
   // Smart sampler: beginning (40%) + middle (30%) + end (30%)
   // Catches the hook (start) AND the sales pitch (usually at end)
@@ -1693,7 +1726,7 @@ window.addEventListener('load', () => {
         transcripts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
       }
       const combined = transcripts.join('\n\n');
-      const charLimit = PROVIDER_CHAR_LIMITS[currentProvider] || 80000;
+      const charLimit = getCharLimit();
       const trimmed = trimTranscript(combined, charLimit);
       const prompt = buildPrompt(trimmed);
       let text = '';
