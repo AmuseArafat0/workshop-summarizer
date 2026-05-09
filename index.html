@@ -981,8 +981,8 @@
           <select id="model-groq">
             <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile — FREE</option>
             <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant — FREE (fastest)</option>
-            <option value="mixtral-8x7b-32768">Mixtral 8x7B — FREE</option>
-            <option value="gemma2-9b-it">Gemma 2 9B — FREE</option>
+            <option value="llama-3.2-90b-vision-preview">Llama 3.2 90B — FREE</option>
+            <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B — FREE</option>
           </select>
         </div>
         <div class="provider-hint">
@@ -1640,10 +1640,10 @@ window.addEventListener('load', () => {
     'openai/gpt-4o-mini':                             480000,
     'google/gemini-2.5-flash-preview-05-20':          700000,
     // Groq models — 32768 token context
-    'llama-3.3-70b-versatile':  88000,
-    'llama-3.1-8b-instant':     88000,
-    'mixtral-8x7b-32768':       88000,
-    'gemma2-9b-it':             88000,
+    'llama-3.3-70b-versatile':      88000,
+    'llama-3.1-8b-instant':        88000,
+    'llama-3.2-90b-vision-preview': 88000,
+    'llama-3.2-11b-vision-preview': 88000,
     // Mistral
     'mistral-small-latest':    100000,
     'open-mistral-nemo':       100000,
@@ -1728,7 +1728,7 @@ window.addEventListener('load', () => {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 4096 } })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 8192 } })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini API error ' + res.status); }
     const data = await res.json();
@@ -1790,10 +1790,12 @@ window.addEventListener('load', () => {
 
   async function callGroq(apiKey, prompt) {
     const model = document.getElementById('model-groq').value;
+    // Groq free tier has strict TPM limits — truncate prompt to ~4000 chars to stay safe
+    const groqPrompt = prompt.length > 16000 ? prompt.substring(0, 16000) + '\n\n[Transcript truncated for token limits]' : prompt;
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: groqPrompt }], temperature: 0.3, max_tokens: 2048 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Groq error ' + res.status); }
     const data = await res.json();
@@ -1805,7 +1807,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096, response_format: { type: 'json_object' } })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Mistral error ' + res.status); }
     const data = await res.json();
@@ -1816,12 +1818,21 @@ window.addEventListener('load', () => {
     const model = document.getElementById('model-cohere').value;
     const res = await fetch('https://api.cohere.com/v2/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'Accept': 'application/json' },
       body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Cohere error ' + res.status); }
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      const msg = e.message || e.error?.message || JSON.stringify(e);
+      throw new Error('Cohere error ' + res.status + ': ' + msg);
+    }
     const data = await res.json();
-    return data.message?.content?.[0]?.text || '';
+    // Cohere v2 response shape: data.message.content[0].text
+    const text = data.message?.content?.[0]?.text
+      || data.text  // v1 fallback
+      || data.generations?.[0]?.text  // generate fallback
+      || '';
+    return text;
   }
 
   // ── Main ───────────────────────────────────────────────────────────────────
