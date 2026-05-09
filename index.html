@@ -1678,17 +1678,32 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
   function parseAndDisplay(text) {
     let data;
+    let data;
     try {
-      let clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const start = clean.indexOf('{');
-      const end = clean.lastIndexOf('}');
-      if (start === -1 || end === -1) throw new Error('No JSON object found');
-      clean = clean.substring(start, end + 1);
-      clean = clean.replace(/"((?:[^"\\]|\\.)*)"/gs, (match, inner) => {
-        const fixed = inner.replace(/\r\n/g, '\\n').replace(/\r/g, '\\n').replace(/\n/g, '\\n');
-        return '"' + fixed + '"';
-      });
-      data = JSON.parse(clean);
+      let t = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const s0 = t.indexOf('{'), e0 = t.lastIndexOf('}');
+      if (s0 === -1 || e0 === -1) throw new Error('No JSON found');
+      t = t.substring(s0, e0 + 1);
+      // char-by-char fix for unescaped control chars inside strings
+      let out = '', inStr = false, esc = false;
+      for (let i = 0; i < t.length; i++) {
+        const ch = t[i];
+        if (esc) { out += ch; esc = false; continue; }
+        if (ch === '\\') { out += ch; esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; out += ch; continue; }
+        if (inStr) {
+          if (ch === '\n') { out += '\\n'; continue; }
+          if (ch === '\r') { out += '\\n'; continue; }
+          if (ch === '\t') { out += '\\t'; continue; }
+          if (ch.charCodeAt(0) < 32) { out += ' '; continue; }
+        }
+        out += ch;
+      }
+      try { data = JSON.parse(out); }
+      catch(_) {
+        const safe = out.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ');
+        data = JSON.parse(safe);
+      }
     } catch(e) {
       const preview = text ? text.substring(0, 300).replace(/</g,'&lt;') : '(empty)';
       document.getElementById('errorBox').innerHTML =
@@ -1933,7 +1948,9 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const detailsEl = document.getElementById('detailsInner');
     const summaryText = Array.from(summaryEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (summaryEl?.textContent || '');
     const detailsText = Array.from(detailsEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (detailsEl?.textContent || '');
-    const reportText = (summaryText + '\n\n' + detailsText).substring(0, 20000);
+    // Strip control chars from report text before sending to AI
+    const reportRaw = (summaryText + '\n\n' + detailsText).substring(0, 20000);
+    const reportText = reportRaw.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
 
     const analyseBtn = document.getElementById('analyseBtn');
     analyseBtn.disabled = true;
@@ -1960,18 +1977,40 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
       else if (currentProvider === 'mistral')    text = await callMistral(apiKey, prompt);
       else if (currentProvider === 'cohere')     text = await callCohere(apiKey, prompt);
 
-      // Parse JSON
-      let clean = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
-      const s = clean.indexOf('{'), e2 = clean.lastIndexOf('}');
-      if (s === -1 || e2 === -1) {
-        const preview = text ? text.substring(0, 400) : '(empty response)';
-        throw new Error('No JSON in response. Model returned:\n\n' + preview);
+      // Parse JSON — robust multi-stage sanitization
+      function extractAndParseJSON(raw) {
+        // Stage 1: strip markdown fences
+        let t = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        // Stage 2: extract outermost { ... }
+        const start = t.indexOf('{'), end = t.lastIndexOf('}');
+        if (start === -1 || end === -1) throw new Error('No JSON object found in response. Preview: ' + raw.substring(0, 300));
+        t = t.substring(start, end + 1);
+        // Stage 3: try direct parse
+        try { return JSON.parse(t); } catch(_) {}
+        // Stage 4: walk char-by-char, fix unescaped control chars inside strings
+        let out = '', inStr = false, esc = false;
+        for (let i = 0; i < t.length; i++) {
+          const ch = t[i];
+          if (esc) { out += ch; esc = false; continue; }
+          if (ch === '\\') { out += ch; esc = true; continue; }
+          if (ch === '"') { inStr = !inStr; out += ch; continue; }
+          if (inStr) {
+            if (ch === '\n') { out += '\\n'; continue; }
+            if (ch === '\r') { out += '\\n'; continue; }
+            if (ch === '\t') { out += '\\t'; continue; }
+            if (ch.charCodeAt(0) < 32) { out += ' '; continue; }
+          }
+          out += ch;
+        }
+        // Stage 5: try again
+        try { return JSON.parse(out); } catch(_) {}
+        // Stage 6: strip remaining control chars and retry
+        const safe = out.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ');
+        try { return JSON.parse(safe); } catch(e) {
+          throw new Error('Analysis failed: ' + e.message + '. Preview: ' + raw.substring(0, 200));
+        }
       }
-      clean = clean.substring(s, e2 + 1);
-      clean = clean.replace(/"((?:[^"\\]|\\.)*)"/gs, (m, inner) =>
-        '"' + inner.replace(/\r\n/g,'\\n').replace(/\r/g,'\\n').replace(/\n/g,'\\n') + '"'
-      );
-      const data = JSON.parse(clean);
+      const data = extractAndParseJSON(text);
 
       const sections = Array.isArray(data.sections) ? data.sections : [];
 
