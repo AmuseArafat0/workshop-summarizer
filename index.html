@@ -1538,6 +1538,34 @@ window.addEventListener('load', () => {
   }
   function clearError() { document.getElementById('errorBox').classList.remove('active'); }
 
+  // ── Context limits per provider (chars of transcript text) ──────────────────
+  // 1 token ≈ 4 chars. We reserve ~3000 tokens for instructions + ~4000 for output.
+  const PROVIDER_CHAR_LIMITS = {
+    gemini:     700000,  // gemini-2.5-flash: ~1M token context
+    openrouter: 160000,  // llama-3.3-70b: 128k ctx → safe at ~40k tokens of transcript
+    claude:     140000,  // haiku: 200k ctx, browser direct access is stable up to ~35k tokens
+    groq:        88000,  // llama-3.3-70b on groq: 32k ctx → ~20k tokens of transcript
+    mistral:    100000,  // mistral-small: 32k ctx
+    cohere:     120000,  // command-r+: 128k ctx
+  };
+
+  // Smart sampler: beginning (40%) + middle (30%) + end (30%)
+  // Catches the hook (start) AND the sales pitch (usually at end)
+  function trimTranscript(text, maxChars) {
+    if (text.length <= maxChars) return text;
+    const start  = Math.floor(maxChars * 0.40);
+    const mid    = Math.floor(maxChars * 0.30);
+    const tail   = Math.floor(maxChars * 0.30);
+    const midPos = Math.floor(text.length / 2);
+    return (
+      text.substring(0, start) +
+      '\n\n[... transcript sampled: middle section ...] \n\n' +
+      text.substring(midPos - Math.floor(mid / 2), midPos + Math.floor(mid / 2)) +
+      '\n\n[... transcript sampled: final section ...] \n\n' +
+      text.substring(text.length - tail)
+    );
+  }
+
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
     var lines = [
@@ -1553,32 +1581,31 @@ window.addEventListener('load', () => {
       '7. If a category has nothing relevant, write \u2022 Not mentioned in transcript.',
       '',
       'OUTPUT FORMAT:',
-      '{"summary":"A single paragraph...","details":"HOOK & TARGET AUDIENCE:\\n\u2022 point one\\n\u2022 point two\\nSALES & CONVERSION STRATEGY:\\n\u2022 point one"}',
+      '{"summary":"...","details":"HOOK & TARGET AUDIENCE:\\n\u2022 point one\\nSALES & CONVERSION STRATEGY:\\n\u2022 point one"}',
       '',
       'FIELD DEFINITIONS:',
-      'summary = A bullet-point overview using the bullet character \u2022 followed by a space. Write 5-7 bullets covering: who taught it, what was taught, key tools/concepts shown, offers or prices mentioned, and the main takeaway. Each bullet max 30 words, specific, no repetition.',
-      'details = Intelligence report with exactly 7 category headers. Under each header write 3-5 bullet points. Each bullet is concise (max 30 words), specific, and unique — never repeat the same fact in another bullet or category. No vague or generic statements.',
-      '  HOOK & TARGET AUDIENCE: bullets covering → target audience, core pain point, promised transformation.',
-      '  SALES & CONVERSION STRATEGY: bullets covering → emotional triggers used, urgency/scarcity tactics, objection handling, pitch timing.',
-      '  OFFER & MONETIZATION: bullets covering → each offer name, exact price, payment plan, bonuses, upsells.',
-      '  TRUST & ENGAGEMENT: bullets covering → social proof shown, testimonials, live interaction methods, community tactics.',
-      '  AI TOOLS & PRACTICAL VALUE: bullets covering → specific AI tools named, prompts/templates shown, how actionable the content is.',
-      '  BUSINESS MOAT & COMPETITIVE ADVANTAGE: bullets covering → unique systems, brand authority, exclusive access, proprietary frameworks.',
-      '  WEAKNESSES & GROWTH OPPORTUNITIES: bullets covering → gaps in delivery, overpromises, weak areas, opportunities to outperform.',
+      'summary = A bullet-point overview using \u2022. Write 5-7 bullets: who taught it, what was taught, key tools/concepts, offers/prices, main takeaway. Max 30 words each.',
+      'details = Intelligence report with exactly 7 category headers, 3-5 bullets each. Concise (max 30 words), specific, unique — no repeated facts.',
+      '  HOOK & TARGET AUDIENCE: target audience, core pain point, promised transformation.',
+      '  SALES & CONVERSION STRATEGY: emotional triggers, urgency/scarcity tactics, objection handling, pitch timing.',
+      '  OFFER & MONETIZATION: each offer name, exact price, payment plan, bonuses, upsells.',
+      '  TRUST & ENGAGEMENT: social proof, testimonials, live interaction methods, community tactics.',
+      '  AI TOOLS & PRACTICAL VALUE: specific AI tools named, prompts/templates shown, actionability.',
+      '  BUSINESS MOAT & COMPETITIVE ADVANTAGE: unique systems, brand authority, exclusive access, proprietary frameworks.',
+      '  WEAKNESSES & GROWTH OPPORTUNITIES: gaps in delivery, overpromises, weak areas, opportunities to outperform.',
       '',
       'TRANSCRIPT:',
-      transcript.substring(0, 900000)
+      transcript
     ];
     return lines.join('\n');
   }
-
   // ── API Calls ──────────────────────────────────────────────────────────────
   async function callGemini(apiKey, prompt) {
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 8192 } })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 4096 } })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini API error ' + res.status); }
     const data = await res.json();
@@ -1590,7 +1617,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'HTTP-Referer': window.location.href, 'X-Title': 'Workshop Intel' },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'OpenRouter error ' + res.status); }
     const data = await res.json();
@@ -1601,7 +1628,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8192, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4096, messages: [{ role: 'user', content: prompt }] })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Claude API error ' + res.status); }
     const data = await res.json();
@@ -1613,7 +1640,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Groq error ' + res.status); }
     const data = await res.json();
@@ -1625,7 +1652,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Mistral error ' + res.status); }
     const data = await res.json();
@@ -1637,7 +1664,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.cohere.com/v2/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Cohere error ' + res.status); }
     const data = await res.json();
@@ -1665,7 +1692,10 @@ window.addEventListener('load', () => {
         const raw = await readFile(file);
         transcripts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
       }
-      const prompt = buildPrompt(transcripts.join('\n\n'));
+      const combined = transcripts.join('\n\n');
+      const charLimit = PROVIDER_CHAR_LIMITS[currentProvider] || 80000;
+      const trimmed = trimTranscript(combined, charLimit);
+      const prompt = buildPrompt(trimmed);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
