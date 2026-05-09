@@ -857,19 +857,7 @@
           <span class="p-badge badge-free">FREE · Ultra fast</span>
         </button>
 
-        <button class="provider-tab" onclick="selectProvider('mistral')" id="tab-mistral">
-          <div class="p-icon">🌊</div>
-          <div class="p-name">Mistral AI</div>
-          <div class="p-model">mistral-small-latest</div>
-          <span class="p-badge badge-free">FREE tier</span>
-        </button>
 
-        <button class="provider-tab" onclick="selectProvider('cohere')" id="tab-cohere">
-          <div class="p-icon">🔵</div>
-          <div class="p-name">Cohere</div>
-          <div class="p-model">command-r-plus</div>
-          <span class="p-badge badge-free">FREE tier</span>
-        </button>
 
       </div>
     </div>
@@ -888,6 +876,15 @@
             <input type="password" id="key-gemini" placeholder="AIza..." autocomplete="off" oninput="updateRunBtn()" />
           </div>
           <button class="save-btn" onclick="saveKey('gemini')">Save</button>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="field-label">Select Model</span>
+          <select id="model-gemini">
+            <option value="auto">⚡ Auto (try all, fallback if fail)</option>
+            <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash — FREE (recommended)</option>
+            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite — FREE (fastest)</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro — FREE (most capable)</option>
+          </select>
         </div>
         <div class="provider-hint">
           🌿 Completely free — no credit card needed.<br>
@@ -992,55 +989,7 @@
         </div>
       </div>
 
-      <!-- Mistral -->
-      <div id="fields-mistral" class="provider-fields" style="display:none">
-        <div class="api-row">
-          <div class="field">
-            <span class="field-label">Mistral API Key</span>
-            <input type="password" id="key-mistral" placeholder="..." autocomplete="off" oninput="updateRunBtn()" />
-          </div>
-          <button class="save-btn" onclick="saveKey('mistral')">Save</button>
-        </div>
-        <div class="field" style="margin-top:12px">
-          <span class="field-label">Select Model</span>
-          <select id="model-mistral">
-            <option value="auto">⚡ Auto (try all, fallback if fail)</option>
-            <option value="mistral-small-latest">Mistral Small 3.2 — Latest</option>
-            <option value="mistral-medium-latest">Mistral Medium 3.1 — Latest</option>
-            <option value="mistral-large-latest">Mistral Large 3 — Most Capable</option>
-            <option value="open-mistral-nemo">Mistral Nemo 12B — Lightweight</option>
-          </select>
-        </div>
-        <div class="provider-hint">
-          🌿 Free tier available with generous limits.<br>
-          Get key → <a href="https://console.mistral.ai/api-keys" target="_blank">console.mistral.ai</a> (sign up free)
-        </div>
-      </div>
 
-      <!-- Cohere -->
-      <div id="fields-cohere" class="provider-fields" style="display:none">
-        <div class="api-row">
-          <div class="field">
-            <span class="field-label">Cohere API Key</span>
-            <input type="password" id="key-cohere" placeholder="..." autocomplete="off" oninput="updateRunBtn()" />
-          </div>
-          <button class="save-btn" onclick="saveKey('cohere')">Save</button>
-        </div>
-        <div class="field" style="margin-top:12px">
-          <span class="field-label">Select Model</span>
-          <select id="model-cohere">
-            <option value="auto">⚡ Auto (try all, fallback if fail)</option>
-            <option value="command-a-03-2025">Command A — Latest (recommended)</option>
-            <option value="command-r-plus-08-2024">Command R+ (Aug 2024)</option>
-            <option value="command-r-08-2024">Command R (Aug 2024)</option>
-            <option value="command-r7b-12-2024">Command R7B — Fastest</option>
-          </select>
-        </div>
-        <div class="provider-hint">
-          🌿 Free trial key — no credit card needed.<br>
-          Get key → <a href="https://dashboard.cohere.com/api-keys" target="_blank">dashboard.cohere.com</a> (sign up free)
-        </div>
-      </div>
 
       <div id="keyStatus" class="key-status none" style="margin-top:8px">No key saved yet</div>
     </div>
@@ -1433,7 +1382,7 @@ window.addEventListener('load', () => {
   // ── Provider Switcher ──────────────────────────────────────────────────────
   function selectProvider(p) {
     currentProvider = p;
-    ['gemini','openrouter','claude','groq','mistral','cohere'].forEach(id => {
+    ['gemini','openrouter','claude','groq'].forEach(id => {
       document.getElementById('tab-' + id).classList.toggle('active', id === p);
       document.getElementById('fields-' + id).style.display = id === p ? 'block' : 'none';
     });
@@ -1728,16 +1677,43 @@ window.addEventListener('load', () => {
     return lines.join('\n');
   }
   // ── API Calls ──────────────────────────────────────────────────────────────
-  async function callGemini(apiKey, prompt) {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
+  const GEMINI_FALLBACK_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.5-pro',
+  ];
+
+  async function callGeminiModel(apiKey, model, prompt) {
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 8192 } })
     });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini API error ' + res.status); }
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini error ' + res.status); }
     const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) throw new Error('Empty response from model');
+    return text;
+  }
+
+  async function callGemini(apiKey, prompt) {
+    const selectEl = document.getElementById('model-gemini');
+    const selected = selectEl ? selectEl.value : 'gemini-2.5-flash';
+    if (selected !== 'auto') return await callGeminiModel(apiKey, selected, prompt);
+    const errors = [];
+    for (const model of GEMINI_FALLBACK_MODELS) {
+      try {
+        const loaderEl = document.getElementById('loaderText');
+        if (loaderEl) loaderEl.textContent = 'Trying ' + model + '…';
+        return await callGeminiModel(apiKey, model, prompt);
+      } catch(err) {
+        console.warn('[Gemini Auto] Failed ' + model + ':', err.message);
+        errors.push(model + ': ' + err.message);
+        await new Promise(r => setTimeout(r, 400));
+      }
+    }
+    throw new Error('All Gemini models failed:\n' + errors.slice(-3).join('\n'));
   }
 
   async function callOpenRouterModel(apiKey, model, prompt) {
@@ -1833,85 +1809,7 @@ window.addEventListener('load', () => {
     throw new Error('All Groq models failed:\n' + errors.slice(-3).join('\n'));
   }
 
-  const MISTRAL_FALLBACK_MODELS = [
-    'mistral-small-latest',
-    'mistral-medium-latest',
-    'mistral-large-latest',
-    'open-mistral-nemo',
-  ];
 
-  async function callMistralModel(apiKey, model, prompt) {
-    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096, response_format: { type: 'json_object' } })
-    });
-    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Mistral error ' + res.status); }
-    const data = await res.json();
-    const text = data.choices?.[0]?.message?.content || '';
-    if (!text) throw new Error('Empty response from model');
-    return text;
-  }
-
-  async function callMistral(apiKey, prompt) {
-    const selected = document.getElementById('model-mistral').value;
-    if (selected !== 'auto') return await callMistralModel(apiKey, selected, prompt);
-    const errors = [];
-    for (const model of MISTRAL_FALLBACK_MODELS) {
-      try {
-        const loaderEl = document.getElementById('loaderText');
-        if (loaderEl) loaderEl.textContent = 'Trying Mistral ' + model.replace('-latest','') + '…';
-        return await callMistralModel(apiKey, model, prompt);
-      } catch(err) {
-        console.warn('[Mistral Auto] Failed ' + model + ':', err.message);
-        errors.push(model + ': ' + err.message);
-        await new Promise(r => setTimeout(r, 400));
-      }
-    }
-    throw new Error('All Mistral models failed:\n' + errors.slice(-3).join('\n'));
-  }
-
-  const COHERE_FALLBACK_MODELS = [
-    'command-a-03-2025',
-    'command-r-plus-08-2024',
-    'command-r-08-2024',
-    'command-r7b-12-2024',
-  ];
-
-  async function callCohereModel(apiKey, model, prompt) {
-    const res = await fetch('https://api.cohere.com/v2/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'Accept': 'application/json' },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
-    });
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      const msg = e.message || e.error?.message || JSON.stringify(e);
-      throw new Error('Cohere error ' + res.status + ': ' + msg);
-    }
-    const data = await res.json();
-    const text = data.message?.content?.[0]?.text || data.text || data.generations?.[0]?.text || '';
-    if (!text) throw new Error('Empty response from model');
-    return text;
-  }
-
-  async function callCohere(apiKey, prompt) {
-    const selected = document.getElementById('model-cohere').value;
-    if (selected !== 'auto') return await callCohereModel(apiKey, selected, prompt);
-    const errors = [];
-    for (const model of COHERE_FALLBACK_MODELS) {
-      try {
-        const loaderEl = document.getElementById('loaderText');
-        if (loaderEl) loaderEl.textContent = 'Trying Cohere ' + model + '…';
-        return await callCohereModel(apiKey, model, prompt);
-      } catch(err) {
-        console.warn('[Cohere Auto] Failed ' + model + ':', err.message);
-        errors.push(model + ': ' + err.message);
-        await new Promise(r => setTimeout(r, 400));
-      }
-    }
-    throw new Error('All Cohere models failed:\n' + errors.slice(-3).join('\n'));
-  }
 
   // ── Main ───────────────────────────────────────────────────────────────────
   async function runSummary() {
@@ -1943,8 +1841,6 @@ window.addEventListener('load', () => {
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
       else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
       else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
-      else if (currentProvider === 'mistral')    text = await callMistral(apiKey, prompt);
-      else if (currentProvider === 'cohere')     text = await callCohere(apiKey, prompt);
       if (!text) throw new Error('Empty response from API. Please try again.');
       parseAndDisplay(text);
     } catch (err) {
@@ -2268,8 +2164,6 @@ window.addEventListener('load', () => {
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
       else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
       else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
-      else if (currentProvider === 'mistral')    text = await callMistral(apiKey, prompt);
-      else if (currentProvider === 'cohere')     text = await callCohere(apiKey, prompt);
 
       // Parse JSON — robust multi-stage sanitization
       function extractAndParseJSON(raw) {
@@ -2469,7 +2363,7 @@ window.addEventListener('load', () => {
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
-  ['gemini','openrouter','claude','groq','mistral','cohere'].forEach(p => {
+  ['gemini','openrouter','claude','groq'].forEach(p => {
     const stored = sessionStorage.getItem('wk_key_' + p);
     if (stored) document.getElementById('key-' + p).value = stored;
   });
