@@ -908,7 +908,7 @@
           <span class="field-label">Select Model</span>
           <select id="model-openrouter">
             <optgroup label="── FREE Models ──">
-              <option value="openrouter/free">Auto-select best free model (recommended)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">Auto / Best free model (recommended)</option>
               <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B — FREE</option>
               <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B — FREE</option>
               <option value="nvidia/nemotron-super-49b-v1:free">NVIDIA Nemotron 49B — FREE</option>
@@ -1021,7 +1021,7 @@
     <div class="step-label" data-step="3">Step 3 — Upload Transcripts</div>
 
     <div class="upload-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".vtt,.txt,.srt" multiple />
+      <input type="file" id="fileInput" accept=".vtt,.txt,.srt,.text,text/vtt,text/plain" multiple />
       <span class="upload-icon">🌸</span>
       <div class="upload-title">Drop transcript files here</div>
       <div class="upload-hint">or click to browse · .vtt &nbsp;.txt &nbsp;.srt · upload multiple days at once</div>
@@ -1376,8 +1376,22 @@
 <script>
 const revealObs = new IntersectionObserver((entries) => {
   entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
-}, { threshold: 0.1 });
-document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+}, { threshold: 0, rootMargin: '0px 0px 0px 0px' });
+document.querySelectorAll('.reveal').forEach(el => {
+  // Immediately show elements already in the viewport on load
+  const rect = el.getBoundingClientRect();
+  if (rect.top < window.innerHeight && rect.bottom > 0) {
+    el.classList.add('visible');
+  }
+  revealObs.observe(el);
+});
+// Fallback: after full load, reveal anything still hidden in viewport
+window.addEventListener('load', () => {
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 100) el.classList.add('visible');
+  });
+});
 </script>
 
 <!-- ═══════════ APP LOGIC ════════════════════════════════════════════════ -->
@@ -1434,7 +1448,16 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     dropZone.classList.remove('dragover');
     handleFiles([...e.dataTransfer.files]);
   });
-  fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+  // Clicking anywhere in the zone triggers the file picker
+  dropZone.addEventListener('click', e => {
+    if (e.target !== fileInput) fileInput.click();
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files.length) {
+      handleFiles([...fileInput.files]);
+      fileInput.value = ''; // Reset so same file can be re-added if removed
+    }
+  });
 
   function handleFiles(files) {
     files.forEach(f => { if (!uploadedFiles.find(x => x.name === f.name)) uploadedFiles.push(f); });
@@ -1677,7 +1700,6 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
   }
 
   function parseAndDisplay(text) {
-    let data;
     let data;
     try {
       let t = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
@@ -2165,6 +2187,8 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const stored = sessionStorage.getItem('wk_key_' + p);
     if (stored) document.getElementById('key-' + p).value = stored;
   });
+  // Initialize provider UI state
+  selectProvider('gemini');
   if (sessionStorage.getItem('wk_key_gemini')) {
     setKeyStatus('✿ Key loaded from session', 'ok');
   }
