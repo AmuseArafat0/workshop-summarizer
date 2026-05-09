@@ -11,14 +11,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #faf6f0;
-      --bg2:      #f5ede0;
+      --bg:       #fdf0f4;
+      --bg2:      #f9e5ec;
       --surface:  rgba(255,255,255,0.72);
       --surface2: rgba(255,255,255,0.55);
       --border:   rgba(180,130,100,0.18);
       --border2:  rgba(180,130,100,0.32);
-      --sakura:   #e8a0b0;
-      --sakura2:  #f5c6d0;
+      --sakura:   #e8809a;
+      --sakura2:  #f4b0c5;
       --amber:    #c47a3a;
       --amber2:   #e8a05a;
       --leaf:     #7a9b6a;
@@ -26,7 +26,7 @@
       --text:     #3a2818;
       --text2:    #6b4828;
       --muted:    #9a7860;
-      --glow:     rgba(232,160,176,0.3);
+      --glow:     rgba(232,128,154,0.4);
       --glow2:    rgba(196,122,58,0.2);
     }
 
@@ -56,10 +56,10 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(245,198,208,0.25) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 5%, rgba(255,225,180,0.2) 0%, transparent 55%),
-        radial-gradient(ellipse 100% 60% at 50% 100%, rgba(180,210,160,0.15) 0%, transparent 50%),
-        linear-gradient(170deg, #fdf5ee 0%, #f8ede0 40%, #f2e8d5 100%);
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(240,170,190,0.38) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 5%, rgba(255,200,215,0.32) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 60% at 50% 100%, rgba(240,180,200,0.2) 0%, transparent 50%),
+        linear-gradient(170deg, #fef0f4 0%, #fce8ef 40%, #f8e0e8 100%);
     }
 
     /* Watercolor texture overlay */
@@ -81,7 +81,7 @@
     }
     .bg-orb-1 {
       width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(232,160,176,0.22), transparent 70%);
+      background: radial-gradient(circle, rgba(230,130,160,0.38), transparent 70%);
       top: -100px; right: 10%;
       animation-duration: 15s;
     }
@@ -94,10 +94,17 @@
     }
     .bg-orb-3 {
       width: 250px; height: 250px;
-      background: radial-gradient(circle, rgba(160,200,140,0.15), transparent 70%);
+      background: radial-gradient(circle, rgba(160,200,140,0.12), transparent 70%);
       top: 40%; right: -50px;
       animation-duration: 20s;
       animation-delay: -10s;
+    }
+    .bg-orb-4 {
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(235,140,170,0.28), transparent 70%);
+      top: 60%; left: 25%;
+      animation-duration: 22s;
+      animation-delay: -4s;
     }
 
     @keyframes orbFloat {
@@ -798,6 +805,7 @@
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
   <div class="bg-orb bg-orb-3"></div>
+  <div class="bg-orb bg-orb-4"></div>
 </div>
 
 <!-- SAKURA PETALS CANVAS -->
@@ -1095,9 +1103,9 @@
     <!-- ANALYSE BUTTON -->
     <div id="analyseWrap" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:10px 0;">
       <button class="analyse-btn" id="analyseBtn" onclick="runAnalysis()">
-        <span>🍂</span> Generate Competitive Growth Report
+        <span>🌿</span> Generate Deep Insight Report
       </button>
-      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:0.05em;">Deep strategic analysis · Global market gaps · Actionable growth playbook</div>
+      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:0.05em;">Meaningful insight · Key patterns · Learnings from the report</div>
     </div>
 
     <!-- Analysis Loader -->
@@ -1122,7 +1130,7 @@
     <div id="analysisCard" style="display:none;flex-direction:column;gap:20px;">
 
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title analysis-accent-title">🍂 Global Competitive Growth Report</div>
+        <div class="results-title analysis-accent-title">🌿 Deep Insight Report</div>
         <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">Copy All ↗</button>
       </div>
 
@@ -1131,7 +1139,7 @@
         <div class="card-watermark">智</div>
         <div class="section-meta">
           <span class="section-icon">🌏</span>
-          <span class="card-label">Strategic Intelligence · Executive Summary</span>
+          <span class="card-label">Report Understanding · Executive Summary</span>
         </div>
         <div class="section-title">Executive Summary</div>
         <div class="section-content" id="analysisRewrite">—</div>
@@ -1145,9 +1153,9 @@
         <div class="card-watermark">先</div>
         <div class="section-meta">
           <span class="section-icon">🎯</span>
-          <span class="card-label">Strategic Intelligence · Action Items</span>
+          <span class="card-label">Report Understanding · Key Takeaways</span>
         </div>
-        <div class="section-title">Top Priority Actions</div>
+        <div class="section-title">Top Takeaways & Actions</div>
         <div id="analysisPriorities">—</div>
         <div class="card-action">
           <button class="copy-btn" onclick="copySection('analysisPriorities',this)">Copy</button>
@@ -1160,7 +1168,7 @@
           <div class="card-watermark">策</div>
           <div class="section-meta">
             <span class="section-icon">📖</span>
-            <span class="card-label">Strategic Intelligence · Dimension Breakdown</span>
+            <span class="card-label">Report Understanding · Dimension Breakdown</span>
           </div>
           <div class="section-title">Key Insights by Dimension</div>
           <div id="analysisGrid"></div>
@@ -1182,7 +1190,7 @@
   <span class="footer-flower">🌸</span>
 </footer>
 
-<!-- ═══════════ SAKURA PETAL ANIMATION ══════════════════════════════════ -->
+<!-- ═══════════ SAKURA PETAL + LEAF ANIMATION ════════════════════════════ -->
 <script>
 (function() {
   const canvas = document.getElementById('petalsCanvas');
@@ -1195,13 +1203,24 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Petal shapes
+  // ── Sakura petal colors (richer pink) ──
   const PETAL_COLORS = [
-    'rgba(232,160,176,0.75)',
-    'rgba(245,198,208,0.6)',
-    'rgba(255,215,215,0.55)',
-    'rgba(220,140,160,0.65)',
-    'rgba(255,230,235,0.5)',
+    'rgba(228,110,148,0.82)',
+    'rgba(242,150,175,0.72)',
+    'rgba(255,175,200,0.65)',
+    'rgba(215,90,135,0.75)',
+    'rgba(250,190,210,0.60)',
+    'rgba(235,120,160,0.78)',
+  ];
+
+  // ── Autumn leaf colors ──
+  const LEAF_COLORS = [
+    'rgba(80,130,70,0.62)',
+    'rgba(100,155,85,0.55)',
+    'rgba(60,110,55,0.65)',
+    'rgba(110,160,90,0.50)',
+    'rgba(70,120,60,0.58)',
+    'rgba(90,140,75,0.52)',
   ];
 
   class Petal {
@@ -1211,15 +1230,15 @@
       this.x = Math.random() * canvas.width;
       this.y = initial ? Math.random() * canvas.height : -20;
       this.size = 4 + Math.random() * 7;
-      this.speedY = 0.5 + Math.random() * 1.2;
-      this.speedX = (Math.random() - 0.5) * 0.8;
+      this.speedY = 0.22 + Math.random() * 0.45;
+      this.speedX = (Math.random() - 0.5) * 0.4;
       this.rotation = Math.random() * Math.PI * 2;
-      this.rotSpeed = (Math.random() - 0.5) * 0.04;
+      this.rotSpeed = (Math.random() - 0.5) * 0.018;
       this.sway = Math.random() * Math.PI * 2;
-      this.swaySpeed = 0.02 + Math.random() * 0.02;
-      this.swayAmp  = 0.6 + Math.random() * 1.2;
+      this.swaySpeed = 0.008 + Math.random() * 0.01;
+      this.swayAmp  = 0.5 + Math.random() * 0.9;
       this.color = PETAL_COLORS[Math.floor(Math.random() * PETAL_COLORS.length)];
-      this.opacity = 0.5 + Math.random() * 0.5;
+      this.opacity = 0.6 + Math.random() * 0.4;
     }
 
     update() {
@@ -1236,8 +1255,7 @@
       ctx.rotate(this.rotation);
       ctx.globalAlpha = this.opacity;
       ctx.fillStyle = this.color;
-
-      // Draw a 5-petal flower
+      // 5-petal sakura flower
       const s = this.size;
       ctx.beginPath();
       for (let i = 0; i < 5; i++) {
@@ -1253,22 +1271,109 @@
         ctx.quadraticCurveTo(c2x, c2y, 0, 0);
       }
       ctx.fill();
-
       // Center dot
       ctx.beginPath();
       ctx.arc(0, 0, s * 0.18, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,240,245,0.9)';
+      ctx.fillStyle = 'rgba(255,235,245,0.95)';
       ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  class Leaf {
+    constructor() { this.reset(true); }
+
+    reset(initial) {
+      this.x = Math.random() * canvas.width;
+      this.y = initial ? Math.random() * canvas.height : -30;
+      this.size = 7 + Math.random() * 9;
+      this.speedY = 0.18 + Math.random() * 0.38;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.rotation = Math.random() * Math.PI * 2;
+      // Leaves tumble slowly and gently
+      this.rotSpeed = (Math.random() - 0.5) * 0.012;
+      this.sway = Math.random() * Math.PI * 2;
+      this.swaySpeed = 0.006 + Math.random() * 0.008;
+      this.swayAmp  = 0.8 + Math.random() * 1.2;
+      this.color = LEAF_COLORS[Math.floor(Math.random() * LEAF_COLORS.length)];
+      this.opacity = 0.45 + Math.random() * 0.35;
+      // Leaf shape variant: 0=maple-ish, 1=oval, 2=pointed
+      this.variant = Math.floor(Math.random() * 3);
+    }
+
+    update() {
+      this.sway += this.swaySpeed;
+      this.x += this.speedX + Math.sin(this.sway) * this.swayAmp;
+      this.y += this.speedY;
+      this.rotation += this.rotSpeed;
+      if (this.y > canvas.height + 40) this.reset(false);
+    }
+
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      ctx.globalAlpha = this.opacity;
+      ctx.fillStyle = this.color;
+      const s = this.size;
+
+      if (this.variant === 0) {
+        // Simple maple-ish leaf: 3-lobe shape
+        ctx.beginPath();
+        ctx.moveTo(0, s);
+        ctx.bezierCurveTo(-s * 0.5, s * 0.5, -s * 0.9, -s * 0.1, -s * 0.6, -s * 0.4);
+        ctx.bezierCurveTo(-s * 0.3, -s * 0.7, 0, -s * 0.3, 0, -s * 0.6);
+        ctx.bezierCurveTo(0, -s * 0.3, s * 0.3, -s * 0.7, s * 0.6, -s * 0.4);
+        ctx.bezierCurveTo(s * 0.9, -s * 0.1, s * 0.5, s * 0.5, 0, s);
+        ctx.closePath();
+        ctx.fill();
+        // Vein
+        ctx.strokeStyle = 'rgba(255,220,150,0.3)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(0, s);
+        ctx.lineTo(0, -s * 0.5);
+        ctx.stroke();
+      } else if (this.variant === 1) {
+        // Oval leaf
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 0.45, s * 0.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Vein
+        ctx.strokeStyle = 'rgba(255,220,150,0.25)';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.9);
+        ctx.lineTo(0, s * 0.9);
+        ctx.stroke();
+      } else {
+        // Pointed teardrop leaf
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.bezierCurveTo(s * 0.6, -s * 0.3, s * 0.5, s * 0.5, 0, s);
+        ctx.bezierCurveTo(-s * 0.5, s * 0.5, -s * 0.6, -s * 0.3, 0, -s);
+        ctx.closePath();
+        ctx.fill();
+        // Vein
+        ctx.strokeStyle = 'rgba(255,220,150,0.25)';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.lineTo(0, s);
+        ctx.stroke();
+      }
 
       ctx.restore();
     }
   }
 
-  const petals = Array.from({ length: 38 }, () => new Petal());
+  const petals = Array.from({ length: 40 }, () => new Petal());
+  const leaves  = Array.from({ length: 6 }, () => new Leaf());
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    petals.forEach(p => { p.update(); p.draw(); });
+    leaves.forEach(l  => { l.update();  l.draw();  });
+    petals.forEach(p  => { p.update();  p.draw();  });
     requestAnimationFrame(animate);
   }
   animate();
@@ -1458,7 +1563,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 4096 } })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 8192 } })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini API error ' + res.status); }
     const data = await res.json();
@@ -1470,7 +1575,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'HTTP-Referer': window.location.href, 'X-Title': 'Workshop Intel' },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'OpenRouter error ' + res.status); }
     const data = await res.json();
@@ -1481,7 +1586,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4096, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8192, messages: [{ role: 'user', content: prompt }] })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Claude API error ' + res.status); }
     const data = await res.json();
@@ -1493,7 +1598,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Groq error ' + res.status); }
     const data = await res.json();
@@ -1505,7 +1610,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Mistral error ' + res.status); }
     const data = await res.json();
@@ -1517,7 +1622,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const res = await fetch('https://api.cohere.com/v2/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 8192 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Cohere error ' + res.status); }
     const data = await res.json();
@@ -1769,37 +1874,37 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     triggerDownload(html, 'workshop-details.html', 'text/html');
   }
 
-  // ── Analysis (Competitive Growth Report) ──────────────────────────────────
+  // ── Analysis (Deep Insight Report) ────────────────────────────────────────
   function buildAnalysisPrompt(reportText) {
     return [
-      'You are a senior business strategist preparing a crisp competitive scorecard for an executive manager.',
-      'Based on the workshop intelligence report below, produce a focused, insight-driven scorecard.',
-      'Every sentence must deliver a concrete, specific finding — no filler, no generic advice.',
+      'You are a thoughtful learning analyst helping someone deeply understand a workshop intelligence report.',
+      'Your goal is NOT competitive analysis. Your goal is to extract meaningful insight, patterns, and understanding from the report so the reader walks away truly grasping what was taught, why it matters, and what they can learn from it.',
+      'Every sentence must be specific and grounded in the report — no filler, no generic advice.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown, no code fences, no preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. All string values must be plain text (no HTML, no bullet characters inside strings).',
-      '4. Be specific: use names, prices, tactics, and numbers found in the report. Never write vague statements.',
+      '4. Be specific: use names, prices, tactics, frameworks, and numbers found in the report. Never write vague statements.',
       '',
       'OUTPUT FORMAT:',
       '{',
-      '  "executiveSummary": "<2-3 sentences. What is the single most important competitive reality? What is the #1 risk and #1 opportunity?>",',
+      '  "executiveSummary": "<Write a thorough, meaningful overview of the report. Cover: what this workshop was fundamentally about, the core ideas and frameworks presented, who it is for and what transformation it promises, and the most important takeaways. Write as many sentences as needed — do not cut short.>",',
       '  "priorityActions": [',
-      '    "<Specific action to take — what, why, expected outcome. Max 20 words.>",',
-      '    "<Second priority action>",',
-      '    "<Third priority action>"',
+      '    "<Key learning or action to apply — what it is, why it matters, expected outcome. Max 25 words.>",',
+      '    "<Second key learning or action>",',
+      '    "<Third key learning or action>"',
       '  ],',
       '  "sections": [',
       '    {',
       '      "label": "HOOK & TARGET AUDIENCE",',
-      '      "score": <integer 1 to 5 — how strong is the competitor in this area? 1=very weak, 5=excellent>,',
-      '      "scoreLabel": "<one word rating: e.g. Weak / Average / Strong / Excellent>",',
-      '      "verdict": "<One crisp sentence: the key competitive reality in this dimension>",',
+      '      "score": <integer 1 to 5 — how clearly and thoroughly does the report cover this dimension? 1=barely mentioned, 5=very thoroughly covered>,',
+      '      "scoreLabel": "<one word: e.g. Sparse / Partial / Covered / Thorough / Excellent>",',
+      '      "verdict": "<One sentence: the most meaningful insight about this dimension from the report>",',
       '      "bullets": [',
       '        "<Specific insight with a concrete detail from the report>",',
-      '        "<Another specific insight>",',
-      '        "<Actionable gap or opportunity you can exploit>"',
+      '        "<Another meaningful insight or pattern>",',
+      '        "<Key takeaway or lesson for the reader from this dimension>"',
       '      ]',
       '    },',
       '    { "label": "SALES & CONVERSION STRATEGY", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
@@ -1812,14 +1917,14 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
       '}',
       '',
       'FIELD DEFINITIONS:',
-      'executiveSummary: 2-3 sentence bottom-line for a manager who has 30 seconds. Specific, direct, no fluff.',
-      'priorityActions: exactly 3 strings — the three most important moves. Each is one crisp sentence with a clear action and expected result.',
+      'executiveSummary: A rich, complete narrative overview of the report. Write enough sentences to fully convey the essence of what was covered — do not artificially limit yourself. The reader depends on this to understand the whole report at a deeper level.',
+      'priorityActions: exactly 3 strings — the three most important learnings or actions the reader should apply. Each is one clear sentence grounded in the report content.',
       'sections: exactly 7 objects, one per dimension.',
-      '  score: integer 1–5. Rate how strong the competitor is in this area based on the report evidence.',
-      '    1 = Very Weak, 2 = Below Average, 3 = Average, 4 = Strong, 5 = Excellent.',
-      '  scoreLabel: one word capturing the rating (e.g. "Weak", "Average", "Strong", "Excellent").',
-      '  verdict: one sharp sentence summarizing the key competitive reality for that dimension.',
-      '  bullets: exactly 3 strings. Each must include a concrete detail (name, price, tactic, stat) from the report. Third bullet is always an actionable opportunity for you.',
+      '  score: integer 1–5. Rate how thoroughly and meaningfully this dimension is covered in the report.',
+      '    1 = Barely mentioned, 2 = Lightly touched, 3 = Adequately covered, 4 = Well covered, 5 = Thoroughly covered with strong insight.',
+      '  scoreLabel: one word capturing coverage depth (e.g. "Sparse", "Partial", "Covered", "Thorough", "Excellent").',
+      '  verdict: one sentence capturing the most meaningful insight for this dimension.',
+      '  bullets: exactly 3 strings. Each must include a concrete detail from the report. Third bullet is always the key lesson or takeaway for the reader.',
       '',
       'WORKSHOP INTELLIGENCE REPORT:',
       reportText.substring(0, 60000)
@@ -1831,10 +1936,12 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
     const apiKey = (keyEl?.value || '').trim();
     if (!apiKey) { alert('Please enter your API key first.'); return; }
 
-    // Gather report text
+    // Gather report text — use only the original summary + detail bullet text, not any nested analysis cards
     const summaryEl = document.getElementById('content1');
     const detailsEl = document.getElementById('detailsInner');
-    const reportText = (summaryEl?.textContent || '') + '\n\n' + (detailsEl?.textContent || '');
+    const summaryText = Array.from(summaryEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (summaryEl?.textContent || '');
+    const detailsText = Array.from(detailsEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (detailsEl?.textContent || '');
+    const reportText = (summaryText + '\n\n' + detailsText).substring(0, 20000);
 
     const analyseBtn = document.getElementById('analyseBtn');
     analyseBtn.disabled = true;
@@ -1864,7 +1971,10 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
       // Parse JSON
       let clean = text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
       const s = clean.indexOf('{'), e2 = clean.lastIndexOf('}');
-      if (s === -1 || e2 === -1) throw new Error('No JSON in response');
+      if (s === -1 || e2 === -1) {
+        const preview = text ? text.substring(0, 400) : '(empty response)';
+        throw new Error('No JSON in response. Model returned:\n\n' + preview);
+      }
       clean = clean.substring(s, e2 + 1);
       clean = clean.replace(/"((?:[^"\\]|\\.)*)"/gs, (m, inner) =>
         '"' + inner.replace(/\r\n/g,'\\n').replace(/\r/g,'\\n').replace(/\n/g,'\\n') + '"'
@@ -1878,7 +1988,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
       const rewriteEl = document.getElementById('analysisRewrite');
       rewriteEl.innerHTML = '<p style="font-size:14.5px;line-height:1.9;color:var(--text2);">' + summaryText.replace(/</g,'&lt;') + '</p>';
 
-      // ── Top Priority Actions ──────────────────────────────────────────
+      // ── Top Takeaways & Actions ──────────────────────────────────────────
       const priorities = Array.isArray(data.priorityActions) ? data.priorityActions : [];
       const prioritiesEl = document.getElementById('analysisPriorities');
       if (priorities.length) {
@@ -1969,7 +2079,7 @@ document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
   function copyAnalysisDetails(btn) {
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let out = 'GROWTH PLAYBOOK\n' + '─'.repeat(40) + '\n\n';
+    let out = 'DEEP INSIGHT REPORT\n' + '─'.repeat(40) + '\n\n';
     labels.forEach((label, i) => {
       const el = document.getElementById('refined-detail-' + i);
       if (!el) return;
