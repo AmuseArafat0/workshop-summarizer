@@ -1885,6 +1885,9 @@ window.addEventListener('load', () => {
       }).join('') + '</ul>';
   }
 
+  // Stores raw bullet strings (with @[timestamps]) from report 1 — used by analysis prompt
+  let storedReportBullets = { summary: [], details: {} };
+
   function parseAndDisplay(text) {
     let data;
     try {
@@ -1927,6 +1930,8 @@ window.addEventListener('load', () => {
     const summaryBullets = summaryRaw.split('\n')
       .map(l => l.trim().replace(/^[•\-\*]\s*/, '').trim())
       .filter(l => l.length > 0);
+    // Store raw bullets (with timestamps) for accurate analysis prompt
+    storedReportBullets.summary = summaryBullets;
     const summaryEl = document.getElementById('content1');
     if (summaryBullets.length > 1) {
       summaryEl.innerHTML = renderBullets(summaryBullets, 'var(--text2)');
@@ -1960,6 +1965,8 @@ window.addEventListener('load', () => {
         if (point) parsed[currentKey].push(point);
       }
     });
+    // Store raw details bullets (with timestamps) for accurate analysis prompt
+    storedReportBullets.details = parsed;
 
     const container = document.getElementById('detailsCards');
     container.innerHTML = '';
@@ -2104,7 +2111,7 @@ window.addEventListener('load', () => {
       '2. Your entire reply must start with { and end with }.',
       '3. All string values must be plain text (no HTML, no bullet characters inside strings).',
       '4. Be specific: use names, prices, tactics, frameworks, and numbers found in the report. Never write vague statements.',
-      '5. TIMESTAMPS: The report bullets may contain timestamps like [12:34]. If a bullet in the report has a timestamp, reference that same timestamp at the END of your analysis bullet using the format @[MM:SS] or @[HH:MM:SS]. Only include a timestamp if you are drawing on a specific timestamped bullet from the report.',
+      '5. TIMESTAMPS: Some bullets in the report already contain timestamps in the format @[MM:SS] or @[HH:MM:SS]. These are EXACT transcript positions. When your analysis bullet is directly based on a report bullet that has a timestamp, you MUST copy that exact timestamp to the end of your bullet using the same @[MM:SS] format. Do NOT invent or guess timestamps — only use ones already present in the report.',
       '',
       'OUTPUT FORMAT:',
       '{',
@@ -2165,13 +2172,23 @@ window.addEventListener('load', () => {
       if (!proceed) return;
     }
 
-    // Gather report text — use only the original summary + detail bullet text, not any nested analysis cards
-    const summaryEl = document.getElementById('content1');
-    const detailsEl = document.getElementById('detailsInner');
-    const summaryText = Array.from(summaryEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (summaryEl?.textContent || '');
-    const detailsText = Array.from(detailsEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (detailsEl?.textContent || '');
-    // Strip control chars from report text before sending to AI
-    const reportRaw = (summaryText + '\n\n' + detailsText).substring(0, 20000);
+    // Build report text from stored raw bullets (preserves @[timestamps] accurately)
+    const summaryLines = storedReportBullets.summary.map(b => '• ' + b);
+    const detailLines = [];
+    const detailCategoryOrder = [
+      'HOOK & TARGET AUDIENCE', 'SALES & CONVERSION STRATEGY', 'OFFER & MONETIZATION',
+      'TRUST & ENGAGEMENT', 'AI TOOLS & PRACTICAL VALUE',
+      'BUSINESS MOAT & COMPETITIVE ADVANTAGE', 'WEAKNESSES & GROWTH OPPORTUNITIES'
+    ];
+    detailCategoryOrder.forEach(key => {
+      const bullets = storedReportBullets.details[key];
+      if (bullets && bullets.length) {
+        detailLines.push(key + ':');
+        bullets.forEach(b => detailLines.push('• ' + b));
+      }
+    });
+    // Strip control chars and combine
+    const reportRaw = (summaryLines.join('\n') + '\n\n' + detailLines.join('\n')).substring(0, 20000);
     const reportText = reportRaw.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
 
     const analyseBtn = document.getElementById('analyseBtn');
