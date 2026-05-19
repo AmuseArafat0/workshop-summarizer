@@ -1654,13 +1654,14 @@ window.addEventListener('load', () => {
       '5. Each bullet must be a single, specific, non-repetitive fact. No duplicates across bullets or categories.',
       '6. For category headers use the exact label in ALL CAPS followed by a colon, on its own line.',
       '7. If a category has nothing relevant, write \u2022 Not mentioned in transcript.',
+      '8. TIMESTAMPS: The transcript may contain timestamps in formats like [HH:MM:SS], [MM:SS], or lines starting with a timecode. For EVERY bullet point in both summary and details, append the nearest timestamp where that fact appears, in the format @[MM:SS] or @[HH:MM:SS] at the END of the bullet. If no timestamp is found for a point, omit the @ tag for that bullet.',
       '',
       'OUTPUT FORMAT:',
-      '{"summary":"...","details":"HOOK & TARGET AUDIENCE:\\n\u2022 point one\\nSALES & CONVERSION STRATEGY:\\n\u2022 point one"}',
+      '{"summary":"...","details":"HOOK & TARGET AUDIENCE:\\n\u2022 point one @[12:34]\\nSALES & CONVERSION STRATEGY:\\n\u2022 point one @[05:10]"}',
       '',
       'FIELD DEFINITIONS:',
-      'summary = A bullet-point overview using \u2022. Write 5-7 bullets: who taught it, what was taught, key tools/concepts, offers/prices, main takeaway. Max 30 words each.',
-      'details = Intelligence report with exactly 7 category headers, 3-5 bullets each. Concise (max 30 words), specific, unique — no repeated facts.',
+      'summary = A bullet-point overview using \u2022. Write 5-7 bullets: who taught it, what was taught, key tools/concepts, offers/prices, main takeaway. Max 30 words each. End each bullet with @[timestamp] if available.',
+      'details = Intelligence report with exactly 7 category headers, 3-5 bullets each. Concise (max 30 words), specific, unique — no repeated facts. End each bullet with @[timestamp] if available.',
       '  HOOK & TARGET AUDIENCE: target audience, core pain point, promised transformation.',
       '  SALES & CONVERSION STRATEGY: emotional triggers, urgency/scarcity tactics, objection handling, pitch timing.',
       '  OFFER & MONETIZATION: each offer name, exact price, payment plan, bonuses, upsells.',
@@ -1856,14 +1857,32 @@ window.addEventListener('load', () => {
     return words.slice(0, 30).join(' ') + '…';
   }
 
-  // Helper to render bullet lists with sakura dots
+  // Extract @[timestamp] from end of a bullet string, return { text, timestamp }
+  function extractTimestamp(str) {
+    const match = str.match(/^([\s\S]*?)\s*@\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*$/);
+    if (match) return { text: match[1].trim(), timestamp: match[2] };
+    return { text: str.trim(), timestamp: null };
+  }
+
+  // Render a timestamp badge
+  function renderTimestamp(ts) {
+    if (!ts) return '';
+    return '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:8px;padding:2px 8px;background:rgba(232,160,176,0.15);border:1px solid rgba(232,160,176,0.35);border-radius:999px;font-size:10px;font-family:\'Noto Serif JP\',serif;color:var(--sakura);letter-spacing:0.04em;vertical-align:middle;white-space:nowrap;flex-shrink:0;" title="Jump to this moment in the transcript">' +
+      '<span style="font-size:9px;opacity:0.7;">⏱</span> ' + ts +
+      '</span>';
+  }
+
+  // Helper to render bullet lists with sakura dots and timestamps
   function renderBullets(bullets, textColor) {
     return '<ul style="list-style:none;padding:0;margin:0;">' +
-      bullets.map(b =>
-        '<li style="margin-bottom:9px;line-height:1.75;color:' + textColor + ';padding-left:20px;position:relative;">' +
-        '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
-        truncateTo30Words(b) + '</li>'
-      ).join('') + '</ul>';
+      bullets.map(b => {
+        const { text, timestamp } = extractTimestamp(b);
+        return '<li style="margin-bottom:9px;line-height:1.75;color:' + textColor + ';padding-left:20px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;">' +
+          '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
+          '<span>' + truncateTo30Words(text) + '</span>' +
+          renderTimestamp(timestamp) +
+          '</li>';
+      }).join('') + '</ul>';
   }
 
   function parseAndDisplay(text) {
@@ -1949,11 +1968,14 @@ window.addEventListener('load', () => {
     let innerHtml = '';
     categoryMeta.forEach((cat, i) => {
       const bullets = parsed[cat.key] && parsed[cat.key].length ? parsed[cat.key] : ['Not mentioned in this transcript.'];
-      const liItems = bullets.map(b =>
-        '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
-        '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
-        truncateTo30Words(b) + '</li>'
-      ).join('');
+      const liItems = bullets.map(b => {
+        const { text, timestamp } = extractTimestamp(b);
+        return '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;">' +
+          '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
+          '<span>' + truncateTo30Words(text) + '</span>' +
+          renderTimestamp(timestamp) +
+          '</li>';
+      }).join('');
       innerHtml +=
         '<div style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:20px;margin-top:20px;' : '') + '">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
@@ -2082,12 +2104,13 @@ window.addEventListener('load', () => {
       '2. Your entire reply must start with { and end with }.',
       '3. All string values must be plain text (no HTML, no bullet characters inside strings).',
       '4. Be specific: use names, prices, tactics, frameworks, and numbers found in the report. Never write vague statements.',
+      '5. TIMESTAMPS: The report bullets may contain timestamps like [12:34]. If a bullet in the report has a timestamp, reference that same timestamp at the END of your analysis bullet using the format @[MM:SS] or @[HH:MM:SS]. Only include a timestamp if you are drawing on a specific timestamped bullet from the report.',
       '',
       'OUTPUT FORMAT:',
       '{',
-      '  "executiveSummary": ["<Key point 1 about what this workshop was fundamentally about — one clear sentence>", "<Key point 2 covering core ideas and frameworks presented>", "<Key point 3 about who it is for and the transformation it promises>", "<Key point 4 about a major tactic, tool, or offer detail>", "<Key point 5 about an important takeaway, strength, or weakness>"],',
+      '  "executiveSummary": ["<Key point 1 — one clear sentence, append @[MM:SS] if drawn from a timestamped bullet>", "<Key point 2>", "<Key point 3>", "<Key point 4>", "<Key point 5>"],',
       '  "priorityActions": [',
-      '    "<Key learning or action to apply — what it is, why it matters, expected outcome. Max 25 words.>",',
+      '    "<Key learning or action — max 25 words, append @[MM:SS] if applicable>",',
       '    "<Second key learning or action>",',
       '    "<Third key learning or action>"',
       '  ],',
@@ -2098,9 +2121,9 @@ window.addEventListener('load', () => {
       '      "scoreLabel": "<one word: e.g. Sparse / Partial / Covered / Thorough / Excellent>",',
       '      "verdict": "<One sentence: the most meaningful insight about this dimension from the report>",',
       '      "bullets": [',
-      '        "<Specific insight with a concrete detail from the report>",',
-      '        "<Another meaningful insight or pattern>",',
-      '        "<Key takeaway or lesson for the reader from this dimension>"',
+      '        "<Specific insight with a concrete detail from the report, append @[MM:SS] if from a timestamped bullet>",',
+      '        "<Another meaningful insight or pattern, append @[MM:SS] if applicable>",',
+      '        "<Key takeaway or lesson for the reader from this dimension, append @[MM:SS] if applicable>"',
       '      ]',
       '    },',
       '    { "label": "SALES & CONVERSION STRATEGY", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
@@ -2222,12 +2245,13 @@ window.addEventListener('load', () => {
         summaryBullets = rawSummary.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
       }
       rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
-        summaryBullets.map(b =>
-          '<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:14.5px;line-height:1.8;color:var(--text2);">' +
-          '<span style="flex-shrink:0;color:var(--sakura);font-size:12px;margin-top:6px;">✿</span>' +
-          '<span>' + b.replace(/</g,'&lt;') + '</span>' +
-          '</li>'
-        ).join('') +
+        summaryBullets.map(b => {
+          const { text, timestamp } = extractTimestamp(b);
+          return '<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:14.5px;line-height:1.8;color:var(--text2);">' +
+            '<span style="flex-shrink:0;color:var(--sakura);font-size:12px;margin-top:6px;">✿</span>' +
+            '<span>' + text.replace(/</g,'&lt;') + renderTimestamp(timestamp) + '</span>' +
+            '</li>';
+        }).join('') +
         '</ul>';
 
       // ── Top Takeaways & Actions ──────────────────────────────────────────
@@ -2235,12 +2259,13 @@ window.addEventListener('load', () => {
       const prioritiesEl = document.getElementById('analysisPriorities');
       if (priorities.length) {
         prioritiesEl.innerHTML = '<ol style="list-style:none;padding:0;margin:0;">' +
-          priorities.map((p, i) =>
-            '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
-            '<span style="flex-shrink:0;width:24px;height:24px;background:var(--leaf);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:11px;font-weight:700;margin-top:1px;">' + (i+1) + '</span>' +
-            '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + p.replace(/</g,'&lt;') + '</span>' +
-            '</li>'
-          ).join('') + '</ol>';
+          priorities.map((p, i) => {
+            const { text: pText, timestamp: pTs } = extractTimestamp(String(p));
+            return '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
+              '<span style="flex-shrink:0;width:24px;height:24px;background:var(--leaf);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:11px;font-weight:700;margin-top:1px;">' + (i+1) + '</span>' +
+              '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + pText.replace(/</g,'&lt;') + renderTimestamp(pTs) + '</span>' +
+              '</li>';
+          }).join('') + '</ol>';
       }
 
       // ── Dimension Scorecard ───────────────────────────────────────────
@@ -2275,11 +2300,13 @@ window.addEventListener('load', () => {
         const col = scoreLabelColor[score] || '#c47a3a';
         const bg = scoreBg[score] || 'rgba(196,122,58,0.08)';
         const border = scoreBorder[score] || 'rgba(196,122,58,0.2)';
-        const liItems = (sec.bullets || []).map(b =>
-          '<li style="margin-bottom:9px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
-          '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' +
-          b.replace(/</g,'&lt;') + '</li>'
-        ).join('');
+        const liItems = (sec.bullets || []).map(b => {
+          const { text: bText, timestamp: bTs } = extractTimestamp(String(b));
+          return '<li style="margin-bottom:9px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;">' +
+            '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' +
+            '<span>' + bText.replace(/</g,'&lt;') + '</span>' +
+            renderTimestamp(bTs) + '</li>';
+        }).join('');
 
         innerHtml +=
           '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:22px;margin-top:22px;' : '') + '">' +
