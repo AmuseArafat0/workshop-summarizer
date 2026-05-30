@@ -1039,118 +1039,53 @@
   <div class="results" id="results">
 
     <div class="results-header">
-      <div class="results-title">✿ Workshop Intelligence Report</div>
+      <div class="results-title">✿ Workshop Intelligence</div>
       <div style="display:flex;gap:8px;">
         <button class="copy-all-btn" onclick="copyAll()">Copy All ↗</button>
       </div>
     </div>
 
-    <!-- Summary Card -->
-    <div class="section-card card-1">
-      <div class="card-watermark">一</div>
-      <div class="section-meta">
-        <span class="section-icon">🌸</span>
-        <span class="card-label">Section 01</span>
-      </div>
-      <div class="section-title">Summary of Workshop</div>
-      <div class="section-content" id="content1">—</div>
-      <div class="card-action">
-        <button class="copy-btn" onclick="copySection('content1',this)">Copy</button>
-        <button class="copy-btn" id="downloadSummaryBtn" onclick="downloadSummaryDoc()" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">⬇ Download Summary (.html)</button>
-      </div>
-    </div>
-
-    <!-- Details Report -->
+    <!-- Report 1: Intelligence Breakdown -->
     <div id="detailsReport" style="display:none;flex-direction:column;gap:14px;">
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title">✿ Details Report</div>
+        <div class="results-title">🎯 Report 1 · Intelligence Breakdown</div>
         <div style="display:flex;gap:8px;">
           <button class="copy-all-btn" onclick="copyDetails()">Copy Report ↗</button>
-          <button class="copy-all-btn" id="downloadDetailsBtn" onclick="downloadDetailsDoc()" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">⬇ Download Details (.html)</button>
         </div>
       </div>
       <div id="detailsCards"></div>
     </div>
 
-    <!-- ANALYSE BUTTON -->
-    <div id="analyseWrap" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:10px 0;">
-      <button class="analyse-btn" id="analyseBtn" onclick="runAnalysis()">
-        <span>🌿</span> Generate Deep Insight Report
-      </button>
-      <div style="font-size:11px;color:var(--muted);text-align:center;letter-spacing:0.05em;">Meaningful insight · Key patterns · Learnings from the report</div>
-    </div>
-
-    <!-- Analysis Loader -->
-    <div class="loader" id="analyseLoader" style="display:none;">
-      <div class="sakura-spinner">
-        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-          <g transform="translate(30,30)">
-            <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#c47a3a" opacity="0.8"/>
-            <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#e8a05a" opacity="0.8" transform="rotate(72)"/>
-            <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#c47a3a" opacity="0.8" transform="rotate(144)"/>
-            <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#e8a05a" opacity="0.8" transform="rotate(216)"/>
-            <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#c47a3a" opacity="0.8" transform="rotate(288)"/>
-            <circle cx="0" cy="0" r="4" fill="#d4904a"/>
-            <circle cx="0" cy="0" r="2" fill="#fff" opacity="0.8"/>
-          </g>
-        </svg>
-      </div>
-      <div class="loader-text" id="analyseLoaderText">Gathering autumn leaves of insight…</div>
-    </div>
-
-    <!-- ANALYSIS RESULT CARD -->
-    <div id="analysisCard" style="display:none;flex-direction:column;gap:20px;">
-
+    <!-- Report 2: Accuracy Fact-Check (auto-runs after Report 1) -->
+    <div id="report2Section" style="display:none;flex-direction:column;gap:14px;margin-top:10px;">
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title analysis-accent-title">🌿 Deep Insight Report</div>
-        <button class="copy-all-btn" onclick="copyAnalysisFull(this)" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">Copy All ↗</button>
+        <div class="results-title">🔍 Report 2 · Accuracy Fact-Check</div>
       </div>
-
-      <!-- Executive Summary -->
-      <div class="section-card card-2" style="border-color:rgba(196,122,58,0.22);">
-        <div class="card-watermark">智</div>
-        <div class="section-meta">
-          <span class="section-icon">🌏</span>
-          <span class="card-label">Report Understanding · Executive Summary</span>
+      <!-- Report 2 Loader -->
+      <div class="loader" id="report2Loader" style="display:none;">
+        <div class="sakura-spinner">
+          <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(30,30)">
+              <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#c47a3a" opacity="0.8"/>
+              <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#e8a05a" opacity="0.8" transform="rotate(72)"/>
+              <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#c47a3a" opacity="0.8" transform="rotate(144)"/>
+              <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#e8a05a" opacity="0.8" transform="rotate(216)"/>
+              <ellipse cx="0" cy="-14" rx="5" ry="9" fill="#c47a3a" opacity="0.8" transform="rotate(288)"/>
+              <circle cx="0" cy="0" r="4" fill="#d4904a"/>
+              <circle cx="0" cy="0" r="2" fill="#fff" opacity="0.8"/>
+            </g>
+          </svg>
         </div>
-        <div class="section-title">Executive Summary</div>
-        <div class="section-content" id="analysisRewrite">—</div>
-        <div class="card-action">
-          <button class="copy-btn" onclick="copySection('analysisRewrite',this)">Copy</button>
-        </div>
+        <div class="loader-text">Verifying claims against transcript…</div>
       </div>
-
-      <!-- Top Priorities -->
-      <div class="section-card card-2" style="border-color:rgba(122,155,106,0.28);">
-        <div class="card-watermark">先</div>
-        <div class="section-meta">
-          <span class="section-icon">🎯</span>
-          <span class="card-label">Report Understanding · Key Takeaways</span>
-        </div>
-        <div class="section-title">Top Takeaways & Actions</div>
-        <div id="analysisPriorities">—</div>
-        <div class="card-action">
-          <button class="copy-btn" onclick="copySection('analysisPriorities',this)">Copy</button>
-        </div>
-      </div>
-
-      <!-- Deep Dimension Breakdown -->
-      <div style="display:flex;flex-direction:column;gap:14px;" id="analysisDetailsWrap">
-        <div class="section-card card-2" style="border-color:rgba(196,122,58,0.18);">
-          <div class="card-watermark">策</div>
-          <div class="section-meta">
-            <span class="section-icon">📖</span>
-            <span class="card-label">Report Understanding · Dimension Breakdown</span>
-          </div>
-          <div class="section-title">Key Insights by Dimension</div>
-          <div id="analysisGrid"></div>
-          <div class="card-action">
-            <button class="copy-btn" onclick="copyAnalysisDetails(this)">Copy</button>
-          </div>
-        </div>
-      </div>
-
+      <div id="report2Error" style="display:none;font-size:13px;color:#c06060;padding:10px 16px;background:rgba(200,80,80,0.06);border-radius:10px;border:1px solid rgba(200,80,80,0.18);"></div>
+      <!-- Report 2 Card -->
+      <div class="section-card card-3" id="report2Card" style="display:none;"></div>
     </div>
+
+    <!-- Hidden legacy wrappers (kept so old JS references don't break) -->
+    <div id="analyseWrap"   style="display:none;"></div>
+    <div id="analysisCard"  style="display:none;"></div>
 
   </div>
 
@@ -1376,6 +1311,8 @@ window.addEventListener('load', () => {
   let uploadedFiles = [];
   let currentProvider = 'gemini';
   let summaryProvider = null; // tracks which provider was used to generate the summary
+  let storedReport1Data = null;       // parsed JSON from Report 1
+  let storedTimestampedTranscript = ''; // for Report 2 fact-check
 
   // ── Provider Switcher ──────────────────────────────────────────────────────
   function selectProvider(p) {
@@ -1467,11 +1404,56 @@ window.addEventListener('load', () => {
   }
 
   // ── VTT Parser ─────────────────────────────────────────────────────────────
+  // Returns plain text (timestamps stripped) for Report 1 prompt
   function parseVTT(text) {
     return text.split('\n')
       .map(l => l.trim())
       .filter(l => l && l !== 'WEBVTT' && !/^\d+$/.test(l) && !l.includes('-->'))
       .join(' ');
+  }
+
+  // Returns timestamped version for Report 2 accuracy check
+  // Format: [00:01:23] Dialogue text here
+  function parseVTTWithTimestamps(text) {
+    const lines = text.split('\n').map(l => l.trim());
+    const result = [];
+    let currentTimestamp = null;
+    let buffer = [];
+
+    function toSeconds(ts) {
+      // ts like 00:01:23.456 or 01:23.456
+      const parts = ts.split(':');
+      if (parts.length === 3) return parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseFloat(parts[2]);
+      if (parts.length === 2) return parseInt(parts[0])*60 + parseFloat(parts[1]);
+      return 0;
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!l || l === 'WEBVTT' || /^\d+$/.test(l)) continue;
+      if (l.includes('-->')) {
+        if (currentTimestamp && buffer.length) {
+          result.push('[' + currentTimestamp + '] ' + buffer.join(' '));
+          buffer = [];
+        }
+        // Extract start time from "00:01:23.456 --> 00:01:26.000"
+        const startRaw = l.split('-->')[0].trim();
+        // Convert to HH:MM:SS display
+        const secs = toSeconds(startRaw);
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const s = Math.floor(secs % 60);
+        currentTimestamp = (h > 0 ? String(h).padStart(2,'0') + ':' : '') +
+          String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      } else {
+        buffer.push(l);
+      }
+    }
+    if (currentTimestamp && buffer.length) result.push('[' + currentTimestamp + '] ' + buffer.join(' '));
+
+    // If no timestamps were found (plain .txt), return plain text with a note
+    if (result.length === 0) return text.trim();
+    return result.join('\n');
   }
 
   async function readFile(file) {
@@ -1644,36 +1626,96 @@ window.addEventListener('load', () => {
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
     var lines = [
-      'You are a competitive workshop intelligence analyst. Read the transcript and fill in the 2 JSON fields.',
+      'You are a competitive workshop intelligence analyst. Read the transcript and fill in the JSON fields below.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
-      '3. Both keys must exist. Values are plain strings.',
-      '4. For each detail category: write 3-5 bullet points using the bullet character \u2022 followed by a space. One point per line.',
-      '5. Each bullet must be a single, specific, non-repetitive fact. No duplicates across bullets or categories.',
-      '6. For category headers use the exact label in ALL CAPS followed by a colon, on its own line.',
-      '7. If a category has nothing relevant, write \u2022 Not mentioned in transcript.',
-      '8. TIMESTAMPS: The transcript may contain timestamps in formats like [HH:MM:SS], [MM:SS], or lines starting with a timecode. For EVERY bullet point in both summary and details, append the nearest timestamp where that fact appears, in the format @[MM:SS] or @[HH:MM:SS] at the END of the bullet. If no timestamp is found for a point, omit the @ tag for that bullet.',
+      '3. All values are plain strings or arrays of strings.',
+      '4. For each detail category: write 3-5 bullet points. Each bullet is one specific, non-repetitive fact.',
+      '5. If a category has nothing relevant, write "Not mentioned in transcript."',
       '',
-      'OUTPUT FORMAT:',
-      '{"summary":"...","details":"HOOK & TARGET AUDIENCE:\\n\u2022 point one @[12:34]\\nSALES & CONVERSION STRATEGY:\\n\u2022 point one @[05:10]"}',
+      'OUTPUT FORMAT (exact keys required):',
+      '{',
+      '  "hookAudience":    ["bullet 1", "bullet 2", "bullet 3"],',
+      '  "salesConversion": ["bullet 1", "bullet 2", "bullet 3"],',
+      '  "offerMonetization": ["bullet 1", "bullet 2", "bullet 3"],',
+      '  "trustEngagement": ["bullet 1", "bullet 2", "bullet 3"],',
+      '  "aiToolsValue":    ["bullet 1", "bullet 2", "bullet 3"],',
+      '  "businessMoat":    ["bullet 1", "bullet 2", "bullet 3"],',
+      '  "weaknesses":      ["bullet 1", "bullet 2", "bullet 3"]',
+      '}',
       '',
       'FIELD DEFINITIONS:',
-      'summary = A bullet-point overview using \u2022. Write 5-7 bullets: who taught it, what was taught, key tools/concepts, offers/prices, main takeaway. Max 30 words each. End each bullet with @[timestamp] if available.',
-      'details = Intelligence report with exactly 7 category headers, 3-5 bullets each. Concise (max 30 words), specific, unique — no repeated facts. End each bullet with @[timestamp] if available.',
-      '  HOOK & TARGET AUDIENCE: target audience, core pain point, promised transformation.',
-      '  SALES & CONVERSION STRATEGY: emotional triggers, urgency/scarcity tactics, objection handling, pitch timing.',
-      '  OFFER & MONETIZATION: each offer name, exact price, payment plan, bonuses, upsells.',
-      '  TRUST & ENGAGEMENT: social proof, testimonials, live interaction methods, community tactics.',
-      '  AI TOOLS & PRACTICAL VALUE: specific AI tools named, prompts/templates shown, actionability.',
-      '  BUSINESS MOAT & COMPETITIVE ADVANTAGE: unique systems, brand authority, exclusive access, proprietary frameworks.',
-      '  WEAKNESSES & GROWTH OPPORTUNITIES: gaps in delivery, overpromises, weak areas, opportunities to outperform.',
+      'hookAudience:      Target audience, core pain point, promised transformation, who the workshop is for.',
+      'salesConversion:   Emotional triggers, urgency/scarcity tactics, objection handling, pitch timing.',
+      'offerMonetization: Each offer name, exact price, payment plan, bonuses, upsells.',
+      'trustEngagement:   Social proof, testimonials, live interaction methods, community tactics.',
+      'aiToolsValue:      Specific AI tools named, prompts/templates shown, practical takeaways.',
+      'businessMoat:      Unique systems, brand authority, exclusive access, proprietary frameworks.',
+      'weaknesses:        Gaps in delivery, overpromises, weak areas, opportunities to outperform.',
+      '',
+      'Be specific: use names, prices, tactics, and numbers directly from the transcript. No filler.',
       '',
       'TRANSCRIPT:',
       transcript
     ];
     return lines.join('\n');
+  }
+
+  // ── Report 2 Prompt: Accuracy Fact-Check with Timestamps ─────────────────
+  function buildReport2Prompt(report1Data, timestampedTranscript) {
+    const r1Text = [
+      'HOOK & TARGET AUDIENCE: ' + (report1Data.hookAudience || []).join(' | '),
+      'SALES & CONVERSION STRATEGY: ' + (report1Data.salesConversion || []).join(' | '),
+      'OFFER & MONETIZATION: ' + (report1Data.offerMonetization || []).join(' | '),
+      'TRUST & ENGAGEMENT: ' + (report1Data.trustEngagement || []).join(' | '),
+      'AI TOOLS & PRACTICAL VALUE: ' + (report1Data.aiToolsValue || []).join(' | '),
+      'BUSINESS MOAT & COMPETITIVE ADVANTAGE: ' + (report1Data.businessMoat || []).join(' | '),
+      'WEAKNESSES & GROWTH OPPORTUNITIES: ' + (report1Data.weaknesses || []).join(' | '),
+    ].join('\n');
+
+    return [
+      'You are a transcript accuracy auditor. You have been given:',
+      '1. An AI-generated intelligence report (Report 1) about a workshop.',
+      '2. The original timestamped transcript the report was based on.',
+      '',
+      'Your job: fact-check every specific claim in Report 1 against the actual transcript.',
+      'For each finding, cite the timestamp where you found (or could not find) the evidence.',
+      '',
+      'STRICT RULES:',
+      '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
+      '2. Your entire reply must start with { and end with }.',
+      '3. All string values are plain text only — no HTML.',
+      '4. verdict must be exactly one of: "CONFIRMED", "INACCURATE", "UNVERIFIABLE"',
+      '   - CONFIRMED: claim is clearly supported by the transcript with a specific timestamp',
+      '   - INACCURATE: claim contradicts what was actually said (state what was really said)',
+      '   - UNVERIFIABLE: claim cannot be confirmed or denied from the transcript text',
+      '5. timestamp: the nearest [MM:SS] or [HH:MM:SS] timestamp label from the transcript, or "N/A" if unverifiable.',
+      '6. Check 5-8 specific factual claims total, spread across different categories.',
+      '',
+      'OUTPUT FORMAT:',
+      '{',
+      '  "overallAccuracy": "<one sentence overall accuracy assessment with a percentage estimate>",',
+      '  "checks": [',
+      '    {',
+      '      "category": "<which Report 1 category this claim came from>",',
+      '      "claim": "<exact claim from Report 1, quoted>",',
+      '      "verdict": "CONFIRMED",',
+      '      "timestamp": "[00:01:23]",',
+      '      "note": "<what the transcript actually says at that point — be specific>"',
+      '    }',
+      '  ],',
+      '  "missedInsights": ["<important thing in the transcript that Report 1 missed>", "..."],',
+      '  "recommendation": "<one actionable sentence about how reliable this report is>"',
+      '}',
+      '',
+      '━━━ REPORT 1 TO FACT-CHECK ━━━',
+      r1Text,
+      '',
+      '━━━ ORIGINAL TIMESTAMPED TRANSCRIPT ━━━',
+      timestampedTranscript.substring(0, 60000)
+    ].join('\n');
   }
   // ── API Calls ──────────────────────────────────────────────────────────────
   const GEMINI_FALLBACK_MODELS = [
@@ -1826,12 +1868,16 @@ window.addEventListener('load', () => {
     startLoader();
 
     try {
-      const transcripts = [];
+      const rawTexts = [];
+      const timestampedParts = [];
       for (const file of uploadedFiles) {
         const raw = await readFile(file);
-        transcripts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
+        rawTexts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
+        timestampedParts.push('=== FILE: ' + file.name + ' ===\n' + parseVTTWithTimestamps(raw));
       }
-      const combined = transcripts.join('\n\n');
+      const combined = rawTexts.join('\n\n');
+      storedTimestampedTranscript = timestampedParts.join('\n\n');
+
       const charLimit = getCharLimit();
       const trimmed = trimTranscript(combined, charLimit);
       const prompt = buildPrompt(trimmed);
@@ -1841,13 +1887,41 @@ window.addEventListener('load', () => {
       else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
       else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
       if (!text) throw new Error('Empty response from API. Please try again.');
-      parseAndDisplay(text);
+      const report1Ok = parseAndDisplayReport1(text);
       summaryProvider = currentProvider;
+
+      // Auto-run Report 2 if Report 1 parsed successfully
+      if (report1Ok && storedReport1Data) {
+        await runReport2(apiKey);
+      }
     } catch (err) {
       showError(err.message || 'Something went wrong. Check your API key and try again.');
     } finally {
       stopLoader();
       document.getElementById('runBtn').disabled = false;
+    }
+  }
+
+  // ── Report 2: Accuracy Check ───────────────────────────────────────────────
+  async function runReport2(apiKey) {
+    const report2Loader = document.getElementById('report2Loader');
+    const report2Card   = document.getElementById('report2Card');
+    if (report2Loader) report2Loader.style.display = 'flex';
+    if (report2Card)   report2Card.style.display = 'none';
+
+    try {
+      const prompt = buildReport2Prompt(storedReport1Data, storedTimestampedTranscript);
+      let text = '';
+      if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
+      else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
+      else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
+      else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
+      if (text) parseAndDisplayReport2(text);
+    } catch(err) {
+      const el = document.getElementById('report2Error');
+      if (el) { el.textContent = '⚠ Report 2 failed: ' + err.message; el.style.display = 'block'; }
+    } finally {
+      if (report2Loader) report2Loader.style.display = 'none';
     }
   }
 
@@ -1857,45 +1931,23 @@ window.addEventListener('load', () => {
     return words.slice(0, 30).join(' ') + '…';
   }
 
-  // Extract @[timestamp] from end of a bullet string, return { text, timestamp }
-  function extractTimestamp(str) {
-    const match = str.match(/^([\s\S]*?)\s*@\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*$/);
-    if (match) return { text: match[1].trim(), timestamp: match[2] };
-    return { text: str.trim(), timestamp: null };
-  }
-
-  // Render a timestamp badge
-  function renderTimestamp(ts) {
-    if (!ts) return '';
-    return '<span style="display:inline-flex;align-items:center;gap:3px;margin-left:8px;padding:2px 8px;background:rgba(232,160,176,0.15);border:1px solid rgba(232,160,176,0.35);border-radius:999px;font-size:10px;font-family:\'Noto Serif JP\',serif;color:var(--sakura);letter-spacing:0.04em;vertical-align:middle;white-space:nowrap;flex-shrink:0;" title="Jump to this moment in the transcript">' +
-      '<span style="font-size:9px;opacity:0.7;">⏱</span> ' + ts +
-      '</span>';
-  }
-
-  // Helper to render bullet lists with sakura dots and timestamps
+  // Helper to render bullet lists with sakura dots
   function renderBullets(bullets, textColor) {
     return '<ul style="list-style:none;padding:0;margin:0;">' +
-      bullets.map(b => {
-        const { text, timestamp } = extractTimestamp(b);
-        return '<li style="margin-bottom:9px;line-height:1.75;color:' + textColor + ';padding-left:20px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;">' +
-          '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
-          '<span>' + truncateTo30Words(text) + '</span>' +
-          renderTimestamp(timestamp) +
-          '</li>';
-      }).join('') + '</ul>';
+      bullets.map(b =>
+        '<li style="margin-bottom:9px;line-height:1.75;color:' + textColor + ';padding-left:20px;position:relative;">' +
+        '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
+        truncateTo30Words(b) + '</li>'
+      ).join('') + '</ul>';
   }
 
-  // Stores raw bullet strings (with @[timestamps]) from report 1 — used by analysis prompt
-  let storedReportBullets = { summary: [], details: {} };
-
-  function parseAndDisplay(text) {
+  function parseAndDisplayReport1(text) {
     let data;
     try {
       let t = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
       const s0 = t.indexOf('{'), e0 = t.lastIndexOf('}');
       if (s0 === -1 || e0 === -1) throw new Error('No JSON found');
       t = t.substring(s0, e0 + 1);
-      // char-by-char fix for unescaped control chars inside strings
       let out = '', inStr = false, esc = false;
       for (let i = 0; i < t.length; i++) {
         const ch = t[i];
@@ -1922,92 +1974,177 @@ window.addEventListener('load', () => {
         '<span style="opacity:0.7">Raw output preview:</span><br>' +
         '<code style="font-size:11px;word-break:break-all;white-space:pre-wrap">' + preview + '</code>';
       document.getElementById('errorBox').classList.add('active');
-      return;
+      return false;
     }
 
-    // Render summary
-    const summaryRaw = data.summary || '—';
-    const summaryBullets = summaryRaw.split('\n')
-      .map(l => l.trim().replace(/^[•\-\*]\s*/, '').trim())
-      .filter(l => l.length > 0);
-    // Store raw bullets (with timestamps) for accurate analysis prompt
-    storedReportBullets.summary = summaryBullets;
-    const summaryEl = document.getElementById('content1');
-    if (summaryBullets.length > 1) {
-      summaryEl.innerHTML = renderBullets(summaryBullets, 'var(--text2)');
-    } else {
-      summaryEl.textContent = summaryRaw;
-    }
+    storedReport1Data = data;
 
-    const detailsRaw = data.details || '';
     const categoryMeta = [
-      { key: 'HOOK & TARGET AUDIENCE',                icon: '🎯' },
-      { key: 'SALES & CONVERSION STRATEGY',           icon: '🍂' },
-      { key: 'OFFER & MONETIZATION',                  icon: '💮' },
-      { key: 'TRUST & ENGAGEMENT',                    icon: '🌟' },
-      { key: 'AI TOOLS & PRACTICAL VALUE',            icon: '🤖' },
-      { key: 'BUSINESS MOAT & COMPETITIVE ADVANTAGE', icon: '🏯' },
-      { key: 'WEAKNESSES & GROWTH OPPORTUNITIES',     icon: '🌱' },
+      { key: 'hookAudience',      label: 'HOOK & TARGET AUDIENCE',                icon: '🎯' },
+      { key: 'salesConversion',   label: 'SALES & CONVERSION STRATEGY',           icon: '🍂' },
+      { key: 'offerMonetization', label: 'OFFER & MONETIZATION',                  icon: '💮' },
+      { key: 'trustEngagement',   label: 'TRUST & ENGAGEMENT',                    icon: '🌟' },
+      { key: 'aiToolsValue',      label: 'AI TOOLS & PRACTICAL VALUE',            icon: '🤖' },
+      { key: 'businessMoat',      label: 'BUSINESS MOAT & COMPETITIVE ADVANTAGE', icon: '🏯' },
+      { key: 'weaknesses',        label: 'WEAKNESSES & GROWTH OPPORTUNITIES',     icon: '🌱' },
     ];
-
-    const parsed = {};
-    let currentKey = null;
-    detailsRaw.split('\n').forEach(line => {
-      const trimmed = line.trim();
-      const headerMatch = categoryMeta.find(c =>
-        trimmed.toUpperCase().startsWith(c.key + ':') || trimmed.toUpperCase() === c.key + ':'
-      );
-      if (headerMatch) {
-        currentKey = headerMatch.key;
-        if (!parsed[currentKey]) parsed[currentKey] = [];
-      } else if (currentKey && trimmed) {
-        const point = trimmed.replace(/^[•\-\*]\s*/, '').trim();
-        if (point) parsed[currentKey].push(point);
-      }
-    });
-    // Store raw details bullets (with timestamps) for accurate analysis prompt
-    storedReportBullets.details = parsed;
-
-    const container = document.getElementById('detailsCards');
-    container.innerHTML = '';
-    container.style.display = 'block';
 
     let innerHtml = '';
     categoryMeta.forEach((cat, i) => {
-      const bullets = parsed[cat.key] && parsed[cat.key].length ? parsed[cat.key] : ['Not mentioned in this transcript.'];
-      const liItems = bullets.map(b => {
-        const { text, timestamp } = extractTimestamp(b);
-        return '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;">' +
-          '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
-          '<span>' + truncateTo30Words(text) + '</span>' +
-          renderTimestamp(timestamp) +
-          '</li>';
-      }).join('');
+      const bullets = Array.isArray(data[cat.key]) && data[cat.key].length
+        ? data[cat.key]
+        : ['Not mentioned in this transcript.'];
+      const liItems = bullets.map(b =>
+        '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
+        '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
+        truncateTo30Words(b.replace(/^[•\-\*]\s*/, '').trim()) + '</li>'
+      ).join('');
       innerHtml +=
         '<div style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:20px;margin-top:20px;' : '') + '">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
         '<span style="font-size:18px">' + cat.icon + '</span>' +
-        '<span style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted)">' + cat.key + '</span>' +
+        '<span style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted)">' + cat.label + '</span>' +
         '</div>' +
         '<ul id="detail-' + i + '" style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
         '</div>';
     });
 
+    const container = document.getElementById('detailsCards');
+    container.innerHTML = '';
+    container.style.display = 'block';
+
     const card = document.createElement('div');
-    card.className = 'section-card card-2';
+    card.className = 'section-card card-1';
     card.innerHTML =
       '<div class="card-watermark">詳</div>' +
-      '<div class="section-meta"><span class="section-icon">📖</span><span class="card-label">Section 02</span></div>' +
-      '<div class="section-title">Details Report</div>' +
+      '<div class="section-meta"><span class="section-icon">🎯</span><span class="card-label">Report 1 · Intelligence Breakdown</span></div>' +
+      '<div class="section-title">Workshop Intelligence Report</div>' +
       '<div id="detailsInner">' + innerHtml + '</div>' +
-      '<div class="card-action"><button class="copy-btn" onclick="copyDetails(this)">Copy</button></div>';
+      '<div class="card-action">' +
+        '<button class="copy-btn" onclick="copyDetails(this)">Copy</button>' +
+        '<button class="copy-btn" id="downloadDetailsBtn" onclick="downloadDetailsDoc()" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">⬇ Download (.html)</button>' +
+      '</div>';
     container.appendChild(card);
 
     document.getElementById('detailsReport').style.display = 'flex';
     document.getElementById('results').classList.add('active');
-    document.getElementById('analyseWrap').style.display = 'flex';
+    document.getElementById('analyseWrap').style.display = 'none'; // hide old deep insight button
     document.getElementById('analysisCard').style.display = 'none';
+    // Show Report 2 section with loader running
+    const r2section = document.getElementById('report2Section');
+    if (r2section) { r2section.style.display = 'flex'; }
+    const r2loader = document.getElementById('report2Loader');
+    if (r2loader) { r2loader.style.display = 'flex'; }
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+
+  // ── Render Report 2: Accuracy Fact-Check ──────────────────────────────────
+  function parseAndDisplayReport2(text) {
+    let data;
+    try {
+      let t = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const s0 = t.indexOf('{'), e0 = t.lastIndexOf('}');
+      if (s0 === -1 || e0 === -1) throw new Error('No JSON found');
+      t = t.substring(s0, e0 + 1);
+      let out = '', inStr = false, esc = false;
+      for (let i = 0; i < t.length; i++) {
+        const ch = t[i];
+        if (esc) { out += ch; esc = false; continue; }
+        if (ch === '\\') { out += ch; esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; out += ch; continue; }
+        if (inStr) {
+          if (ch === '\n') { out += '\\n'; continue; }
+          if (ch === '\r') { out += '\\n'; continue; }
+          if (ch === '\t') { out += '\\t'; continue; }
+          if (ch.charCodeAt(0) < 32) { out += ' '; continue; }
+        }
+        out += ch;
+      }
+      try { data = JSON.parse(out); }
+      catch(_) {
+        const safe = out.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ');
+        data = JSON.parse(safe);
+      }
+    } catch(e) {
+      const el = document.getElementById('report2Error');
+      if (el) { el.textContent = '⚠ Could not parse Report 2 response. Raw: ' + text.substring(0,200); el.style.display = 'block'; }
+      return;
+    }
+
+    const verdictColor = { 'CONFIRMED': '#4a8a4a', 'INACCURATE': '#c06060', 'UNVERIFIABLE': '#b09040' };
+    const verdictBg    = { 'CONFIRMED': 'rgba(80,140,80,0.08)', 'INACCURATE': 'rgba(200,80,80,0.07)', 'UNVERIFIABLE': 'rgba(180,160,60,0.08)' };
+    const verdictIcon  = { 'CONFIRMED': '✓', 'INACCURATE': '✗', 'UNVERIFIABLE': '?' };
+    const verdictBorder= { 'CONFIRMED': 'rgba(80,140,80,0.22)', 'INACCURATE': 'rgba(200,80,80,0.2)', 'UNVERIFIABLE': 'rgba(180,160,60,0.2)' };
+
+    const checks = Array.isArray(data.checks) ? data.checks : [];
+    const missed = Array.isArray(data.missedInsights) ? data.missedInsights : [];
+
+    let checksHtml = checks.map(c => {
+      const v = (c.verdict || 'UNVERIFIABLE').toUpperCase();
+      const col = verdictColor[v] || '#b09040';
+      const bg  = verdictBg[v]   || 'rgba(180,160,60,0.08)';
+      const bdr = verdictBorder[v]|| 'rgba(180,160,60,0.2)';
+      const icon = verdictIcon[v] || '?';
+      return (
+        '<div style="margin-bottom:14px;padding:14px 16px;background:' + bg + ';border:1px solid ' + bdr + ';border-radius:14px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
+            '<span style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);font-family:\'Noto Serif JP\',serif;">' + (c.category || '').replace(/</g,'&lt;') + '</span>' +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<span style="font-size:11px;color:#888;font-family:monospace;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:999px;">' + (c.timestamp || 'N/A') + '</span>' +
+              '<span style="font-size:11px;font-weight:700;color:' + col + ';background:' + bg + ';border:1px solid ' + bdr + ';padding:3px 10px;border-radius:999px;">' + icon + ' ' + v + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<p style="font-size:13px;font-style:italic;color:var(--text2);margin:0 0 8px;line-height:1.65;">"' + (c.claim || '').replace(/</g,'&lt;') + '"</p>' +
+          '<p style="font-size:13px;color:var(--text);margin:0;line-height:1.65;opacity:0.85;">' + (c.note || '').replace(/</g,'&lt;') + '</p>' +
+        '</div>'
+      );
+    }).join('');
+
+    let missedHtml = missed.length
+      ? '<ul style="list-style:none;padding:0;margin:0;">' + missed.map(m =>
+          '<li style="margin-bottom:9px;padding-left:20px;position:relative;font-size:14px;line-height:1.75;color:var(--text2);">' +
+          '<span style="position:absolute;left:0;top:7px;color:var(--amber);font-size:10px;">✦</span>' +
+          m.replace(/</g,'&lt;') + '</li>'
+        ).join('') + '</ul>'
+      : '<p style="font-size:13px;color:var(--muted);">No significant gaps detected.</p>';
+
+    const accuracyHtml =
+      '<p style="font-size:14px;line-height:1.8;color:var(--text);padding:12px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;margin-bottom:20px;">' +
+      '🔍 ' + (data.overallAccuracy || '').replace(/</g,'&lt;') + '</p>';
+
+    const recommendHtml = data.recommendation
+      ? '<p style="font-size:13px;font-style:italic;color:var(--text2);margin:16px 0 0;padding:10px 14px;border-left:3px solid var(--sakura);background:rgba(232,160,176,0.06);border-radius:0 8px 8px 0;line-height:1.7;">' +
+        '💡 ' + data.recommendation.replace(/</g,'&lt;') + '</p>'
+      : '';
+
+    const card = document.getElementById('report2Card');
+    if (!card) return;
+    card.innerHTML =
+      '<div class="card-watermark">証</div>' +
+      '<div class="section-meta"><span class="section-icon">🔍</span><span class="card-label">Report 2 · Accuracy Fact-Check</span></div>' +
+      '<div class="section-title">Accuracy Verification with Timestamps</div>' +
+      accuracyHtml +
+      '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Claim-by-Claim Checks</div>' +
+      checksHtml +
+      '<div style="border-top:1px solid rgba(180,130,100,0.1);margin-top:20px;padding-top:20px;">' +
+        '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Insights Missed by Report 1</div>' +
+        missedHtml +
+      '</div>' +
+      recommendHtml +
+      '<div class="card-action"><button class="copy-btn" onclick="copyReport2(this)">Copy</button></div>';
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyReport2(btn) {
+    const card = document.getElementById('report2Card');
+    if (!card) return;
+    navigator.clipboard.writeText(card.innerText).then(() => {
+      btn.textContent = 'Copied ✿';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
   }
 
   // ── Copy ───────────────────────────────────────────────────────────────────
@@ -2025,22 +2162,22 @@ window.addEventListener('load', () => {
   }
 
   function copyAll() {
-    const summaryEl2 = document.getElementById('content1');
-    const summaryLis2 = summaryEl2.querySelectorAll('li');
-    const summary = summaryLis2.length
-      ? Array.from(summaryLis2).map(li => '• ' + li.textContent.trim()).join('\n')
-      : summaryEl2.textContent;
+    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
+    let full = 'WORKSHOP INTELLIGENCE REPORT\n' + '═'.repeat(50) + '\n\n';
     const detailCards = document.querySelectorAll('[id^="detail-"]');
-    let full = 'SUMMARY OF WORKSHOP\n' + '─'.repeat(40) + '\n' + summary + '\n\n';
-    full += 'DETAILS REPORT\n' + '─'.repeat(40) + '\n';
-    detailCards.forEach(el => {
-      const title = el.previousElementSibling?.textContent || '';
-      full += '\n' + title.toUpperCase() + '\n' + el.textContent + '\n';
+    detailCards.forEach((el, i) => {
+      full += (labels[i] || '') + '\n';
+      el.querySelectorAll('li').forEach(li => { full += '  • ' + li.textContent.trim() + '\n'; });
+      full += '\n';
     });
+    const r2card = document.getElementById('report2Card');
+    if (r2card && r2card.style.display !== 'none') {
+      full += '\n' + '─'.repeat(50) + '\nACCURACY FACT-CHECK (REPORT 2)\n' + '─'.repeat(50) + '\n';
+      full += r2card.innerText;
+    }
     navigator.clipboard.writeText(full).then(() => {
       const btn = document.querySelector('.copy-all-btn');
-      btn.textContent = 'Copied ✿';
-      setTimeout(() => btn.textContent = 'Copy All ↗', 2000);
+      if (btn) { btn.textContent = 'Copied ✿'; setTimeout(() => btn.textContent = 'Copy All ↗', 2000); }
     });
   }
 
@@ -2111,13 +2248,12 @@ window.addEventListener('load', () => {
       '2. Your entire reply must start with { and end with }.',
       '3. All string values must be plain text (no HTML, no bullet characters inside strings).',
       '4. Be specific: use names, prices, tactics, frameworks, and numbers found in the report. Never write vague statements.',
-      '5. TIMESTAMPS: Some bullets in the report already contain timestamps in the format @[MM:SS] or @[HH:MM:SS]. These are EXACT transcript positions. When your analysis bullet is directly based on a report bullet that has a timestamp, you MUST copy that exact timestamp to the end of your bullet using the same @[MM:SS] format. Do NOT invent or guess timestamps — only use ones already present in the report.',
       '',
       'OUTPUT FORMAT:',
       '{',
-      '  "executiveSummary": ["<Key point 1 — one clear sentence, append @[MM:SS] if drawn from a timestamped bullet>", "<Key point 2>", "<Key point 3>", "<Key point 4>", "<Key point 5>"],',
+      '  "executiveSummary": ["<Key point 1 about what this workshop was fundamentally about — one clear sentence>", "<Key point 2 covering core ideas and frameworks presented>", "<Key point 3 about who it is for and the transformation it promises>", "<Key point 4 about a major tactic, tool, or offer detail>", "<Key point 5 about an important takeaway, strength, or weakness>"],',
       '  "priorityActions": [',
-      '    "<Key learning or action — max 25 words, append @[MM:SS] if applicable>",',
+      '    "<Key learning or action to apply — what it is, why it matters, expected outcome. Max 25 words.>",',
       '    "<Second key learning or action>",',
       '    "<Third key learning or action>"',
       '  ],',
@@ -2128,9 +2264,9 @@ window.addEventListener('load', () => {
       '      "scoreLabel": "<one word: e.g. Sparse / Partial / Covered / Thorough / Excellent>",',
       '      "verdict": "<One sentence: the most meaningful insight about this dimension from the report>",',
       '      "bullets": [',
-      '        "<Specific insight with a concrete detail from the report, append @[MM:SS] if from a timestamped bullet>",',
-      '        "<Another meaningful insight or pattern, append @[MM:SS] if applicable>",',
-      '        "<Key takeaway or lesson for the reader from this dimension, append @[MM:SS] if applicable>"',
+      '        "<Specific insight with a concrete detail from the report>",',
+      '        "<Another meaningful insight or pattern>",',
+      '        "<Key takeaway or lesson for the reader from this dimension>"',
       '      ]',
       '    },',
       '    { "label": "SALES & CONVERSION STRATEGY", "score": <1-5>, "scoreLabel": "...", "verdict": "...", "bullets": ["...","...","..."] },',
@@ -2172,23 +2308,13 @@ window.addEventListener('load', () => {
       if (!proceed) return;
     }
 
-    // Build report text from stored raw bullets (preserves @[timestamps] accurately)
-    const summaryLines = storedReportBullets.summary.map(b => '• ' + b);
-    const detailLines = [];
-    const detailCategoryOrder = [
-      'HOOK & TARGET AUDIENCE', 'SALES & CONVERSION STRATEGY', 'OFFER & MONETIZATION',
-      'TRUST & ENGAGEMENT', 'AI TOOLS & PRACTICAL VALUE',
-      'BUSINESS MOAT & COMPETITIVE ADVANTAGE', 'WEAKNESSES & GROWTH OPPORTUNITIES'
-    ];
-    detailCategoryOrder.forEach(key => {
-      const bullets = storedReportBullets.details[key];
-      if (bullets && bullets.length) {
-        detailLines.push(key + ':');
-        bullets.forEach(b => detailLines.push('• ' + b));
-      }
-    });
-    // Strip control chars and combine
-    const reportRaw = (summaryLines.join('\n') + '\n\n' + detailLines.join('\n')).substring(0, 20000);
+    // Gather report text — use only the original summary + detail bullet text, not any nested analysis cards
+    const summaryEl = document.getElementById('content1');
+    const detailsEl = document.getElementById('detailsInner');
+    const summaryText = Array.from(summaryEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (summaryEl?.textContent || '');
+    const detailsText = Array.from(detailsEl?.querySelectorAll('li') || []).map(li => '• ' + li.textContent.trim()).join('\n') || (detailsEl?.textContent || '');
+    // Strip control chars from report text before sending to AI
+    const reportRaw = (summaryText + '\n\n' + detailsText).substring(0, 20000);
     const reportText = reportRaw.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
 
     const analyseBtn = document.getElementById('analyseBtn');
@@ -2262,13 +2388,12 @@ window.addEventListener('load', () => {
         summaryBullets = rawSummary.trim().split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
       }
       rewriteEl.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' +
-        summaryBullets.map(b => {
-          const { text, timestamp } = extractTimestamp(b);
-          return '<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:14.5px;line-height:1.8;color:var(--text2);">' +
-            '<span style="flex-shrink:0;color:var(--sakura);font-size:12px;margin-top:6px;">✿</span>' +
-            '<span>' + text.replace(/</g,'&lt;') + renderTimestamp(timestamp) + '</span>' +
-            '</li>';
-        }).join('') +
+        summaryBullets.map(b =>
+          '<li style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:14.5px;line-height:1.8;color:var(--text2);">' +
+          '<span style="flex-shrink:0;color:var(--sakura);font-size:12px;margin-top:6px;">✿</span>' +
+          '<span>' + b.replace(/</g,'&lt;') + '</span>' +
+          '</li>'
+        ).join('') +
         '</ul>';
 
       // ── Top Takeaways & Actions ──────────────────────────────────────────
@@ -2276,13 +2401,12 @@ window.addEventListener('load', () => {
       const prioritiesEl = document.getElementById('analysisPriorities');
       if (priorities.length) {
         prioritiesEl.innerHTML = '<ol style="list-style:none;padding:0;margin:0;">' +
-          priorities.map((p, i) => {
-            const { text: pText, timestamp: pTs } = extractTimestamp(String(p));
-            return '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
-              '<span style="flex-shrink:0;width:24px;height:24px;background:var(--leaf);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:11px;font-weight:700;margin-top:1px;">' + (i+1) + '</span>' +
-              '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + pText.replace(/</g,'&lt;') + renderTimestamp(pTs) + '</span>' +
-              '</li>';
-          }).join('') + '</ol>';
+          priorities.map((p, i) =>
+            '<li style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding:14px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;">' +
+            '<span style="flex-shrink:0;width:24px;height:24px;background:var(--leaf);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:\'Noto Serif JP\',serif;font-size:11px;font-weight:700;margin-top:1px;">' + (i+1) + '</span>' +
+            '<span style="font-size:14px;line-height:1.75;color:var(--text2);">' + p.replace(/</g,'&lt;') + '</span>' +
+            '</li>'
+          ).join('') + '</ol>';
       }
 
       // ── Dimension Scorecard ───────────────────────────────────────────
@@ -2317,13 +2441,11 @@ window.addEventListener('load', () => {
         const col = scoreLabelColor[score] || '#c47a3a';
         const bg = scoreBg[score] || 'rgba(196,122,58,0.08)';
         const border = scoreBorder[score] || 'rgba(196,122,58,0.2)';
-        const liItems = (sec.bullets || []).map(b => {
-          const { text: bText, timestamp: bTs } = extractTimestamp(String(b));
-          return '<li style="margin-bottom:9px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;">' +
-            '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' +
-            '<span>' + bText.replace(/</g,'&lt;') + '</span>' +
-            renderTimestamp(bTs) + '</li>';
-        }).join('');
+        const liItems = (sec.bullets || []).map(b =>
+          '<li style="margin-bottom:9px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
+          '<span style="position:absolute;left:0;color:var(--sakura);font-size:10px;top:7px;">✿</span>' +
+          b.replace(/</g,'&lt;') + '</li>'
+        ).join('');
 
         innerHtml +=
           '<div id="refined-detail-' + i + '" style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:22px;margin-top:22px;' : '') + '">' +
