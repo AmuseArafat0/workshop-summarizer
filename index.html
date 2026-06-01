@@ -1068,7 +1068,7 @@
       <div class="results-header" style="margin-bottom:0;">
         <div class="results-title">🎯 Report 1 · Intelligence Breakdown</div>
         <div style="display:flex;gap:8px;">
-          <button class="copy-all-btn" onclick="copyDetails()">Copy Report ↗</button>
+          <button class="copy-all-btn" onclick="copyDetails(this)">Copy Report ↗</button>
         </div>
       </div>
       <div id="detailsCards"></div>
@@ -2277,7 +2277,8 @@ window.addEventListener('load', () => {
       '<div class="card-watermark">概</div>' +
       '<div class="section-meta"><span class="section-icon">📋</span><span class="card-label">Report 1 · Summary</span></div>' +
       '<div class="section-title">Workshop Overview</div>' +
-      summaryListHtml;
+      summaryListHtml +
+      '<div class="card-action"><button class="copy-btn" onclick="copySummary(this)">Copy Summary</button></div>';
     container.appendChild(summaryCard);
 
     // ── Details Card ──────────────────────────────────────────────────────
@@ -2458,6 +2459,21 @@ window.addEventListener('load', () => {
     navigator.clipboard.writeText(full).then(() => {
       const btn = document.querySelector('.copy-all-btn');
       if (btn) { btn.textContent = 'Copied ✿'; setTimeout(() => btn.textContent = 'Copy All ↗', 2000); }
+    });
+  }
+
+  function copySummary(btn) {
+    const card = btn.closest('.section-card');
+    const lis = card ? card.querySelectorAll('li') : [];
+    const text = lis.length
+      ? 'WORKSHOP SUMMARY\n' + '─'.repeat(40) + '\n\n' +
+        Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
+      : '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied ✿';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 2000);
     });
   }
 
