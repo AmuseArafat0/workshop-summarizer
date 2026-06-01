@@ -1065,7 +1065,7 @@
       <!-- Trigger button -->
       <div id="report2Trigger" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:32px 24px;background:rgba(255,255,255,0.6);border:1.5px dashed rgba(196,122,58,0.3);border-radius:20px;text-align:center;">
         <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:480px;">
-          Report 1 is ready. Report 2 will go to each exact timestamp from Report 1, verify the content directly from memory, correct anything wrong, and find the real timestamp for anything missing.
+          Report 1 is ready. Report 2 verifies every bullet using two sources: the timestamp memory (exact lookup at each [MM:SS]) and the full transcript (fallback for anything memory can't resolve). Nothing gets left as N/A.
         </div>
         <div id="memoryStatus" style="font-size:12px;padding:8px 16px;background:rgba(122,155,106,0.08);border:1px solid rgba(122,155,106,0.2);border-radius:999px;color:var(--leaf);display:inline-flex;align-items:center;gap:6px;">
           <span>🕐</span> <span id="memoryCountdown">Transcript in memory — 5:00 remaining</span>
@@ -1752,7 +1752,7 @@ window.addEventListener('load', () => {
   }
 
   // ── Report 2 Prompt: Verified & Rectified using Timestamp Memory ────────────
-  function buildReport2Prompt(report1Data, timestampMap) {
+  function buildReport2Prompt(report1Data, timestampMap, fullTranscript) {
 
     // For each Report 1 bullet, extract its timestamp and look it up in memory
     const categoryMeta = [
@@ -1817,26 +1817,30 @@ window.addEventListener('load', () => {
     return [
       'You are a senior workshop intelligence analyst. Your job is to produce the DEFINITIVE verified and rectified Report 2.',
       '',
-      'You have been given:',
-      '1. Every bullet from Report 1, each paired with the EXACT transcript text found at that timestamp.',
-      '2. A sample of additional transcript moments Report 1 may have missed.',
+      'You have THREE sources to work with:',
+      '1. EVIDENCE BLOCK — every Report 1 bullet paired with the exact transcript text at that timestamp (from memory).',
+      '2. FULL TRANSCRIPT — the complete original transcript, for finding anything the evidence block missed.',
+      '3. UNUSED TIMESTAMPS — a sample of moments Report 1 never referenced, for discovering missed insights.',
       '',
-      'For each Report 1 bullet:',
-      '  - If the TRANSCRIPT AT TIMESTAMP confirms the claim → keep it (with timestamp)',
-      '  - If the transcript says something DIFFERENT → correct the bullet using what the transcript actually says',
-      '  - If the transcript shows [No transcript found] → search the additional transcript moments below and find the correct timestamp',
-      '  - If a claim is completely absent from the transcript → replace it with a real finding from the transcript moments',
+      'VERIFICATION PROCESS — for each Report 1 bullet:',
+      '  Step 1: Check the TRANSCRIPT AT TIMESTAMP in the evidence block.',
+      '          → Confirms the claim? Keep it.',
+      '          → Says something different? Correct it using the actual transcript text.',
+      '          → Shows [No transcript found]? Go to Step 2.',
+      '  Step 2: Search the FULL TRANSCRIPT for the claim topic.',
+      '          → Found it? Use that timestamp and correct/confirm the bullet.',
+      '          → Still not found? Replace with a real finding from the full transcript.',
       '',
-      'Then ADD any important insights from the additional transcript moments that Report 1 missed.',
-      'Target 5-7 bullets per category. Every bullet MUST start with a verified [MM:SS] timestamp.',
+      'Then scan the FULL TRANSCRIPT and UNUSED TIMESTAMPS for important insights Report 1 missed entirely — add them.',
+      'Target 5-7 bullets per category. Every bullet MUST start with a verified [MM:SS] or [HH:MM:SS] timestamp.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. All string values are plain text only — no HTML.',
-      '4. "summaryVerdict": 4-5 sentences on what Report 1 got right, what was corrected, what was added.',
-      '5. NEVER write [N/A] if Report 1 had content for that category — find something from the transcript.',
-      '6. Use exact names, numbers, prices, and quotes from the transcript text provided.',
+      '4. "summaryVerdict": 4-5 sentences — what Report 1 got right, what was corrected, what gaps were filled from the full transcript.',
+      '5. NEVER write [N/A] if Report 1 had content for that category — the full transcript is your fallback.',
+      '6. Use exact names, numbers, prices, and direct quotes. No vague generalisations.',
       '',
       'OUTPUT FORMAT:',
       '{',
@@ -1850,10 +1854,13 @@ window.addEventListener('load', () => {
       '  "weaknesses":      ["[MM:SS] verified bullet", "..."]',
       '}',
       '',
-      '━━━ REPORT 1 BULLETS WITH TRANSCRIPT EVIDENCE ━━━',
+      '━━━ SOURCE 1: REPORT 1 BULLETS WITH TIMESTAMP EVIDENCE (from memory) ━━━',
       evidenceBlock,
       '',
-      '━━━ ADDITIONAL TRANSCRIPT MOMENTS (for finding missed content) ━━━',
+      '━━━ SOURCE 2: FULL TRANSCRIPT (for gap-filling and finding missed content) ━━━',
+      fullTranscript || '[Full transcript not available]',
+      '',
+      '━━━ SOURCE 3: UNUSED TIMESTAMPS (additional moments Report 1 never referenced) ━━━',
       unusedSample,
     ].join('\n');
   }
@@ -2065,12 +2072,13 @@ window.addEventListener('load', () => {
 
     // Rotating loader messages so user knows it's doing deep work
     const r2messages = [
-      'Deep-reading transcript for verification…',
-      'Cross-checking every claim in Report 1…',
-      'Scanning full transcript for missed insights…',
-      'Correcting inaccuracies…',
-      'Building the rectified report…',
-      'Almost there — finalising all 7 categories…',
+      'Looking up each Report 1 timestamp in memory…',
+      'Cross-checking claims against the full transcript…',
+      'Correcting inaccurate bullets…',
+      'Searching full transcript for missed insights…',
+      'Filling gaps memory couldn't resolve…',
+      'Verifying all 7 categories…',
+      'Almost there — building the rectified report…',
     ];
     let r2msgIdx = 0;
     const r2msgEl = document.getElementById('report2LoaderText');
@@ -2085,7 +2093,20 @@ window.addEventListener('load', () => {
         throw new Error('Transcript memory has expired (5 min limit). Please re-upload and regenerate Report 1 first.');
       }
       console.log('[Report 2] Using timestamp map with ' + Object.keys(storedTimestampMap).length + ' entries');
-      const prompt = buildReport2Prompt(storedReport1Data, storedTimestampMap);
+
+      // Budget: total model limit minus the evidence block (~1 char per entry * entries * 300 avg)
+      // Reserve ~40% of remaining space for the full transcript, rest for evidence + prompt
+      const baseLimit = getCharLimit();
+      const evidenceEstimate = Object.keys(storedTimestampMap).length * 350; // ~350 chars per entry
+      const promptOverhead = 3000;
+      const transcriptBudget = Math.max(20000, baseLimit - evidenceEstimate - promptOverhead);
+
+      // Pass full transcript trimmed to budget — used alongside memory map
+      const fullTranscriptForR2 = storedTimestampedTranscript.length <= transcriptBudget
+        ? storedTimestampedTranscript
+        : trimTranscript(storedTimestampedTranscript, transcriptBudget);
+
+      const prompt = buildReport2Prompt(storedReport1Data, storedTimestampMap, fullTranscriptForR2);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
