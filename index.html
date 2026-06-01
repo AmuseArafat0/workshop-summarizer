@@ -1626,24 +1626,25 @@ window.addEventListener('load', () => {
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
     var lines = [
-      'You are a competitive workshop intelligence analyst. Read the transcript and fill in the JSON fields below.',
+      'You are a competitive workshop intelligence analyst. Read the timestamped transcript and fill in the JSON fields below.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. All values are plain strings or arrays of strings.',
       '4. For each detail category: write 3-5 bullet points. Each bullet is one specific, non-repetitive fact.',
-      '5. If a category has nothing relevant, write "Not mentioned in transcript."',
+      '5. EVERY bullet point MUST begin with a timestamp in the format [MM:SS] or [HH:MM:SS] from the nearest timestamp in the transcript.',
+      '6. If a category has nothing relevant, write "[N/A] Not mentioned in transcript."',
       '',
       'OUTPUT FORMAT (exact keys required):',
       '{',
-      '  "hookAudience":    ["bullet 1", "bullet 2", "bullet 3"],',
-      '  "salesConversion": ["bullet 1", "bullet 2", "bullet 3"],',
-      '  "offerMonetization": ["bullet 1", "bullet 2", "bullet 3"],',
-      '  "trustEngagement": ["bullet 1", "bullet 2", "bullet 3"],',
-      '  "aiToolsValue":    ["bullet 1", "bullet 2", "bullet 3"],',
-      '  "businessMoat":    ["bullet 1", "bullet 2", "bullet 3"],',
-      '  "weaknesses":      ["bullet 1", "bullet 2", "bullet 3"]',
+      '  "hookAudience":    ["[00:02:14] bullet 1", "[00:05:30] bullet 2", "[00:08:45] bullet 3"],',
+      '  "salesConversion": ["[00:12:00] bullet 1", "[00:15:20] bullet 2", "[00:18:10] bullet 3"],',
+      '  "offerMonetization": ["[00:22:30] bullet 1", "[00:25:00] bullet 2", "[00:28:15] bullet 3"],',
+      '  "trustEngagement": ["[00:31:00] bullet 1", "[00:34:45] bullet 2", "[00:38:20] bullet 3"],',
+      '  "aiToolsValue":    ["[00:41:10] bullet 1", "[00:44:30] bullet 2", "[00:47:55] bullet 3"],',
+      '  "businessMoat":    ["[00:51:00] bullet 1", "[00:54:20] bullet 2", "[00:57:40] bullet 3"],',
+      '  "weaknesses":      ["[01:01:15] bullet 1", "[01:04:30] bullet 2", "[01:07:50] bullet 3"]',
       '}',
       '',
       'FIELD DEFINITIONS:',
@@ -1655,7 +1656,7 @@ window.addEventListener('load', () => {
       'businessMoat:      Unique systems, brand authority, exclusive access, proprietary frameworks.',
       'weaknesses:        Gaps in delivery, overpromises, weak areas, opportunities to outperform.',
       '',
-      'Be specific: use names, prices, tactics, and numbers directly from the transcript. No filler.',
+      'Be specific: use names, prices, tactics, and numbers directly from the transcript. Always start each bullet with [timestamp]. No filler.',
       '',
       'TRANSCRIPT:',
       transcript
@@ -1993,12 +1994,19 @@ window.addEventListener('load', () => {
     categoryMeta.forEach((cat, i) => {
       const bullets = Array.isArray(data[cat.key]) && data[cat.key].length
         ? data[cat.key]
-        : ['Not mentioned in this transcript.'];
-      const liItems = bullets.map(b =>
-        '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;">' +
-        '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
-        truncateTo30Words(b.replace(/^[•\-\*]\s*/, '').trim()) + '</li>'
-      ).join('');
+        : ['[N/A] Not mentioned in this transcript.'];
+      const liItems = bullets.map(b => {
+        const clean = b.replace(/^[•\-\*]\s*/, '').trim();
+        // Detect timestamp at start e.g. [00:12:34] or [12:34]
+        const tsMatch = clean.match(/^(\[\d{1,2}:\d{2}(?::\d{2})?\])\s*/);
+        const tsTag = tsMatch
+          ? '<span style="display:inline-block;margin-right:7px;font-family:monospace;font-size:10px;color:#fff;background:var(--sakura);padding:1px 7px;border-radius:999px;vertical-align:middle;letter-spacing:0.03em;flex-shrink:0;">' + tsMatch[1] + '</span>'
+          : '';
+        const body = tsMatch ? clean.slice(tsMatch[0].length) : clean;
+        return '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:flex-start;gap:0;">' +
+          '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
+          '<span style="padding-left:4px;">' + tsTag + truncateTo30Words(body) + '</span></li>';
+      }).join('');
       innerHtml +=
         '<div style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:20px;margin-top:20px;' : '') + '">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
@@ -2124,14 +2132,27 @@ window.addEventListener('load', () => {
       '<div class="card-watermark">証</div>' +
       '<div class="section-meta"><span class="section-icon">🔍</span><span class="card-label">Report 2 · Accuracy Fact-Check</span></div>' +
       '<div class="section-title">Accuracy Verification with Timestamps</div>' +
-      accuracyHtml +
+
+      // ── 1. Summary block (mirrors Report 1 summary position) ──
+      '<div style="margin-bottom:20px;">' +
+        '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Overall Accuracy Summary</div>' +
+        accuracyHtml +
+        recommendHtml +
+      '</div>' +
+
+      // ── 2. Divider ──
+      '<div style="border-top:1px solid rgba(180,130,100,0.12);margin-bottom:20px;"></div>' +
+
+      // ── 3. Claim-by-Claim Checks ──
       '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Claim-by-Claim Checks</div>' +
       checksHtml +
+
+      // ── 4. Missed Insights ──
       '<div style="border-top:1px solid rgba(180,130,100,0.1);margin-top:20px;padding-top:20px;">' +
         '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Insights Missed by Report 1</div>' +
         missedHtml +
       '</div>' +
-      recommendHtml +
+
       '<div class="card-action"><button class="copy-btn" onclick="copyReport2(this)">Copy</button></div>';
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
