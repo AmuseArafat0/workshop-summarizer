@@ -1056,12 +1056,23 @@
       <div id="detailsCards"></div>
     </div>
 
-    <!-- Report 2: Accuracy Fact-Check (auto-runs after Report 1) -->
+    <!-- Report 2: Verified & Rectified — manual trigger -->
     <div id="report2Section" style="display:none;flex-direction:column;gap:14px;margin-top:10px;">
       <div class="results-header" style="margin-bottom:0;">
         <div class="results-title">✅ Report 2 · Verified & Rectified</div>
       </div>
-      <!-- Report 2 Loader -->
+
+      <!-- Trigger button -->
+      <div id="report2Trigger" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:32px 24px;background:rgba(255,255,255,0.6);border:1.5px dashed rgba(196,122,58,0.3);border-radius:20px;text-align:center;">
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:480px;">
+          Report 1 is ready. When you're satisfied, run Report 2 to verify and rectify every finding against the full transcript. This takes longer but produces the most accurate version.
+        </div>
+        <button class="run-btn" id="report2RunBtn" onclick="triggerReport2()" style="max-width:360px;margin-top:4px;">
+          <span>✅</span> Generate Verified Report 2
+        </button>
+      </div>
+
+      <!-- Loader -->
       <div class="loader" id="report2Loader" style="display:none;">
         <div class="sakura-spinner">
           <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
@@ -1076,8 +1087,9 @@
             </g>
           </svg>
         </div>
-        <div class="loader-text">Verifying and rectifying Report 1…</div>
+        <div class="loader-text" id="report2LoaderText">Deep-reading transcript for verification…</div>
       </div>
+
       <div id="report2Error" style="display:none;font-size:13px;color:#c06060;padding:10px 16px;background:rgba(200,80,80,0.06);border-radius:10px;border:1px solid rgba(200,80,80,0.18);"></div>
       <!-- Report 2 Card -->
       <div class="section-card card-3" id="report2Card" style="display:none;"></div>
@@ -1711,9 +1723,12 @@ window.addEventListener('load', () => {
       '4. "summaryVerdict": 4-5 sentences — what Report 1 got right, what was corrected, what was added, how much more reliable this version is.',
       '5. Every bullet MUST start with a [MM:SS] or [HH:MM:SS] timestamp from the transcript.',
       '6. Use exact names, numbers, prices, and quotes. No vague generalisations.',
-      '7. If a category has nothing in the transcript, write "[N/A] Not found in transcript."',
+      '7. IMPORTANT: [N/A] is ONLY allowed if that topic is completely absent from the transcript.',
+      '   If Report 1 already found content for a category, you MUST also find content — search harder.',
+      '   Do NOT write [N/A] for a category just because it is harder to find or appears later in the transcript.',
       '',
       '━━━ REPORT 1 (to verify and rectify) ━━━',
+      'NOTE: Report 1 found content in ALL categories below. Your rectified version must also cover all of them.',
       r1Text,
       '',
       '━━━ ORIGINAL TIMESTAMPED TRANSCRIPT ━━━',
@@ -1732,7 +1747,7 @@ window.addEventListener('load', () => {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 8192 } })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, maxOutputTokens: 16384 } })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Gemini error ' + res.status); }
     const data = await res.json();
@@ -1764,7 +1779,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey, 'HTTP-Referer': window.location.href, 'X-Title': 'Workshop Intel' },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.3, max_tokens: 4096 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 8192 })
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
@@ -1806,7 +1821,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 4096, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8192, temperature: 0.2, messages: [{ role: 'user', content: prompt }] })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Claude API error ' + res.status); }
     const data = await res.json();
@@ -1826,7 +1841,7 @@ window.addEventListener('load', () => {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: groqPrompt }], temperature: 0.3, max_tokens: 2048 })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: groqPrompt }], temperature: 0.2, max_tokens: 4096 })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Groq error ' + res.status); }
     const data = await res.json();
@@ -1895,17 +1910,27 @@ window.addEventListener('load', () => {
       if (!text) throw new Error('Empty response from API. Please try again.');
       const report1Ok = parseAndDisplayReport1(text);
       summaryProvider = currentProvider;
-
-      // Auto-run Report 2 if Report 1 parsed successfully
-      if (report1Ok && storedReport1Data) {
-        await runReport2(apiKey);
-      }
+      // Report 2 is triggered manually by the user via button
     } catch (err) {
       showError(err.message || 'Something went wrong. Check your API key and try again.');
     } finally {
       stopLoader();
       document.getElementById('runBtn').disabled = false;
     }
+  }
+
+  // ── Report 2: Button trigger ──────────────────────────────────────────────
+  async function triggerReport2() {
+    const keyEl = document.getElementById('key-' + currentProvider);
+    const apiKey = (keyEl?.value || '').trim();
+    if (!apiKey) { alert('Please enter your API key first.'); return; }
+    if (!storedReport1Data) { alert('Please generate Report 1 first.'); return; }
+    const btn = document.getElementById('report2RunBtn');
+    if (btn) btn.disabled = true;
+    const trigger = document.getElementById('report2Trigger');
+    if (trigger) trigger.style.display = 'none';
+    await runReport2(apiKey);
+    if (btn) btn.disabled = false;
   }
 
   // ── Report 2: Verified & Rectified ────────────────────────────────────────
@@ -1915,11 +1940,29 @@ window.addEventListener('load', () => {
     if (report2Loader) report2Loader.style.display = 'flex';
     if (report2Card)   report2Card.style.display = 'none';
 
+    // Rotating loader messages so user knows it's doing deep work
+    const r2messages = [
+      'Deep-reading transcript for verification…',
+      'Cross-checking every claim in Report 1…',
+      'Scanning full transcript for missed insights…',
+      'Correcting inaccuracies…',
+      'Building the rectified report…',
+      'Almost there — finalising all 7 categories…',
+    ];
+    let r2msgIdx = 0;
+    const r2msgEl = document.getElementById('report2LoaderText');
+    const r2msgInterval = setInterval(() => {
+      r2msgIdx = (r2msgIdx + 1) % r2messages.length;
+      if (r2msgEl) r2msgEl.textContent = r2messages[r2msgIdx];
+    }, 4000);
+
     try {
-      // Use the same char limit as Report 1 but reserve ~4000 chars for the
-      // prompt text + Report 1 data that gets prepended
-      const charLimit = Math.max(20000, getCharLimit() - 4000);
-      const trimmedTranscript = trimTranscript(storedTimestampedTranscript, charLimit);
+      // Reserve space for: prompt instructions (~2000) + Report 1 data (measured) + safety buffer (3000)
+      const baseLimit = getCharLimit();
+      const r1DataSize = JSON.stringify(storedReport1Data).length;
+      const overhead = 2000 + r1DataSize + 3000;
+      const transcriptLimit = Math.max(20000, baseLimit - overhead);
+      const trimmedTranscript = trimTranscript(storedTimestampedTranscript, transcriptLimit);
       const prompt = buildReport2Prompt(storedReport1Data, trimmedTranscript);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
@@ -1930,7 +1973,11 @@ window.addEventListener('load', () => {
     } catch(err) {
       const el = document.getElementById('report2Error');
       if (el) { el.textContent = '⚠ Report 2 failed: ' + err.message; el.style.display = 'block'; }
+      // Show button again so user can retry
+      const trigger = document.getElementById('report2Trigger');
+      if (trigger) trigger.style.display = 'flex';
     } finally {
+      clearInterval(r2msgInterval);
       if (report2Loader) report2Loader.style.display = 'none';
     }
   }
@@ -2060,11 +2107,11 @@ window.addEventListener('load', () => {
     document.getElementById('results').classList.add('active');
     document.getElementById('analyseWrap').style.display = 'none'; // hide old deep insight button
     document.getElementById('analysisCard').style.display = 'none';
-    // Show Report 2 section with loader running
+    // Show Report 2 section with the trigger button (not auto-run)
     const r2section = document.getElementById('report2Section');
     if (r2section) { r2section.style.display = 'flex'; }
-    const r2loader = document.getElementById('report2Loader');
-    if (r2loader) { r2loader.style.display = 'flex'; }
+    const r2trigger = document.getElementById('report2Trigger');
+    if (r2trigger) { r2trigger.style.display = 'flex'; }
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return true;
   }
