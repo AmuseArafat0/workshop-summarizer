@@ -1065,8 +1065,12 @@
       <!-- Trigger button -->
       <div id="report2Trigger" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:32px 24px;background:rgba(255,255,255,0.6);border:1.5px dashed rgba(196,122,58,0.3);border-radius:20px;text-align:center;">
         <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:480px;">
-          Report 1 is ready. When you're satisfied, run Report 2 to verify and rectify every finding against the full transcript. This takes longer but produces the most accurate version.
+          Report 1 is ready. Report 2 will go to each exact timestamp from Report 1, verify the content directly from memory, correct anything wrong, and find the real timestamp for anything missing.
         </div>
+        <div id="memoryStatus" style="font-size:12px;padding:8px 16px;background:rgba(122,155,106,0.08);border:1px solid rgba(122,155,106,0.2);border-radius:999px;color:var(--leaf);display:inline-flex;align-items:center;gap:6px;">
+          <span>🕐</span> <span id="memoryCountdown">Transcript in memory — 5:00 remaining</span>
+        </div>
+        <div id="memoryNotice" style="display:none;font-size:12px;color:#c06060;padding:8px 14px;background:rgba(200,80,80,0.06);border-radius:10px;border:1px solid rgba(200,80,80,0.18);"></div>
         <button class="run-btn" id="report2RunBtn" onclick="triggerReport2()" style="max-width:360px;margin-top:4px;">
           <span>✅</span> Generate Verified Report 2
         </button>
@@ -1323,8 +1327,66 @@ window.addEventListener('load', () => {
   let uploadedFiles = [];
   let currentProvider = 'gemini';
   let summaryProvider = null; // tracks which provider was used to generate the summary
-  let storedReport1Data = null;       // parsed JSON from Report 1
-  let storedTimestampedTranscript = ''; // for Report 2 fact-check
+  let storedReport1Data = null;           // parsed JSON from Report 1
+  let storedTimestampedTranscript = '';   // full timestamped transcript text
+  let storedTimestampMap = {};            // { "MM:SS": "transcript text at that point" }
+  let transcriptMemoryTimer = null;       // 5-min expiry timer for transcript memory
+
+  function setTranscriptMemory(timestampedText) {
+    // Build a lookup map: timestamp -> ~200 chars of context around that point
+    storedTimestampedTranscript = timestampedText;
+    storedTimestampMap = {};
+    const lines = timestampedText.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const match = lines[i].match(/^\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*(.*)/);
+      if (match) {
+        const ts = match[1];
+        // Grab this line + next 3 lines as context window
+        const context = lines.slice(i, i + 4).map(l => l.replace(/^\[?\d{1,2}:\d{2}(?::\d{2})?\]?\s*/, '')).join(' ').trim();
+        storedTimestampMap[ts] = context;
+      }
+    }
+    // Clear any existing timer
+    if (transcriptMemoryTimer) clearTimeout(transcriptMemoryTimer);
+    // Expire memory after 5 minutes
+    transcriptMemoryTimer = setTimeout(() => {
+      storedTimestampMap = {};
+      storedTimestampedTranscript = '';
+      console.log('[Memory] Transcript memory expired after 5 minutes.');
+      const notice = document.getElementById('memoryNotice');
+      if (notice) {
+        notice.textContent = '⚠ Transcript memory expired (5 min limit). Please re-upload and regenerate Report 1 before running Report 2.';
+        notice.style.display = 'block';
+      }
+      const statusEl = document.getElementById('memoryStatus');
+      if (statusEl) statusEl.style.background = 'rgba(200,80,80,0.06)';
+      const countdownEl = document.getElementById('memoryCountdown');
+      if (countdownEl) countdownEl.textContent = 'Memory expired — regenerate Report 1 to continue';
+      const btn = document.getElementById('report2RunBtn');
+      if (btn) btn.disabled = true;
+    }, 5 * 60 * 1000);
+
+    // Live countdown every second
+    const memoryStartTime = Date.now();
+    const countdownInterval = setInterval(() => {
+      const elapsed = Date.now() - memoryStartTime;
+      const remaining = Math.max(0, 5 * 60 * 1000 - elapsed);
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      const countdownEl = document.getElementById('memoryCountdown');
+      if (countdownEl && remaining > 0) {
+        countdownEl.textContent = 'Transcript in memory — ' + mins + ':' + String(secs).padStart(2,'0') + ' remaining';
+      }
+      if (remaining <= 0) clearInterval(countdownInterval);
+    }, 1000);
+
+    console.log('[Memory] Transcript stored: ' + Object.keys(storedTimestampMap).length + ' timestamps. Expires in 5 mins.');
+  }
+
+  function getMemoryStatus() {
+    const count = Object.keys(storedTimestampMap).length;
+    return count > 0 ? count + ' timestamps in memory' : 'expired';
+  }
 
   // ── Provider Switcher ──────────────────────────────────────────────────────
   function selectProvider(p) {
@@ -1689,53 +1751,114 @@ window.addEventListener('load', () => {
     return lines.join('\n');
   }
 
-  // ── Report 2 Prompt: Verified & Rectified Report ─────────────────────────
-  function buildReport2Prompt(report1Data, timestampedTranscript) {
-    const r1Text = [
-      'HOOK & TARGET AUDIENCE: ' + (report1Data.hookAudience || []).join(' | '),
-      'SALES & CONVERSION STRATEGY: ' + (report1Data.salesConversion || []).join(' | '),
-      'OFFER & MONETIZATION: ' + (report1Data.offerMonetization || []).join(' | '),
-      'TRUST & ENGAGEMENT: ' + (report1Data.trustEngagement || []).join(' | '),
-      'AI TOOLS & PRACTICAL VALUE: ' + (report1Data.aiToolsValue || []).join(' | '),
-      'BUSINESS MOAT & COMPETITIVE ADVANTAGE: ' + (report1Data.businessMoat || []).join(' | '),
-      'WEAKNESSES & GROWTH OPPORTUNITIES: ' + (report1Data.weaknesses || []).join(' | '),
-    ].join('\n');
+  // ── Report 2 Prompt: Verified & Rectified using Timestamp Memory ────────────
+  function buildReport2Prompt(report1Data, timestampMap) {
+
+    // For each Report 1 bullet, extract its timestamp and look it up in memory
+    const categoryMeta = [
+      { key: 'hookAudience',      label: 'HOOK & TARGET AUDIENCE' },
+      { key: 'salesConversion',   label: 'SALES & CONVERSION STRATEGY' },
+      { key: 'offerMonetization', label: 'OFFER & MONETIZATION' },
+      { key: 'trustEngagement',   label: 'TRUST & ENGAGEMENT' },
+      { key: 'aiToolsValue',      label: 'AI TOOLS & PRACTICAL VALUE' },
+      { key: 'businessMoat',      label: 'BUSINESS MOAT & COMPETITIVE ADVANTAGE' },
+      { key: 'weaknesses',        label: 'WEAKNESSES & GROWTH OPPORTUNITIES' },
+    ];
+
+    // Build a verified evidence block: each Report 1 bullet with the actual
+    // transcript text found at that timestamp (or nearest available)
+    let evidenceBlock = '';
+    const usedTimestamps = new Set();
+
+    categoryMeta.forEach(cat => {
+      const bullets = report1Data[cat.key] || [];
+      if (!bullets.length) return;
+      evidenceBlock += '\n--- ' + cat.label + ' ---\n';
+      bullets.forEach(bullet => {
+        const tsMatch = bullet.match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+        const ts = tsMatch ? tsMatch[1] : null;
+        let transcriptContext = '[Timestamp not found in transcript]';
+
+        if (ts && timestampMap[ts]) {
+          transcriptContext = timestampMap[ts];
+          usedTimestamps.add(ts);
+        } else if (ts) {
+          // Try to find nearest timestamp in map (within ±30 seconds)
+          const [tsParts] = [ts.split(':').reverse()];
+          const tsSeconds = tsParts.reduce((acc, v, i) => acc + parseInt(v) * Math.pow(60, i), 0);
+          let nearest = null, nearestDiff = Infinity;
+          Object.keys(timestampMap).forEach(k => {
+            const kParts = k.split(':').reverse();
+            const kSec = kParts.reduce((acc, v, i) => acc + parseInt(v) * Math.pow(60, i), 0);
+            const diff = Math.abs(kSec - tsSeconds);
+            if (diff < nearestDiff) { nearestDiff = diff; nearest = k; }
+          });
+          if (nearest && nearestDiff <= 30) {
+            transcriptContext = '[Nearest: ' + nearest + '] ' + timestampMap[nearest];
+            usedTimestamps.add(nearest);
+          } else {
+            transcriptContext = '[No transcript found within 30s of ' + ts + ']';
+          }
+        }
+        evidenceBlock += 'R1 BULLET: ' + bullet + '\n';
+        evidenceBlock += 'TRANSCRIPT AT TIMESTAMP: ' + transcriptContext + '\n\n';
+      });
+    });
+
+    // Also include a sample of unused timestamps so the AI can find missed content
+    const allTimestamps = Object.keys(timestampMap);
+    const unusedSample = allTimestamps
+      .filter(ts => !usedTimestamps.has(ts))
+      .filter((_, i) => i % 5 === 0)  // every 5th = ~20% coverage of unused
+      .slice(0, 80)
+      .map(ts => '[' + ts + '] ' + timestampMap[ts])
+      .join('\n');
 
     return [
-      'You are a senior workshop intelligence analyst. You have:',
-      '1. A first-pass Report 1 about a workshop (may have errors, gaps, or missed details).',
-      '2. The full original timestamped transcript.',
+      'You are a senior workshop intelligence analyst. Your job is to produce the DEFINITIVE verified and rectified Report 2.',
       '',
-      'Your job: Produce a VERIFIED & RECTIFIED Report 2 — the definitive, organisation-grade version.',
-      'Go through EVERY category. Cross-reference every claim in Report 1 against the transcript.',
-      'For each bullet:',
-      '  - CORRECT it if the detail is wrong (use what the transcript actually says)',
-      '  - EXPAND it if important context or specifics were missed',
-      '  - REPLACE it if it was fabricated or unverifiable',
-      '  - KEEP it (with timestamp) if accurate',
-      'Then ADD any important insights from the transcript that Report 1 missed entirely.',
-      'Target 5-7 bullets per category — the most complete, accurate version possible.',
+      'You have been given:',
+      '1. Every bullet from Report 1, each paired with the EXACT transcript text found at that timestamp.',
+      '2. A sample of additional transcript moments Report 1 may have missed.',
+      '',
+      'For each Report 1 bullet:',
+      '  - If the TRANSCRIPT AT TIMESTAMP confirms the claim → keep it (with timestamp)',
+      '  - If the transcript says something DIFFERENT → correct the bullet using what the transcript actually says',
+      '  - If the transcript shows [No transcript found] → search the additional transcript moments below and find the correct timestamp',
+      '  - If a claim is completely absent from the transcript → replace it with a real finding from the transcript moments',
+      '',
+      'Then ADD any important insights from the additional transcript moments that Report 1 missed.',
+      'Target 5-7 bullets per category. Every bullet MUST start with a verified [MM:SS] timestamp.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. All string values are plain text only — no HTML.',
-      '4. "summaryVerdict": 4-5 sentences — what Report 1 got right, what was corrected, what was added, how much more reliable this version is.',
-      '5. Every bullet MUST start with a [MM:SS] or [HH:MM:SS] timestamp from the transcript.',
-      '6. Use exact names, numbers, prices, and quotes. No vague generalisations.',
-      '7. IMPORTANT: [N/A] is ONLY allowed if that topic is completely absent from the transcript.',
-      '   If Report 1 already found content for a category, you MUST also find content — search harder.',
-      '   Do NOT write [N/A] for a category just because it is harder to find or appears later in the transcript.',
+      '4. "summaryVerdict": 4-5 sentences on what Report 1 got right, what was corrected, what was added.',
+      '5. NEVER write [N/A] if Report 1 had content for that category — find something from the transcript.',
+      '6. Use exact names, numbers, prices, and quotes from the transcript text provided.',
       '',
-      '━━━ REPORT 1 (to verify and rectify) ━━━',
-      'NOTE: Report 1 found content in ALL categories below. Your rectified version must also cover all of them.',
-      r1Text,
+      'OUTPUT FORMAT:',
+      '{',
+      '  "summaryVerdict": "4-5 sentence verdict...",',
+      '  "hookAudience":    ["[MM:SS] verified bullet", "..."],',
+      '  "salesConversion": ["[MM:SS] verified bullet", "..."],',
+      '  "offerMonetization": ["[MM:SS] verified bullet", "..."],',
+      '  "trustEngagement": ["[MM:SS] verified bullet", "..."],',
+      '  "aiToolsValue":    ["[MM:SS] verified bullet", "..."],',
+      '  "businessMoat":    ["[MM:SS] verified bullet", "..."],',
+      '  "weaknesses":      ["[MM:SS] verified bullet", "..."]',
+      '}',
       '',
-      '━━━ ORIGINAL TIMESTAMPED TRANSCRIPT ━━━',
-      timestampedTranscript
+      '━━━ REPORT 1 BULLETS WITH TRANSCRIPT EVIDENCE ━━━',
+      evidenceBlock,
+      '',
+      '━━━ ADDITIONAL TRANSCRIPT MOMENTS (for finding missed content) ━━━',
+      unusedSample,
     ].join('\n');
   }
-  // ── API Calls ──────────────────────────────────────────────────────────────
+
+    // ── API Calls ──────────────────────────────────────────────────────────────
   const GEMINI_FALLBACK_MODELS = [
     'gemini-2.5-pro',          // Most capable
     'gemini-2.5-flash',        // Balanced
@@ -1893,7 +2016,7 @@ window.addEventListener('load', () => {
         rawTexts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
         timestampedParts.push('=== FILE: ' + file.name + ' ===\n' + parseVTTWithTimestamps(raw));
       }
-      storedTimestampedTranscript = timestampedParts.join('\n\n');
+      setTranscriptMemory(timestampedParts.join('\n\n'));
 
       // Report 1: pass the FULL timestamped transcript — no sampling, no gaps.
       // Only hard-cap at the model's actual context limit to avoid API errors.
@@ -1957,13 +2080,12 @@ window.addEventListener('load', () => {
     }, 4000);
 
     try {
-      // Reserve space for: prompt instructions (~2000) + Report 1 data (measured) + safety buffer (3000)
-      const baseLimit = getCharLimit();
-      const r1DataSize = JSON.stringify(storedReport1Data).length;
-      const overhead = 2000 + r1DataSize + 3000;
-      const transcriptLimit = Math.max(20000, baseLimit - overhead);
-      const trimmedTranscript = trimTranscript(storedTimestampedTranscript, transcriptLimit);
-      const prompt = buildReport2Prompt(storedReport1Data, trimmedTranscript);
+      // Check transcript memory is still alive
+      if (Object.keys(storedTimestampMap).length === 0) {
+        throw new Error('Transcript memory has expired (5 min limit). Please re-upload and regenerate Report 1 first.');
+      }
+      console.log('[Report 2] Using timestamp map with ' + Object.keys(storedTimestampMap).length + ' entries');
+      const prompt = buildReport2Prompt(storedReport1Data, storedTimestampMap);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
