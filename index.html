@@ -1059,7 +1059,7 @@
     <!-- Report 2: Accuracy Fact-Check (auto-runs after Report 1) -->
     <div id="report2Section" style="display:none;flex-direction:column;gap:14px;margin-top:10px;">
       <div class="results-header" style="margin-bottom:0;">
-        <div class="results-title">🔍 Report 2 · Accuracy Fact-Check</div>
+        <div class="results-title">✅ Report 2 · Verified & Rectified</div>
       </div>
       <!-- Report 2 Loader -->
       <div class="loader" id="report2Loader" style="display:none;">
@@ -1076,7 +1076,7 @@
             </g>
           </svg>
         </div>
-        <div class="loader-text">Verifying claims against transcript…</div>
+        <div class="loader-text">Verifying and rectifying Report 1…</div>
       </div>
       <div id="report2Error" style="display:none;font-size:13px;color:#c06060;padding:10px 16px;background:rgba(200,80,80,0.06);border-radius:10px;border:1px solid rgba(200,80,80,0.18);"></div>
       <!-- Report 2 Card -->
@@ -1632,12 +1632,14 @@ window.addEventListener('load', () => {
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. All values are plain strings or arrays of strings.',
-      '4. For each detail category: write 3-5 bullet points. Each bullet is one specific, non-repetitive fact.',
-      '5. EVERY bullet point MUST begin with a timestamp in the format [MM:SS] or [HH:MM:SS] from the nearest timestamp in the transcript.',
-      '6. If a category has nothing relevant, write "[N/A] Not mentioned in transcript."',
+      '4. "summary": Write 3-4 sentences giving a high-level overview of the workshop — what it covers, who it is for, the main value proposition, and the overall tone/approach.',
+      '5. For each detail category: write 3-5 bullet points. Each bullet is one specific, non-repetitive fact.',
+      '6. EVERY bullet point in the detail categories MUST begin with a timestamp in the format [MM:SS] or [HH:MM:SS] taken directly from the nearest timestamp in the transcript.',
+      '7. If a category has nothing relevant, write "[N/A] Not mentioned in transcript."',
       '',
       'OUTPUT FORMAT (exact keys required):',
       '{',
+      '  "summary": "3-4 sentence overview of the whole workshop.",',
       '  "hookAudience":    ["[00:02:14] bullet 1", "[00:05:30] bullet 2", "[00:08:45] bullet 3"],',
       '  "salesConversion": ["[00:12:00] bullet 1", "[00:15:20] bullet 2", "[00:18:10] bullet 3"],',
       '  "offerMonetization": ["[00:22:30] bullet 1", "[00:25:00] bullet 2", "[00:28:15] bullet 3"],',
@@ -1648,6 +1650,7 @@ window.addEventListener('load', () => {
       '}',
       '',
       'FIELD DEFINITIONS:',
+      'summary:           High-level 3-4 sentence overview — workshop topic, target audience, core value promise, overall structure.',
       'hookAudience:      Target audience, core pain point, promised transformation, who the workshop is for.',
       'salesConversion:   Emotional triggers, urgency/scarcity tactics, objection handling, pitch timing.',
       'offerMonetization: Each offer name, exact price, payment plan, bonuses, upsells.',
@@ -1656,7 +1659,7 @@ window.addEventListener('load', () => {
       'businessMoat:      Unique systems, brand authority, exclusive access, proprietary frameworks.',
       'weaknesses:        Gaps in delivery, overpromises, weak areas, opportunities to outperform.',
       '',
-      'Be specific: use names, prices, tactics, and numbers directly from the transcript. Always start each bullet with [timestamp]. No filler.',
+      'Be specific: use names, prices, tactics, and numbers directly from the transcript. Always start each detail bullet with [timestamp]. No filler.',
       '',
       'TRANSCRIPT:',
       transcript
@@ -1664,7 +1667,7 @@ window.addEventListener('load', () => {
     return lines.join('\n');
   }
 
-  // ── Report 2 Prompt: Accuracy Fact-Check with Timestamps ─────────────────
+  // ── Report 2 Prompt: Verified & Rectified Report ─────────────────────────
   function buildReport2Prompt(report1Data, timestampedTranscript) {
     const r1Text = [
       'HOOK & TARGET AUDIENCE: ' + (report1Data.hookAudience || []).join(' | '),
@@ -1677,41 +1680,39 @@ window.addEventListener('load', () => {
     ].join('\n');
 
     return [
-      'You are a transcript accuracy auditor. You have been given:',
-      '1. An AI-generated intelligence report (Report 1) about a workshop.',
-      '2. The original timestamped transcript the report was based on.',
+      'You are a senior workshop intelligence analyst and fact-checker. You have:',
+      '1. An AI-generated Report 1 about a workshop (may contain errors or missed details).',
+      '2. The original timestamped transcript.',
       '',
-      'Your job: fact-check every specific claim in Report 1 against the actual transcript.',
-      'For each finding, cite the timestamp where you found (or could not find) the evidence.',
+      'Your job: Produce a VERIFIED & RECTIFIED Report 2 in the EXACT SAME structure as Report 1.',
+      'Go through each category, cross-reference every claim with the transcript, and rewrite each bullet to be:',
+      '  - CORRECTED if Report 1 got it wrong (fix the error using what the transcript actually says)',
+      '  - EXPANDED if Report 1 missed important details from the transcript',
+      '  - REMOVED and replaced if a bullet was completely fabricated (not in transcript)',
+      '  - CONFIRMED (kept as-is with timestamp) if it is accurate',
+      'The result should be a more accurate and complete version of Report 1.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
-      '3. All string values are plain text only — no HTML.',
-      '4. verdict must be exactly one of: "CONFIRMED", "INACCURATE", "UNVERIFIABLE"',
-      '   - CONFIRMED: claim is clearly supported by the transcript with a specific timestamp',
-      '   - INACCURATE: claim contradicts what was actually said (state what was really said)',
-      '   - UNVERIFIABLE: claim cannot be confirmed or denied from the transcript text',
-      '5. timestamp: the nearest [MM:SS] or [HH:MM:SS] timestamp label from the transcript, or "N/A" if unverifiable.',
-      '6. Check 5-8 specific factual claims total, spread across different categories.',
+      '3. All values are plain strings or arrays of strings.',
+      '4. "summaryVerdict": Write 3-4 sentences — overall accuracy of Report 1, what was wrong or missing, and how reliable this rectified version now is.',
+      '5. For every bullet in every category: ALWAYS start with a [MM:SS] or [HH:MM:SS] timestamp from the transcript.',
+      '6. If a category has nothing supported by the transcript, write "[N/A] Not found in transcript."',
       '',
-      'OUTPUT FORMAT:',
+      'OUTPUT FORMAT (exact keys required):',
       '{',
-      '  "overallAccuracy": "<one sentence overall accuracy assessment with a percentage estimate>",',
-      '  "checks": [',
-      '    {',
-      '      "category": "<which Report 1 category this claim came from>",',
-      '      "claim": "<exact claim from Report 1, quoted>",',
-      '      "verdict": "CONFIRMED",',
-      '      "timestamp": "[00:01:23]",',
-      '      "note": "<what the transcript actually says at that point — be specific>"',
-      '    }',
-      '  ],',
-      '  "missedInsights": ["<important thing in the transcript that Report 1 missed>", "..."],',
-      '  "recommendation": "<one actionable sentence about how reliable this report is>"',
+      '  "summaryVerdict": "3-4 sentence verdict on Report 1 accuracy and what was rectified.",',
+      '  "hookAudience":    ["[00:02:14] rectified bullet 1", "[00:05:30] rectified bullet 2"],',
+      '  "salesConversion": ["[00:12:00] rectified bullet 1", "[00:15:20] rectified bullet 2"],',
+      '  "offerMonetization": ["[00:22:30] rectified bullet 1", "[00:25:00] rectified bullet 2"],',
+      '  "trustEngagement": ["[00:31:00] rectified bullet 1", "[00:34:45] rectified bullet 2"],',
+      '  "aiToolsValue":    ["[00:41:10] rectified bullet 1", "[00:44:30] rectified bullet 2"],',
+      '  "businessMoat":    ["[00:51:00] rectified bullet 1", "[00:54:20] rectified bullet 2"],',
+      '  "weaknesses":      ["[01:01:15] rectified bullet 1", "[01:04:30] rectified bullet 2"]',
       '}',
       '',
-      '━━━ REPORT 1 TO FACT-CHECK ━━━',
+      '━━━ REPORT 1 (to verify and rectify) ━━━',
       r1Text,
       '',
       '━━━ ORIGINAL TIMESTAMPED TRANSCRIPT ━━━',
@@ -2021,6 +2022,19 @@ window.addEventListener('load', () => {
     container.innerHTML = '';
     container.style.display = 'block';
 
+    // ── Summary Card ──────────────────────────────────────────────────────
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'section-card card-2';
+    summaryCard.innerHTML =
+      '<div class="card-watermark">概</div>' +
+      '<div class="section-meta"><span class="section-icon">📋</span><span class="card-label">Report 1 · Summary</span></div>' +
+      '<div class="section-title">Workshop Overview</div>' +
+      '<p style="font-size:14.5px;line-height:1.9;color:var(--text2);margin:0;">' +
+        (data.summary || 'Summary not available.').replace(/</g,'&lt;') +
+      '</p>';
+    container.appendChild(summaryCard);
+
+    // ── Details Card ──────────────────────────────────────────────────────
     const card = document.createElement('div');
     card.className = 'section-card card-1';
     card.innerHTML =
@@ -2047,7 +2061,7 @@ window.addEventListener('load', () => {
     return true;
   }
 
-  // ── Render Report 2: Accuracy Fact-Check ──────────────────────────────────
+  // ── Render Report 2: Verified & Rectified ────────────────────────────────
   function parseAndDisplayReport2(text) {
     let data;
     try {
@@ -2080,80 +2094,66 @@ window.addEventListener('load', () => {
       return;
     }
 
-    const verdictColor = { 'CONFIRMED': '#4a8a4a', 'INACCURATE': '#c06060', 'UNVERIFIABLE': '#b09040' };
-    const verdictBg    = { 'CONFIRMED': 'rgba(80,140,80,0.08)', 'INACCURATE': 'rgba(200,80,80,0.07)', 'UNVERIFIABLE': 'rgba(180,160,60,0.08)' };
-    const verdictIcon  = { 'CONFIRMED': '✓', 'INACCURATE': '✗', 'UNVERIFIABLE': '?' };
-    const verdictBorder= { 'CONFIRMED': 'rgba(80,140,80,0.22)', 'INACCURATE': 'rgba(200,80,80,0.2)', 'UNVERIFIABLE': 'rgba(180,160,60,0.2)' };
+    const categoryMeta = [
+      { key: 'hookAudience',      label: 'HOOK & TARGET AUDIENCE',                icon: '🎯' },
+      { key: 'salesConversion',   label: 'SALES & CONVERSION STRATEGY',           icon: '🍂' },
+      { key: 'offerMonetization', label: 'OFFER & MONETIZATION',                  icon: '💮' },
+      { key: 'trustEngagement',   label: 'TRUST & ENGAGEMENT',                    icon: '🌟' },
+      { key: 'aiToolsValue',      label: 'AI TOOLS & PRACTICAL VALUE',            icon: '🤖' },
+      { key: 'businessMoat',      label: 'BUSINESS MOAT & COMPETITIVE ADVANTAGE', icon: '🏯' },
+      { key: 'weaknesses',        label: 'WEAKNESSES & GROWTH OPPORTUNITIES',     icon: '🌱' },
+    ];
 
-    const checks = Array.isArray(data.checks) ? data.checks : [];
-    const missed = Array.isArray(data.missedInsights) ? data.missedInsights : [];
-
-    let checksHtml = checks.map(c => {
-      const v = (c.verdict || 'UNVERIFIABLE').toUpperCase();
-      const col = verdictColor[v] || '#b09040';
-      const bg  = verdictBg[v]   || 'rgba(180,160,60,0.08)';
-      const bdr = verdictBorder[v]|| 'rgba(180,160,60,0.2)';
-      const icon = verdictIcon[v] || '?';
-      return (
-        '<div style="margin-bottom:14px;padding:14px 16px;background:' + bg + ';border:1px solid ' + bdr + ';border-radius:14px;">' +
-          '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
-            '<span style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);font-family:\'Noto Serif JP\',serif;">' + (c.category || '').replace(/</g,'&lt;') + '</span>' +
-            '<div style="display:flex;align-items:center;gap:6px;">' +
-              '<span style="font-size:11px;color:#888;font-family:monospace;background:rgba(0,0,0,0.05);padding:2px 8px;border-radius:999px;">' + (c.timestamp || 'N/A') + '</span>' +
-              '<span style="font-size:11px;font-weight:700;color:' + col + ';background:' + bg + ';border:1px solid ' + bdr + ';padding:3px 10px;border-radius:999px;">' + icon + ' ' + v + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<p style="font-size:13px;font-style:italic;color:var(--text2);margin:0 0 8px;line-height:1.65;">"' + (c.claim || '').replace(/</g,'&lt;') + '"</p>' +
-          '<p style="font-size:13px;color:var(--text);margin:0;line-height:1.65;opacity:0.85;">' + (c.note || '').replace(/</g,'&lt;') + '</p>' +
-        '</div>'
-      );
-    }).join('');
-
-    let missedHtml = missed.length
-      ? '<ul style="list-style:none;padding:0;margin:0;">' + missed.map(m =>
-          '<li style="margin-bottom:9px;padding-left:20px;position:relative;font-size:14px;line-height:1.75;color:var(--text2);">' +
-          '<span style="position:absolute;left:0;top:7px;color:var(--amber);font-size:10px;">✦</span>' +
-          m.replace(/</g,'&lt;') + '</li>'
-        ).join('') + '</ul>'
-      : '<p style="font-size:13px;color:var(--muted);">No significant gaps detected.</p>';
-
-    const accuracyHtml =
-      '<p style="font-size:14px;line-height:1.8;color:var(--text);padding:12px 16px;background:rgba(122,155,106,0.07);border:1px solid rgba(122,155,106,0.18);border-radius:12px;margin-bottom:20px;">' +
-      '🔍 ' + (data.overallAccuracy || '').replace(/</g,'&lt;') + '</p>';
-
-    const recommendHtml = data.recommendation
-      ? '<p style="font-size:13px;font-style:italic;color:var(--text2);margin:16px 0 0;padding:10px 14px;border-left:3px solid var(--sakura);background:rgba(232,160,176,0.06);border-radius:0 8px 8px 0;line-height:1.7;">' +
-        '💡 ' + data.recommendation.replace(/</g,'&lt;') + '</p>'
-      : '';
+    // Build rectified detail rows (same layout as Report 1)
+    let innerHtml = '';
+    categoryMeta.forEach((cat, i) => {
+      const bullets = Array.isArray(data[cat.key]) && data[cat.key].length
+        ? data[cat.key]
+        : ['[N/A] Not found in transcript.'];
+      const liItems = bullets.map(b => {
+        const clean = b.replace(/^[•\-\*]\s*/, '').trim();
+        const tsMatch = clean.match(/^(\[\d{1,2}:\d{2}(?::\d{2})?\])\s*/);
+        const tsTag = tsMatch
+          ? '<span style="display:inline-block;margin-right:7px;font-family:monospace;font-size:10px;color:#fff;background:var(--amber2);padding:1px 7px;border-radius:999px;vertical-align:middle;letter-spacing:0.03em;flex-shrink:0;">' + tsMatch[1] + '</span>'
+          : '';
+        const body = tsMatch ? clean.slice(tsMatch[0].length) : clean;
+        return '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:flex-start;gap:0;">' +
+          '<span style="position:absolute;left:0;top:7px;color:var(--amber2);font-size:10px;">✦</span>' +
+          '<span style="padding-left:4px;">' + tsTag + truncateTo30Words(body) + '</span></li>';
+      }).join('');
+      innerHtml +=
+        '<div style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:20px;margin-top:20px;' : '') + '">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+        '<span style="font-size:18px">' + cat.icon + '</span>' +
+        '<span style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--amber)">' + cat.label + '</span>' +
+        '</div>' +
+        '<ul id="r2detail-' + i + '" style="list-style:none;padding:0;margin:0;font-size:14px;">' + liItems + '</ul>' +
+        '</div>';
+    });
 
     const card = document.getElementById('report2Card');
     if (!card) return;
+
+    // ── Summary Card ──
+    const summaryHtml =
+      '<div class="section-card card-3" style="margin-bottom:14px;">' +
+        '<div class="card-watermark">検</div>' +
+        '<div class="section-meta"><span class="section-icon">✅</span><span class="card-label">Report 2 · Verified Summary</span></div>' +
+        '<div class="section-title">Rectified Workshop Overview</div>' +
+        '<p style="font-size:14.5px;line-height:1.9;color:var(--text2);margin:0;">' +
+          (data.summaryVerdict || 'Verification summary not available.').replace(/</g,'&lt;') +
+        '</p>' +
+      '</div>';
+
+    // ── Details Card ──
     card.innerHTML =
+      summaryHtml +
       '<div class="card-watermark">証</div>' +
-      '<div class="section-meta"><span class="section-icon">🔍</span><span class="card-label">Report 2 · Accuracy Fact-Check</span></div>' +
-      '<div class="section-title">Accuracy Verification with Timestamps</div>' +
-
-      // ── 1. Summary block (mirrors Report 1 summary position) ──
-      '<div style="margin-bottom:20px;">' +
-        '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Overall Accuracy Summary</div>' +
-        accuracyHtml +
-        recommendHtml +
-      '</div>' +
-
-      // ── 2. Divider ──
-      '<div style="border-top:1px solid rgba(180,130,100,0.12);margin-bottom:20px;"></div>' +
-
-      // ── 3. Claim-by-Claim Checks ──
-      '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Claim-by-Claim Checks</div>' +
-      checksHtml +
-
-      // ── 4. Missed Insights ──
-      '<div style="border-top:1px solid rgba(180,130,100,0.1);margin-top:20px;padding-top:20px;">' +
-        '<div style="font-family:\'Noto Serif JP\',serif;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Insights Missed by Report 1</div>' +
-        missedHtml +
-      '</div>' +
-
+      '<div class="section-meta"><span class="section-icon">🔍</span><span class="card-label">Report 2 · Rectified Intelligence Breakdown</span></div>' +
+      '<div class="section-title">Verified & Corrected Workshop Report</div>' +
+      '<div id="r2detailsInner">' + innerHtml + '</div>' +
       '<div class="card-action"><button class="copy-btn" onclick="copyReport2(this)">Copy</button></div>';
+
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
