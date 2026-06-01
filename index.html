@@ -299,6 +299,7 @@
       inset: 0;
       background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 60%);
       pointer-events: none;
+      z-index: 1;
     }
 
     .provider-tab:hover {
@@ -319,6 +320,14 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(135deg, rgba(232,160,176,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* All direct children of provider-tab sit above pseudo-elements */
+    .provider-tab > * {
+      position: relative;
+      z-index: 2;
       pointer-events: none;
     }
 
@@ -828,21 +837,21 @@
     <div class="glass-card">
       <div class="provider-tabs">
 
-        <button class="provider-tab active" onclick="selectProvider('gemini')" id="tab-gemini">
+        <button class="provider-tab active" id="tab-gemini">
           <div class="p-icon">🟦</div>
           <div class="p-name">Google Gemini</div>
           <div class="p-model">gemini-2.5-flash</div>
           <span class="p-badge badge-free">FREE · No credit card</span>
         </button>
 
-        <button class="provider-tab" onclick="selectProvider('openrouter')" id="tab-openrouter">
+        <button class="provider-tab" id="tab-openrouter">
           <div class="p-icon">🔀</div>
           <div class="p-name">OpenRouter</div>
           <div class="p-model">100+ models</div>
           <span class="p-badge badge-mixed">FREE models available</span>
         </button>
 
-        <button class="provider-tab" onclick="selectProvider('claude')" id="tab-claude">
+        <button class="provider-tab" id="tab-claude">
           <div class="p-icon">🟠</div>
           <div class="p-name">Claude (Anthropic)</div>
           <div class="p-model">claude-haiku-4-5</div>
@@ -853,7 +862,7 @@
 
       <div class="provider-tabs-row2">
 
-        <button class="provider-tab" onclick="selectProvider('groq')" id="tab-groq">
+        <button class="provider-tab" id="tab-groq">
           <div class="p-icon">⚡</div>
           <div class="p-name">Groq</div>
           <div class="p-model">llama-3.3-70b</div>
@@ -1406,6 +1415,17 @@ window.addEventListener('load', () => {
     }
     updateRunBtn();
   }
+
+  // Bind provider tab clicks via addEventListener (avoids overlay interference)
+  ['gemini','openrouter','claude','groq'].forEach(id => {
+    const btn = document.getElementById('tab-' + id);
+    if (btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        selectProvider(id);
+      });
+    }
+  });
 
   function setKeyStatus(msg, cls) {
     const el = document.getElementById('keyStatus');
