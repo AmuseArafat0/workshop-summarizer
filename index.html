@@ -1606,60 +1606,70 @@ window.addEventListener('load', () => {
     return PROVIDER_CHAR_LIMITS[currentProvider] || 48000;
   }
 
-  // Smart sampler: beginning (40%) + middle (30%) + end (30%)
-  // Catches the hook (start) AND the sales pitch (usually at end)
+  // Evenly-distributed sampler: splits transcript into 5 equal windows so the
+  // AI sees content from the full length of the recording, not just the start.
   function trimTranscript(text, maxChars) {
     if (text.length <= maxChars) return text;
-    const start  = Math.floor(maxChars * 0.40);
-    const mid    = Math.floor(maxChars * 0.30);
-    const tail   = Math.floor(maxChars * 0.30);
-    const midPos = Math.floor(text.length / 2);
-    return (
-      text.substring(0, start) +
-      '\n\n[... transcript sampled: middle section ...] \n\n' +
-      text.substring(midPos - Math.floor(mid / 2), midPos + Math.floor(mid / 2)) +
-      '\n\n[... transcript sampled: final section ...] \n\n' +
-      text.substring(text.length - tail)
-    );
+
+    const NUM_CHUNKS = 5;
+    const charsPerChunk = Math.floor(maxChars / NUM_CHUNKS);
+    const segmentSize = Math.floor(text.length / NUM_CHUNKS);
+    let parts = [];
+
+    for (let i = 0; i < NUM_CHUNKS; i++) {
+      const segStart = i * segmentSize;
+      // Centre the chunk window inside each segment
+      const windowStart = Math.min(
+        segStart + Math.floor((segmentSize - charsPerChunk) / 2),
+        text.length - charsPerChunk
+      );
+      const windowEnd = Math.min(windowStart + charsPerChunk, text.length);
+      parts.push(text.substring(Math.max(0, windowStart), windowEnd));
+    }
+
+    return parts.map((chunk, i) => {
+      const label = ['[segment 1/5 — opening]','[segment 2/5 — early]','[segment 3/5 — middle]','[segment 4/5 — late]','[segment 5/5 — closing]'][i];
+      return '\n\n' + label + '\n' + chunk;
+    }).join('\n\n[...]\n');
   }
 
   // ── Prompt ─────────────────────────────────────────────────────────────────
   function buildPrompt(transcript) {
     var lines = [
-      'You are a competitive workshop intelligence analyst. Read the timestamped transcript and fill in the JSON fields below.',
+      'You are a senior workshop intelligence analyst. This report is critical for an organization — extract MAXIMUM value from the ENTIRE transcript. Read every part carefully.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
       '3. All values are plain strings or arrays of strings.',
-      '4. "summary": Write 3-4 sentences giving a high-level overview of the workshop — what it covers, who it is for, the main value proposition, and the overall tone/approach.',
-      '5. For each detail category: write 3-5 bullet points. Each bullet is one specific, non-repetitive fact.',
-      '6. EVERY bullet point in the detail categories MUST begin with a timestamp in the format [MM:SS] or [HH:MM:SS] taken directly from the nearest timestamp in the transcript.',
-      '7. If a category has nothing relevant, write "[N/A] Not mentioned in transcript."',
+      '4. "summary": Write 5-6 sentences — a thorough executive overview covering: what the workshop teaches, who it targets, the core transformation promised, key methods used, the business model behind it, and the overall quality of delivery.',
+      '5. For each detail category: write 5-7 bullets. Each bullet must be a specific, standalone, non-repetitive insight.',
+      '6. EVERY bullet MUST start with a [MM:SS] or [HH:MM:SS] timestamp taken directly from the transcript.',
+      '7. Cover the FULL transcript — pull insights from early, middle AND late sections. Do not cluster everything at the start.',
+      '8. Use exact names, numbers, prices, tool names, and direct quotes from the transcript. No vague generalisations.',
+      '9. If a category has nothing relevant, write "[N/A] Not mentioned in transcript."',
       '',
       'OUTPUT FORMAT (exact keys required):',
       '{',
-      '  "summary": "3-4 sentence overview of the whole workshop.",',
-      '  "hookAudience":    ["[00:02:14] bullet 1", "[00:05:30] bullet 2", "[00:08:45] bullet 3"],',
-      '  "salesConversion": ["[00:12:00] bullet 1", "[00:15:20] bullet 2", "[00:18:10] bullet 3"],',
-      '  "offerMonetization": ["[00:22:30] bullet 1", "[00:25:00] bullet 2", "[00:28:15] bullet 3"],',
-      '  "trustEngagement": ["[00:31:00] bullet 1", "[00:34:45] bullet 2", "[00:38:20] bullet 3"],',
-      '  "aiToolsValue":    ["[00:41:10] bullet 1", "[00:44:30] bullet 2", "[00:47:55] bullet 3"],',
-      '  "businessMoat":    ["[00:51:00] bullet 1", "[00:54:20] bullet 2", "[00:57:40] bullet 3"],',
-      '  "weaknesses":      ["[01:01:15] bullet 1", "[01:04:30] bullet 2", "[01:07:50] bullet 3"]',
+      '  "summary": "5-6 sentence executive overview of the entire workshop.",',
+      '  "hookAudience":    ["[00:02:14] specific insight", "[00:25:00] specific insight", "...up to 7 bullets"],',
+      '  "salesConversion": ["[00:12:00] specific insight", "[00:45:20] specific insight", "...up to 7 bullets"],',
+      '  "offerMonetization": ["[00:22:30] specific insight", "[01:10:00] specific insight", "...up to 7 bullets"],',
+      '  "trustEngagement": ["[00:31:00] specific insight", "[00:55:45] specific insight", "...up to 7 bullets"],',
+      '  "aiToolsValue":    ["[00:41:10] specific insight", "[01:20:30] specific insight", "...up to 7 bullets"],',
+      '  "businessMoat":    ["[00:51:00] specific insight", "[01:35:20] specific insight", "...up to 7 bullets"],',
+      '  "weaknesses":      ["[01:01:15] specific insight", "[01:45:50] specific insight", "...up to 7 bullets"]',
       '}',
       '',
-      'FIELD DEFINITIONS:',
-      'summary:           High-level 3-4 sentence overview — workshop topic, target audience, core value promise, overall structure.',
-      'hookAudience:      Target audience, core pain point, promised transformation, who the workshop is for.',
-      'salesConversion:   Emotional triggers, urgency/scarcity tactics, objection handling, pitch timing.',
-      'offerMonetization: Each offer name, exact price, payment plan, bonuses, upsells.',
-      'trustEngagement:   Social proof, testimonials, live interaction methods, community tactics.',
-      'aiToolsValue:      Specific AI tools named, prompts/templates shown, practical takeaways.',
-      'businessMoat:      Unique systems, brand authority, exclusive access, proprietary frameworks.',
-      'weaknesses:        Gaps in delivery, overpromises, weak areas, opportunities to outperform.',
-      '',
-      'Be specific: use names, prices, tactics, and numbers directly from the transcript. Always start each detail bullet with [timestamp]. No filler.',
+      'FIELD DEFINITIONS — extract deeply:',
+      'summary:           Executive overview — topic, audience, transformation, methods, business model, delivery quality.',
+      'hookAudience:      Exact audience demographics stated, specific pain points named, transformation promised, emotional hooks used, who is explicitly included or excluded.',
+      'salesConversion:   Every emotional trigger used, exact urgency/scarcity tactics with wording, objection handling moments, pitch timing, closing techniques, follow-up mechanisms.',
+      'offerMonetization: Every offer mentioned with EXACT price, payment structure, what is included, bonuses named, upsell sequence, guarantee terms, any discounts or deadlines.',
+      'trustEngagement:   Every testimonial or case study cited (with results), credentials mentioned, live Q&A or interaction moments, community elements, engagement tactics used.',
+      'aiToolsValue:      Every specific AI tool named, exact prompts or templates demonstrated, workflows shown, practical step-by-step takeaways, tools recommended with reasons.',
+      'businessMoat:      Proprietary frameworks or systems named, unique positioning claims, exclusive access mentioned, brand authority signals, competitive differentiation stated.',
+      'weaknesses:        Vague claims without proof, overpromised results, missed objections, thin content areas, delivery problems, gaps a competitor could exploit.',
       '',
       'TRANSCRIPT:',
       transcript
@@ -1680,43 +1690,34 @@ window.addEventListener('load', () => {
     ].join('\n');
 
     return [
-      'You are a senior workshop intelligence analyst and fact-checker. You have:',
-      '1. An AI-generated Report 1 about a workshop (may contain errors or missed details).',
-      '2. The original timestamped transcript.',
+      'You are a senior workshop intelligence analyst. You have:',
+      '1. A first-pass Report 1 about a workshop (may have errors, gaps, or missed details).',
+      '2. The full original timestamped transcript.',
       '',
-      'Your job: Produce a VERIFIED & RECTIFIED Report 2 in the EXACT SAME structure as Report 1.',
-      'Go through each category, cross-reference every claim with the transcript, and rewrite each bullet to be:',
-      '  - CORRECTED if Report 1 got it wrong (fix the error using what the transcript actually says)',
-      '  - EXPANDED if Report 1 missed important details from the transcript',
-      '  - REMOVED and replaced if a bullet was completely fabricated (not in transcript)',
-      '  - CONFIRMED (kept as-is with timestamp) if it is accurate',
-      'The result should be a more accurate and complete version of Report 1.',
+      'Your job: Produce a VERIFIED & RECTIFIED Report 2 — the definitive, organisation-grade version.',
+      'Go through EVERY category. Cross-reference every claim in Report 1 against the transcript.',
+      'For each bullet:',
+      '  - CORRECT it if the detail is wrong (use what the transcript actually says)',
+      '  - EXPAND it if important context or specifics were missed',
+      '  - REPLACE it if it was fabricated or unverifiable',
+      '  - KEEP it (with timestamp) if accurate',
+      'Then ADD any important insights from the transcript that Report 1 missed entirely.',
+      'Target 5-7 bullets per category — the most complete, accurate version possible.',
       '',
       'STRICT RULES:',
       '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
       '2. Your entire reply must start with { and end with }.',
-      '3. All values are plain strings or arrays of strings.',
-      '4. "summaryVerdict": Write 3-4 sentences — overall accuracy of Report 1, what was wrong or missing, and how reliable this rectified version now is.',
-      '5. For every bullet in every category: ALWAYS start with a [MM:SS] or [HH:MM:SS] timestamp from the transcript.',
-      '6. If a category has nothing supported by the transcript, write "[N/A] Not found in transcript."',
-      '',
-      'OUTPUT FORMAT (exact keys required):',
-      '{',
-      '  "summaryVerdict": "3-4 sentence verdict on Report 1 accuracy and what was rectified.",',
-      '  "hookAudience":    ["[00:02:14] rectified bullet 1", "[00:05:30] rectified bullet 2"],',
-      '  "salesConversion": ["[00:12:00] rectified bullet 1", "[00:15:20] rectified bullet 2"],',
-      '  "offerMonetization": ["[00:22:30] rectified bullet 1", "[00:25:00] rectified bullet 2"],',
-      '  "trustEngagement": ["[00:31:00] rectified bullet 1", "[00:34:45] rectified bullet 2"],',
-      '  "aiToolsValue":    ["[00:41:10] rectified bullet 1", "[00:44:30] rectified bullet 2"],',
-      '  "businessMoat":    ["[00:51:00] rectified bullet 1", "[00:54:20] rectified bullet 2"],',
-      '  "weaknesses":      ["[01:01:15] rectified bullet 1", "[01:04:30] rectified bullet 2"]',
-      '}',
+      '3. All string values are plain text only — no HTML.',
+      '4. "summaryVerdict": 4-5 sentences — what Report 1 got right, what was corrected, what was added, how much more reliable this version is.',
+      '5. Every bullet MUST start with a [MM:SS] or [HH:MM:SS] timestamp from the transcript.',
+      '6. Use exact names, numbers, prices, and quotes. No vague generalisations.',
+      '7. If a category has nothing in the transcript, write "[N/A] Not found in transcript."',
       '',
       '━━━ REPORT 1 (to verify and rectify) ━━━',
       r1Text,
       '',
       '━━━ ORIGINAL TIMESTAMPED TRANSCRIPT ━━━',
-      timestampedTranscript.substring(0, 60000)
+      timestampedTranscript
     ].join('\n');
   }
   // ── API Calls ──────────────────────────────────────────────────────────────
@@ -1877,12 +1878,15 @@ window.addEventListener('load', () => {
         rawTexts.push('=== FILE: ' + file.name + ' ===\n' + parseVTT(raw));
         timestampedParts.push('=== FILE: ' + file.name + ' ===\n' + parseVTTWithTimestamps(raw));
       }
-      const combined = rawTexts.join('\n\n');
       storedTimestampedTranscript = timestampedParts.join('\n\n');
 
+      // Report 1: pass the FULL timestamped transcript — no sampling, no gaps.
+      // Only hard-cap at the model's actual context limit to avoid API errors.
       const charLimit = getCharLimit();
-      const trimmed = trimTranscript(combined, charLimit);
-      const prompt = buildPrompt(trimmed);
+      const fullTranscript = storedTimestampedTranscript.length <= charLimit
+        ? storedTimestampedTranscript
+        : storedTimestampedTranscript.substring(0, charLimit);
+      const prompt = buildPrompt(fullTranscript);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
@@ -1904,7 +1908,7 @@ window.addEventListener('load', () => {
     }
   }
 
-  // ── Report 2: Accuracy Check ───────────────────────────────────────────────
+  // ── Report 2: Verified & Rectified ────────────────────────────────────────
   async function runReport2(apiKey) {
     const report2Loader = document.getElementById('report2Loader');
     const report2Card   = document.getElementById('report2Card');
@@ -1912,7 +1916,11 @@ window.addEventListener('load', () => {
     if (report2Card)   report2Card.style.display = 'none';
 
     try {
-      const prompt = buildReport2Prompt(storedReport1Data, storedTimestampedTranscript);
+      // Use the same char limit as Report 1 but reserve ~4000 chars for the
+      // prompt text + Report 1 data that gets prepended
+      const charLimit = Math.max(20000, getCharLimit() - 4000);
+      const trimmedTranscript = trimTranscript(storedTimestampedTranscript, charLimit);
+      const prompt = buildReport2Prompt(storedReport1Data, trimmedTranscript);
       let text = '';
       if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
       else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
@@ -2004,9 +2012,9 @@ window.addEventListener('load', () => {
           ? '<span style="display:inline-block;margin-right:7px;font-family:monospace;font-size:10px;color:#fff;background:var(--sakura);padding:1px 7px;border-radius:999px;vertical-align:middle;letter-spacing:0.03em;flex-shrink:0;">' + tsMatch[1] + '</span>'
           : '';
         const body = tsMatch ? clean.slice(tsMatch[0].length) : clean;
-        return '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:flex-start;gap:0;">' +
+        return '<li style="margin-bottom:10px;line-height:1.8;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:flex-start;gap:0;">' +
           '<span style="position:absolute;left:0;top:7px;color:var(--sakura);font-size:10px;">✿</span>' +
-          '<span style="padding-left:4px;">' + tsTag + truncateTo30Words(body) + '</span></li>';
+          '<span style="padding-left:4px;">' + tsTag + body.replace(/</g,"&lt;") + '</span></li>';
       }).join('');
       innerHtml +=
         '<div style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:20px;margin-top:20px;' : '') + '">' +
@@ -2117,9 +2125,9 @@ window.addEventListener('load', () => {
           ? '<span style="display:inline-block;margin-right:7px;font-family:monospace;font-size:10px;color:#fff;background:var(--amber2);padding:1px 7px;border-radius:999px;vertical-align:middle;letter-spacing:0.03em;flex-shrink:0;">' + tsMatch[1] + '</span>'
           : '';
         const body = tsMatch ? clean.slice(tsMatch[0].length) : clean;
-        return '<li style="margin-bottom:8px;line-height:1.75;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:flex-start;gap:0;">' +
+        return '<li style="margin-bottom:10px;line-height:1.8;color:var(--text2);padding-left:20px;position:relative;display:flex;align-items:flex-start;gap:0;">' +
           '<span style="position:absolute;left:0;top:7px;color:var(--amber2);font-size:10px;">✦</span>' +
-          '<span style="padding-left:4px;">' + tsTag + truncateTo30Words(body) + '</span></li>';
+          '<span style="padding-left:4px;">' + tsTag + body.replace(/</g,"&lt;") + '</span></li>';
       }).join('');
       innerHtml +=
         '<div style="' + (i > 0 ? 'border-top:1px solid rgba(180,130,100,0.1);padding-top:20px;margin-top:20px;' : '') + '">' +
