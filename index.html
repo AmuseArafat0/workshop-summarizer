@@ -267,6 +267,7 @@
       top: 0; left: 0; right: 0;
       height: 1px;
       background: linear-gradient(to right, transparent, rgba(255,255,255,0.9), transparent);
+      pointer-events: none;
     }
 
     /* ─── PROVIDER TABS ───────────────────────────────────────────────── */
@@ -2568,7 +2569,7 @@ window.addEventListener('load', () => {
       '  bullets: exactly 3 strings. Each must include a concrete detail from the report. Third bullet is always the key lesson or takeaway for the reader.',
       '',
       'WORKSHOP INTELLIGENCE REPORT:',
-      reportText.substring(0, 60000)
+      reportText.substring(0, getCharLimit())
     ].join('\n');
   }
 
