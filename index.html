@@ -782,10 +782,16 @@
     footer .footer-flower { opacity: 0.5; margin: 0 6px; }
 
     /* ─── SCROLL ANIMATION ────────────────────────────────────────────── */
+    .provider-section {
+      opacity: 1 !important;
+      transform: none !important;
+      pointer-events: all !important;
+    }
     .reveal {
       opacity: 0;
       transform: translateY(20px);
       transition: opacity 0.6s ease, transform 0.6s ease;
+      pointer-events: all;
     }
     .reveal.visible {
       opacity: 1;
@@ -832,7 +838,7 @@
   </header>
 
   <!-- ═══ STEP 1: PROVIDER ══════════════════════════════════════════════ -->
-  <div class="provider-section reveal">
+  <div class="provider-section">
     <div class="step-label">Step 1 — Choose Your AI Provider</div>
     <div class="glass-card">
       <div class="provider-tabs">
@@ -876,7 +882,7 @@
   </div>
 
   <!-- ═══ STEP 2: API KEY ════════════════════════════════════════════════ -->
-  <div class="reveal" style="animation-delay:0.1s">
+  <div>
     <div class="step-label">Step 2 — Enter Your API Key</div>
     <div class="glass-card">
 
@@ -1328,6 +1334,12 @@ window.addEventListener('load', () => {
   document.querySelectorAll('.reveal:not(.visible)').forEach(el => {
     const rect = el.getBoundingClientRect();
     if (rect.top < window.innerHeight + 100) el.classList.add('visible');
+  });
+  // Force provider section and step 2 always interactive
+  document.querySelectorAll('.provider-section, .provider-tab, .provider-tabs, .provider-tabs-row2').forEach(el => {
+    el.style.opacity = '1';
+    el.style.pointerEvents = 'all';
+    el.style.transform = 'none';
   });
 });
 </script>
@@ -2098,7 +2110,7 @@ window.addEventListener('load', () => {
       'Cross-checking claims against the full transcript…',
       'Correcting inaccurate bullets…',
       'Searching full transcript for missed insights…',
-      'Filling gaps memory couldn't resolve…',
+      'Filling gaps memory could not resolve…',
       'Verifying all 7 categories…',
       'Almost there — building the rectified report…',
     ];
