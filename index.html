@@ -1555,7 +1555,7 @@ window.addEventListener('load', () => {
         const h = Math.floor(secs / 3600);
         const m = Math.floor((secs % 3600) / 60);
         const s = Math.floor(secs % 60);
-        currentTimestamp = (h > 0 ? String(h).padStart(2,'0') + ':' : '') +
+        currentTimestamp = String(h).padStart(2,'0') + ':' +
           String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
       } else {
         buffer.push(l);
@@ -1719,30 +1719,29 @@ window.addEventListener('load', () => {
   }
 
   // Evenly-distributed sampler: splits transcript into 5 equal windows so the
-  // AI sees content from the full length of the recording, not just the start.
+  // Split transcript into sequential chunks, each within the model's context window.
+  // Returns array of chunk strings.
+  function chunkTranscript(text, maxCharsPerChunk) {
+    if (text.length <= maxCharsPerChunk) return [text];
+    const chunks = [];
+    // Split on newlines to avoid cutting mid-line
+    const lines = text.split('\n');
+    let current = '';
+    for (const line of lines) {
+      if (current.length + line.length + 1 > maxCharsPerChunk && current.length > 0) {
+        chunks.push(current.trim());
+        current = '';
+      }
+      current += line + '\n';
+    }
+    if (current.trim()) chunks.push(current.trim());
+    return chunks;
+  }
+
+  // Keep trimTranscript for Report 2 fallback (still used there)
   function trimTranscript(text, maxChars) {
     if (text.length <= maxChars) return text;
-
-    const NUM_CHUNKS = 5;
-    const charsPerChunk = Math.floor(maxChars / NUM_CHUNKS);
-    const segmentSize = Math.floor(text.length / NUM_CHUNKS);
-    let parts = [];
-
-    for (let i = 0; i < NUM_CHUNKS; i++) {
-      const segStart = i * segmentSize;
-      // Centre the chunk window inside each segment
-      const windowStart = Math.min(
-        segStart + Math.floor((segmentSize - charsPerChunk) / 2),
-        text.length - charsPerChunk
-      );
-      const windowEnd = Math.min(windowStart + charsPerChunk, text.length);
-      parts.push(text.substring(Math.max(0, windowStart), windowEnd));
-    }
-
-    return parts.map((chunk, i) => {
-      const label = ['[segment 1/5 — opening]','[segment 2/5 — early]','[segment 3/5 — middle]','[segment 4/5 — late]','[segment 5/5 — closing]'][i];
-      return '\n\n' + label + '\n' + chunk;
-    }).join('\n\n[...]\n');
+    return text.substring(0, maxChars);
   }
 
   // ── Prompt ─────────────────────────────────────────────────────────────────
@@ -1817,24 +1816,24 @@ window.addEventListener('load', () => {
         const ts = tsMatch ? tsMatch[1] : null;
         let transcriptContext = '[Timestamp not found in transcript]';
 
-        if (ts && timestampMap[ts]) {
-          transcriptContext = timestampMap[ts];
-          usedTimestamps.add(ts);
-        } else if (ts) {
-          // Try to find nearest timestamp in map (within ±30 seconds)
-          const [tsParts] = [ts.split(':').reverse()];
-          const tsSeconds = tsParts.reduce((acc, v, i) => acc + parseInt(v) * Math.pow(60, i), 0);
+        if (ts) {
+          // Normalize any timestamp format to total seconds for reliable matching
+          function toSec(t) {
+            const p = t.split(':').map(Number);
+            if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+            if (p.length === 2) return p[0]*60 + p[1];
+            return 0;
+          }
+          const tsSeconds = toSec(ts);
           let nearest = null, nearestDiff = Infinity;
           Object.keys(timestampMap).forEach(k => {
-            const kParts = k.split(':').reverse();
-            const kSec = kParts.reduce((acc, v, i) => acc + parseInt(v) * Math.pow(60, i), 0);
-            const diff = Math.abs(kSec - tsSeconds);
+            const diff = Math.abs(toSec(k) - tsSeconds);
             if (diff < nearestDiff) { nearestDiff = diff; nearest = k; }
           });
           if (nearest && nearestDiff <= 30) {
-            transcriptContext = '[Nearest: ' + nearest + '] ' + timestampMap[nearest];
+            transcriptContext = timestampMap[nearest];
             usedTimestamps.add(nearest);
-          } else {
+          } else if (nearest) {
             transcriptContext = '[No transcript found within 30s of ' + ts + ']';
           }
         }
@@ -2063,20 +2062,137 @@ window.addEventListener('load', () => {
       }
       setTranscriptMemory(timestampedParts.join('\n\n'));
 
-      // Report 1: pass the FULL timestamped transcript — no sampling, no gaps.
-      // Only hard-cap at the model's actual context limit to avoid API errors.
+      // Report 1: chunk → extract → merge so EVERY part of the transcript is read.
       const charLimit = getCharLimit();
-      const fullTranscript = storedTimestampedTranscript.length <= charLimit
-        ? storedTimestampedTranscript
-        : storedTimestampedTranscript.substring(0, charLimit);
-      const prompt = buildPrompt(fullTranscript);
-      let text = '';
-      if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
-      else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
-      else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
-      else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
-      if (!text) throw new Error('Empty response from API. Please try again.');
-      const report1Ok = parseAndDisplayReport1(text);
+      const chunks = chunkTranscript(storedTimestampedTranscript, charLimit);
+      const loaderEl = document.getElementById('loaderText');
+
+      async function callAPI(prompt) {
+        if (currentProvider === 'gemini')         return await callGemini(apiKey, prompt);
+        else if (currentProvider === 'openrouter') return await callOpenRouter(apiKey, prompt);
+        else if (currentProvider === 'claude')     return await callClaude(apiKey, prompt);
+        else if (currentProvider === 'groq')       return await callGroq(apiKey, prompt);
+      }
+
+      let finalText = '';
+
+      if (chunks.length === 1) {
+        // Fits in one shot — send directly
+        clearInterval(loaderInterval);
+        if (loaderEl) loaderEl.textContent = 'Reading full transcript…';
+        finalText = await callAPI(buildPrompt(chunks[0]));
+      } else {
+        clearInterval(loaderInterval);
+        // Multiple chunks — extract raw bullets from each, then merge into one report
+        if (loaderEl) loaderEl.textContent = 'Transcript is long — reading in ' + chunks.length + ' parts…';
+
+        function buildChunkPrompt(chunk, chunkNum, totalChunks) {
+          return [
+            'You are extracting raw intelligence from part ' + chunkNum + ' of ' + totalChunks + ' of a workshop transcript.',
+            'Extract EVERY valuable insight from this segment. Be exhaustive — nothing relevant should be skipped.',
+            '',
+            'STRICT RULES:',
+            '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
+            '2. Your entire reply must start with { and end with }.',
+            '3. EVERY bullet MUST start with a [HH:MM:SS] timestamp taken directly from this transcript segment.',
+            '4. Use exact names, numbers, prices, tool names, direct quotes. No vague generalisations.',
+            '5. If nothing relevant for a category appears in this segment, use [].',
+            '',
+            'OUTPUT FORMAT:',
+            '{',
+            '  "summary":           ["[HH:MM:SS] insight", ...],',
+            '  "hookAudience":      ["[HH:MM:SS] insight", ...],',
+            '  "salesConversion":   ["[HH:MM:SS] insight", ...],',
+            '  "offerMonetization": ["[HH:MM:SS] insight", ...],',
+            '  "trustEngagement":   ["[HH:MM:SS] insight", ...],',
+            '  "aiToolsValue":      ["[HH:MM:SS] insight", ...],',
+            '  "businessMoat":      ["[HH:MM:SS] insight", ...],',
+            '  "weaknesses":        ["[HH:MM:SS] insight", ...]',
+            '}',
+            '',
+            'TRANSCRIPT SEGMENT ' + chunkNum + '/' + totalChunks + ':',
+            chunk
+          ].join('\n');
+        }
+
+        function buildMergePrompt(allBullets) {
+          return [
+            'You are a senior workshop intelligence analyst. Below are raw extracted bullets from ALL parts of a workshop transcript.',
+            'Your job: merge, deduplicate, and produce the FINAL polished report.',
+            '',
+            'STRICT RULES:',
+            '1. Reply with ONLY valid JSON. No markdown. No code fences. No preamble.',
+            '2. Your entire reply must start with { and end with }.',
+            '3. Keep the best 5-7 bullets per category. Remove duplicates. Keep specifics, cut vague ones.',
+            '4. Every bullet MUST keep its original [HH:MM:SS] timestamp.',
+            '5. Use exact names, numbers, prices from the bullets. Do not invent anything.',
+            '6. If a category has no bullets, write ["[N/A] Not mentioned in transcript."]',
+            '',
+            'OUTPUT FORMAT (same keys, same structure):',
+            '{',
+            '  "summary":           ["[HH:MM:SS] bullet", ...],',
+            '  "hookAudience":      ["[HH:MM:SS] bullet", ...],',
+            '  "salesConversion":   ["[HH:MM:SS] bullet", ...],',
+            '  "offerMonetization": ["[HH:MM:SS] bullet", ...],',
+            '  "trustEngagement":   ["[HH:MM:SS] bullet", ...],',
+            '  "aiToolsValue":      ["[HH:MM:SS] bullet", ...],',
+            '  "businessMoat":      ["[HH:MM:SS] bullet", ...],',
+            '  "weaknesses":        ["[HH:MM:SS] bullet", ...]',
+            '}',
+            '',
+            'ALL EXTRACTED BULLETS:',
+            allBullets
+          ].join('\n');
+        }
+
+        function safeParseJSON(text) {
+          let t = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+          const s = t.indexOf('{'), e = t.lastIndexOf('}');
+          if (s === -1 || e === -1) return null;
+          t = t.substring(s, e + 1);
+          let out = '', inStr = false, esc = false;
+          for (let i = 0; i < t.length; i++) {
+            const ch = t[i];
+            if (esc) { out += ch; esc = false; continue; }
+            if (ch === '\\') { out += ch; esc = true; continue; }
+            if (ch === '"') { inStr = !inStr; out += ch; continue; }
+            if (inStr) {
+              if (ch === '\n') { out += '\\n'; continue; }
+              if (ch === '\r') { out += '\\n'; continue; }
+              if (ch === '\t') { out += '\\t'; continue; }
+              if (ch.charCodeAt(0) < 32) { out += ' '; continue; }
+            }
+            out += ch;
+          }
+          try { return JSON.parse(out); } catch(_) {
+            try { return JSON.parse(out.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ')); } catch(_) { return null; }
+          }
+        }
+
+        // Step 1: extract from each chunk
+        const allData = [];
+        for (let i = 0; i < chunks.length; i++) {
+          if (loaderEl) loaderEl.textContent = 'Reading part ' + (i+1) + ' of ' + chunks.length + '…';
+          const chunkText = await callAPI(buildChunkPrompt(chunks[i], i+1, chunks.length));
+          const parsed = safeParseJSON(chunkText);
+          if (parsed) allData.push(parsed);
+        }
+
+        // Step 2: flatten all bullets into one text block
+        const keys = ['summary','hookAudience','salesConversion','offerMonetization','trustEngagement','aiToolsValue','businessMoat','weaknesses'];
+        let allBullets = '';
+        keys.forEach(key => {
+          const bullets = allData.flatMap(d => Array.isArray(d[key]) ? d[key] : []).filter(Boolean);
+          if (bullets.length) allBullets += '\n[' + key + ']\n' + bullets.map(b => '• ' + b).join('\n');
+        });
+
+        // Step 3: merge pass
+        if (loaderEl) loaderEl.textContent = 'Merging all ' + chunks.length + ' parts into final report…';
+        finalText = await callAPI(buildMergePrompt(allBullets));
+      }
+
+      if (!finalText) throw new Error('Empty response from API. Please try again.');
+      const report1Ok = parseAndDisplayReport1(finalText);
       summaryProvider = currentProvider;
       // Report 2 is triggered manually by the user via button
     } catch (err) {
