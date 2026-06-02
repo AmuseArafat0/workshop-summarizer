@@ -2396,7 +2396,7 @@ window.addEventListener('load', () => {
       '<div class="card-watermark">概</div>' +
       '<div class="section-meta"><span class="section-icon">📋</span><span class="card-label">Report 1 · Summary</span></div>' +
       '<div class="section-title">Workshop Overview</div>' +
-      summaryListHtml +
+      summaryListHtml.replace('<ul ', '<ul id="r1SummaryList" ') +
       '<div class="card-action"><button class="copy-btn" onclick="copySummary(this)">Copy Summary</button></div>';
     container.appendChild(summaryCard);
 
@@ -2524,7 +2524,7 @@ window.addEventListener('load', () => {
         '<div class="card-watermark">証</div>' +
         '<div class="section-meta"><span class="section-icon">✅</span><span class="card-label">Report 2 · Summary Verdict</span></div>' +
         '<div class="section-title">Accuracy Overview & Key Corrections</div>' +
-        summaryVerdictListHtml +
+        summaryVerdictListHtml.replace('<ul ', '<ul id="r2SummaryList" ') +
         '<div class="card-action"><button class="copy-btn" onclick="copyR2Summary(this)">Copy Summary</button></div>' +
       '</div>' +
       // Intelligence Breakdown section
@@ -2537,29 +2537,26 @@ window.addEventListener('load', () => {
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // ── Helper: extract clean bullet text from a list element ─────────────────
+  function bulletsFromList(ulEl) {
+    return Array.from(ulEl.querySelectorAll('li')).map(li => '• ' + li.textContent.trim()).join('\n');
+  }
+
+  // ── R2: Copy Summary Verdict only ──────────────────────────────────────────
   function copyR2Summary(btn) {
-    const card = document.getElementById('report2Card');
-    const lis = card ? card.querySelectorAll('ul:first-of-type li') : [];
-    const text = lis.length
-      ? 'REPORT 2 · SUMMARY VERDICT\n' + '─'.repeat(40) + '\n\n' +
-        Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
-      : '';
-    if (!text) return;
+    const ul = document.getElementById('r2SummaryList');
+    if (!ul) return;
+    const text = 'REPORT 2 · SUMMARY VERDICT\n' + '─'.repeat(40) + '\n\n' + bulletsFromList(ul);
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'Copied ✿';
-      btn.classList.add('copied');
+      btn.textContent = 'Copied ✿'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 2000);
     });
   }
 
-  function copyReport2Full(btn) {
+  // ── R2: Copy Breakdown only (7 categories) ────────────────────────────────
+  function copyReport2(btn) {
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    const card = document.getElementById('report2Card');
-    const summaryLis = card ? card.querySelectorAll('ul:first-of-type li') : [];
-    let out = 'VERIFIED & CORRECTED WORKSHOP REPORT\n' + '═'.repeat(50) + '\n\n';
-    out += 'SUMMARY VERDICT\n' + '─'.repeat(40) + '\n';
-    summaryLis.forEach(li => { out += '• ' + li.textContent.trim() + '\n'; });
-    out += '\n' + 'INTELLIGENCE BREAKDOWN\n' + '─'.repeat(40) + '\n\n';
+    let out = 'REPORT 2 · INTELLIGENCE BREAKDOWN\n' + '═'.repeat(50) + '\n\n';
     labels.forEach((label, i) => {
       const el = document.getElementById('r2detail-' + i);
       if (!el) return;
@@ -2568,86 +2565,89 @@ window.addEventListener('load', () => {
       out += '\n';
     });
     navigator.clipboard.writeText(out).then(() => {
-      btn.textContent = 'Copied ✿';
-      btn.classList.add('copied');
+      btn.textContent = 'Copied ✿'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Breakdown'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ── R2: Copy full Report 2 (summary verdict + breakdown) ─────────────────
+  function copyReport2Full(btn) {
+    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
+    const ul = document.getElementById('r2SummaryList');
+    let out = 'REPORT 2 · VERIFIED & CORRECTED\n' + '═'.repeat(50) + '\n\n';
+    out += 'SUMMARY VERDICT\n' + '─'.repeat(40) + '\n';
+    if (ul) out += bulletsFromList(ul);
+    out += '\n\nINTELLIGENCE BREAKDOWN\n' + '─'.repeat(40) + '\n\n';
+    labels.forEach((label, i) => {
+      const el = document.getElementById('r2detail-' + i);
+      if (!el) return;
+      out += label + '\n';
+      el.querySelectorAll('li').forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
+      out += '\n';
+    });
+    navigator.clipboard.writeText(out).then(() => {
+      btn.textContent = 'Copied ✿'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Copy All ↗'; btn.classList.remove('copied'); }, 2000);
     });
   }
 
-  function copyReport2(btn) {
+  // ── R1: Copy Summary only ─────────────────────────────────────────────────
+  function copySummary(btn) {
+    const ul = document.getElementById('r1SummaryList');
+    if (!ul) return;
+    const text = 'REPORT 1 · SUMMARY\n' + '─'.repeat(40) + '\n\n' + bulletsFromList(ul);
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied ✿'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ── R1: Copy Breakdown only (7 categories) ───────────────────────────────
+  function copyDetails(btn) {
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let out = 'VERIFIED & CORRECTED WORKSHOP REPORT\n' + '═'.repeat(50) + '\n\n';
+    let out = 'REPORT 1 · INTELLIGENCE BREAKDOWN\n' + '─'.repeat(40) + '\n\n';
     labels.forEach((label, i) => {
-      const el = document.getElementById('r2detail-' + i);
+      const el = document.getElementById('detail-' + i);
       if (!el) return;
       out += label + '\n';
       el.querySelectorAll('li').forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
       out += '\n';
     });
     navigator.clipboard.writeText(out).then(() => {
-      btn.textContent = 'Copied ✿';
-      btn.classList.add('copied');
+      btn.textContent = 'Copied ✿'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
     });
   }
 
-  // ── Copy ───────────────────────────────────────────────────────────────────
-  function copySection(id, btn) {
-    const el = document.getElementById(id);
-    const lis = el.querySelectorAll('li');
-    const text = lis.length
-      ? Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
-      : el.textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'Copied ✿';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-    });
-  }
-
+  // ── Top-level Copy All (R1 summary + R1 breakdown) ───────────────────────
   function copyAll() {
     const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let full = 'WORKSHOP INTELLIGENCE REPORT\n' + '═'.repeat(50) + '\n\n';
-    const detailCards = document.querySelectorAll('[id^="detail-"]');
-    detailCards.forEach((el, i) => {
-      full += (labels[i] || '') + '\n';
-      el.querySelectorAll('li').forEach(li => { full += '  • ' + li.textContent.trim() + '\n'; });
-      full += '\n';
+    const ul = document.getElementById('r1SummaryList');
+    let out = 'REPORT 1 · WORKSHOP INTELLIGENCE\n' + '═'.repeat(50) + '\n\n';
+    out += 'SUMMARY\n' + '─'.repeat(40) + '\n';
+    if (ul) out += bulletsFromList(ul);
+    out += '\n\nINTELLIGENCE BREAKDOWN\n' + '─'.repeat(40) + '\n\n';
+    labels.forEach((label, i) => {
+      const el = document.getElementById('detail-' + i);
+      if (!el) return;
+      out += label + '\n';
+      el.querySelectorAll('li').forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
+      out += '\n';
     });
-    const r2card = document.getElementById('report2Card');
-    if (r2card && r2card.style.display !== 'none') {
-      full += '\n' + '─'.repeat(50) + '\nACCURACY FACT-CHECK (REPORT 2)\n' + '─'.repeat(50) + '\n';
-      full += r2card.innerText;
-    }
-    navigator.clipboard.writeText(full).then(() => {
+    navigator.clipboard.writeText(out).then(() => {
       const btn = document.querySelector('.copy-all-btn');
       if (btn) { btn.textContent = 'Copied ✿'; setTimeout(() => btn.textContent = 'Copy All ↗', 2000); }
     });
   }
 
-  function copySummary(btn) {
-    const card = btn.closest('.section-card');
-    const lis = card ? card.querySelectorAll('li') : [];
-    const text = lis.length
-      ? 'WORKSHOP SUMMARY\n' + '─'.repeat(40) + '\n\n' +
-        Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
-      : '';
-    if (!text) return;
+  // ── Unused but kept so no reference errors ────────────────────────────────
+  function copySection(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const lis = el.querySelectorAll('li');
+    const text = lis.length ? Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n') : el.textContent;
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = 'Copied ✿';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 2000);
-    });
-  }
-
-  function copyDetails(btn) {
-    const items = document.querySelectorAll('[id^="detail-"]');
-    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
-    let full = 'DETAILS REPORT\n' + '─'.repeat(40) + '\n\n';
-    items.forEach((el, i) => { full += (labels[i] || '') + '\n' + el.textContent + '\n\n'; });
-    navigator.clipboard.writeText(full).then(() => {
-      btn.textContent = 'Copied ✿';
-      btn.classList.add('copied');
+      btn.textContent = 'Copied ✿'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
     });
   }
