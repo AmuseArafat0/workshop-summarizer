@@ -1078,6 +1078,9 @@
     <div id="report2Section" style="display:none;flex-direction:column;gap:14px;margin-top:10px;">
       <div class="results-header" style="margin-bottom:0;">
         <div class="results-title">✅ Report 2 · Verified & Rectified</div>
+        <div style="display:flex;gap:8px;">
+          <button class="copy-all-btn" onclick="copyReport2Full(this)">Copy Report ↗</button>
+        </div>
       </div>
 
       <!-- Trigger button -->
@@ -2381,16 +2384,78 @@ window.addEventListener('load', () => {
     const card = document.getElementById('report2Card');
     if (!card) return;
 
+    // ── Summary Verdict Card ──
+    const summaryVerdictBullets = Array.isArray(data.summaryVerdict) ? data.summaryVerdict
+      : typeof data.summaryVerdict === 'string' ? data.summaryVerdict.split(/(?<=[.!?])\s+/).filter(Boolean).map(s => s.trim())
+      : ['Summary verdict not available.'];
+    const summaryVerdictListHtml = '<ul style="list-style:none;padding:0;margin:0;">' +
+      summaryVerdictBullets.map(b => {
+        const clean = b.replace(/^[•\-\*]\s*/, '').trim();
+        const tsMatch = clean.match(/^(\[\d{1,2}:\d{2}(?::\d{2})?\])\s*/);
+        const tsTag = tsMatch
+          ? '<span style="display:inline-block;margin-right:8px;font-family:monospace;font-size:10px;color:#fff;background:var(--amber2);padding:2px 8px;border-radius:999px;flex-shrink:0;letter-spacing:0.03em;">' + tsMatch[1] + '</span>'
+          : '';
+        const body = tsMatch ? clean.slice(tsMatch[0].length) : clean;
+        return '<li style="display:flex;align-items:flex-start;gap:0;margin-bottom:12px;line-height:1.8;color:var(--text2);font-size:14.5px;padding-left:16px;position:relative;">' +
+          '<span style="position:absolute;left:0;top:8px;color:var(--amber2);font-size:9px;">✦</span>' +
+          '<span style="padding-left:4px;">' + tsTag + body.replace(/</g,'&lt;') + '</span></li>';
+      }).join('') + '</ul>';
+
     // ── Details Card ──
     card.innerHTML =
-      '<div class="card-watermark">証</div>' +
+      // Summary Verdict section
+      '<div style="margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid rgba(180,130,100,0.15);">' +
+        '<div class="card-watermark">証</div>' +
+        '<div class="section-meta"><span class="section-icon">✅</span><span class="card-label">Report 2 · Summary Verdict</span></div>' +
+        '<div class="section-title">Accuracy Overview & Key Corrections</div>' +
+        summaryVerdictListHtml +
+        '<div class="card-action"><button class="copy-btn" onclick="copyR2Summary(this)">Copy Summary</button></div>' +
+      '</div>' +
+      // Intelligence Breakdown section
       '<div class="section-meta"><span class="section-icon">🔍</span><span class="card-label">Report 2 · Rectified Intelligence Breakdown</span></div>' +
       '<div class="section-title">Verified & Corrected Workshop Report</div>' +
       '<div id="r2detailsInner">' + innerHtml + '</div>' +
-      '<div class="card-action"><button class="copy-btn" onclick="copyReport2(this)">Copy</button></div>';
+      '<div class="card-action"><button class="copy-btn" onclick="copyReport2(this)">Copy Breakdown</button><button class="copy-btn" onclick="copyReport2Full(this)" style="color:var(--amber);border-color:rgba(196,122,58,0.35);">Copy All ↗</button></div>';
 
     card.style.display = 'block';
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copyR2Summary(btn) {
+    const card = document.getElementById('report2Card');
+    const lis = card ? card.querySelectorAll('ul:first-of-type li') : [];
+    const text = lis.length
+      ? 'REPORT 2 · SUMMARY VERDICT\n' + '─'.repeat(40) + '\n\n' +
+        Array.from(lis).map(li => '• ' + li.textContent.trim()).join('\n')
+      : '';
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied ✿';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy Summary'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function copyReport2Full(btn) {
+    const labels = ['HOOK & TARGET AUDIENCE','SALES & CONVERSION STRATEGY','OFFER & MONETIZATION','TRUST & ENGAGEMENT','AI TOOLS & PRACTICAL VALUE','BUSINESS MOAT & COMPETITIVE ADVANTAGE','WEAKNESSES & GROWTH OPPORTUNITIES'];
+    const card = document.getElementById('report2Card');
+    const summaryLis = card ? card.querySelectorAll('ul:first-of-type li') : [];
+    let out = 'VERIFIED & CORRECTED WORKSHOP REPORT\n' + '═'.repeat(50) + '\n\n';
+    out += 'SUMMARY VERDICT\n' + '─'.repeat(40) + '\n';
+    summaryLis.forEach(li => { out += '• ' + li.textContent.trim() + '\n'; });
+    out += '\n' + 'INTELLIGENCE BREAKDOWN\n' + '─'.repeat(40) + '\n\n';
+    labels.forEach((label, i) => {
+      const el = document.getElementById('r2detail-' + i);
+      if (!el) return;
+      out += label + '\n';
+      el.querySelectorAll('li').forEach(li => { out += '  • ' + li.textContent.trim() + '\n'; });
+      out += '\n';
+    });
+    navigator.clipboard.writeText(out).then(() => {
+      btn.textContent = 'Copied ✿';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy All ↗'; btn.classList.remove('copied'); }, 2000);
+    });
   }
 
   function copyReport2(btn) {
