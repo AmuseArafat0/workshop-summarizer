@@ -79,6 +79,8 @@
       border-radius: 50%;
       filter: blur(60px);
       animation: orbFloat 12s ease-in-out infinite;
+      will-change: transform;
+      contain: layout style paint;
     }
     .bg-orb-1 {
       width: 400px; height: 400px;
@@ -808,9 +810,30 @@
     @media (max-width: 380px) {
       .provider-tabs, .provider-tabs-row2 { grid-template-columns: 1fr; }
     }
+
+    /* ─── PERF: pause perpetual decorative animations while the tab is hidden (no visual
+       change while you're looking — this only stops burning CPU/GPU while backgrounded) ─── */
+    html.hz-paused .bg-orb,
+    html.hz-paused .emblem-flower,
+    html.hz-paused .upload-icon {
+      animation-play-state: paused !important;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bg-orb, .emblem-flower, .upload-icon { animation: none !important; }
+    }
   </style>
 </head>
 <body>
+<script>
+// Toggle a class on <html> the instant this tab is hidden/shown, so the perpetual decorative
+// CSS animations (floating orbs, spinning emblem, bouncing upload icon) pause while nobody's
+// looking. The petal canvas animation pauses itself the same way — see its own script below.
+(function(){
+  function apply(){document.documentElement.classList.toggle('hz-paused',document.hidden);}
+  document.addEventListener('visibilitychange',apply);
+  apply();
+})();
+</script>
 
 <!-- BACKGROUND SCENE -->
 <div class="bg-scene">
@@ -1163,6 +1186,99 @@
     'rgba(225,120,150,0.40)',
   ];
 
+  // ── PERF: pre-render each petal color and each (variant,color) leaf combo once into an
+  // offscreen sprite. Every frame then just does a drawImage() instead of re-tessellating a
+  // 5-petal bezier flower (or a leaf with veins) from scratch for 40+ objects — identical
+  // pixels, far less per-frame path/fill work. ──
+  function makeSprite(w, h, drawFn) {
+    const s = document.createElement('canvas');
+    s.width = Math.max(1, Math.ceil(w));
+    s.height = Math.max(1, Math.ceil(h));
+    drawFn(s.getContext('2d'), s.width, s.height);
+    return s;
+  }
+
+  const PETAL_REF = 8; // reference "size" the sprite is drawn at
+  const PETAL_SPR = 36;
+  const petalSprites = {};
+  PETAL_COLORS.forEach(color => {
+    petalSprites[color] = makeSprite(PETAL_SPR, PETAL_SPR, sctx => {
+      sctx.translate(PETAL_SPR / 2, PETAL_SPR / 2);
+      const s = PETAL_REF;
+      sctx.fillStyle = color;
+      sctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        const px = Math.cos(angle) * s * 0.9;
+        const py = Math.sin(angle) * s * 0.9;
+        const c1x = Math.cos(angle - 0.4) * s * 0.4;
+        const c1y = Math.sin(angle - 0.4) * s * 0.4;
+        const c2x = Math.cos(angle + 0.4) * s * 0.4;
+        const c2y = Math.sin(angle + 0.4) * s * 0.4;
+        if (i === 0) sctx.moveTo(0, 0);
+        sctx.quadraticCurveTo(c1x, c1y, px, py);
+        sctx.quadraticCurveTo(c2x, c2y, 0, 0);
+      }
+      sctx.fill();
+      sctx.beginPath();
+      sctx.arc(0, 0, s * 0.18, 0, Math.PI * 2);
+      sctx.fillStyle = 'rgba(255,235,245,0.95)';
+      sctx.fill();
+    });
+  });
+
+  const LEAF_REF = 10; // reference "size" the sprite is drawn at
+  const LEAF_SPR = 44;
+  const leafSprites = {}; // keyed "variant|color"
+  LEAF_COLORS.forEach(color => {
+    for (let variant = 0; variant < 3; variant++) {
+      leafSprites[variant + '|' + color] = makeSprite(LEAF_SPR, LEAF_SPR, sctx => {
+        sctx.translate(LEAF_SPR / 2, LEAF_SPR / 2);
+        sctx.fillStyle = color;
+        const s = LEAF_REF;
+        if (variant === 0) {
+          sctx.beginPath();
+          sctx.moveTo(0, s);
+          sctx.bezierCurveTo(-s * 0.5, s * 0.5, -s * 0.9, -s * 0.1, -s * 0.6, -s * 0.4);
+          sctx.bezierCurveTo(-s * 0.3, -s * 0.7, 0, -s * 0.3, 0, -s * 0.6);
+          sctx.bezierCurveTo(0, -s * 0.3, s * 0.3, -s * 0.7, s * 0.6, -s * 0.4);
+          sctx.bezierCurveTo(s * 0.9, -s * 0.1, s * 0.5, s * 0.5, 0, s);
+          sctx.closePath();
+          sctx.fill();
+          sctx.strokeStyle = 'rgba(255,220,150,0.3)';
+          sctx.lineWidth = 0.8;
+          sctx.beginPath();
+          sctx.moveTo(0, s);
+          sctx.lineTo(0, -s * 0.5);
+          sctx.stroke();
+        } else if (variant === 1) {
+          sctx.beginPath();
+          sctx.ellipse(0, 0, s * 0.45, s * 0.9, 0, 0, Math.PI * 2);
+          sctx.fill();
+          sctx.strokeStyle = 'rgba(255,220,150,0.25)';
+          sctx.lineWidth = 0.7;
+          sctx.beginPath();
+          sctx.moveTo(0, -s * 0.9);
+          sctx.lineTo(0, s * 0.9);
+          sctx.stroke();
+        } else {
+          sctx.beginPath();
+          sctx.moveTo(0, -s);
+          sctx.bezierCurveTo(s * 0.6, -s * 0.3, s * 0.5, s * 0.5, 0, s);
+          sctx.bezierCurveTo(-s * 0.5, s * 0.5, -s * 0.6, -s * 0.3, 0, -s);
+          sctx.closePath();
+          sctx.fill();
+          sctx.strokeStyle = 'rgba(255,220,150,0.25)';
+          sctx.lineWidth = 0.7;
+          sctx.beginPath();
+          sctx.moveTo(0, -s);
+          sctx.lineTo(0, s);
+          sctx.stroke();
+        }
+      });
+    }
+  });
+
   class Petal {
     constructor() { this.reset(true); }
 
@@ -1181,11 +1297,11 @@
       this.opacity = 0.6 + Math.random() * 0.4;
     }
 
-    update() {
-      this.sway += this.swaySpeed;
-      this.x += this.speedX + Math.sin(this.sway) * this.swayAmp;
-      this.y += this.speedY;
-      this.rotation += this.rotSpeed;
+    update(dt) {
+      this.sway += this.swaySpeed * dt;
+      this.x += (this.speedX + Math.sin(this.sway) * this.swayAmp) * dt;
+      this.y += this.speedY * dt;
+      this.rotation += this.rotSpeed * dt;
       if (this.y > canvas.height + 30) this.reset(false);
     }
 
@@ -1194,28 +1310,8 @@
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rotation);
       ctx.globalAlpha = this.opacity;
-      ctx.fillStyle = this.color;
-      // 5-petal sakura flower
-      const s = this.size;
-      ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-        const px = Math.cos(angle) * s * 0.9;
-        const py = Math.sin(angle) * s * 0.9;
-        const c1x = Math.cos(angle - 0.4) * s * 0.4;
-        const c1y = Math.sin(angle - 0.4) * s * 0.4;
-        const c2x = Math.cos(angle + 0.4) * s * 0.4;
-        const c2y = Math.sin(angle + 0.4) * s * 0.4;
-        if (i === 0) ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo(c1x, c1y, px, py);
-        ctx.quadraticCurveTo(c2x, c2y, 0, 0);
-      }
-      ctx.fill();
-      // Center dot
-      ctx.beginPath();
-      ctx.arc(0, 0, s * 0.18, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,235,245,0.95)';
-      ctx.fill();
+      const d = (this.size / PETAL_REF) * PETAL_SPR;
+      ctx.drawImage(petalSprites[this.color], -d / 2, -d / 2, d, d);
       ctx.restore();
     }
   }
@@ -1241,11 +1337,11 @@
       this.variant = Math.floor(Math.random() * 3);
     }
 
-    update() {
-      this.sway += this.swaySpeed;
-      this.x += this.speedX + Math.sin(this.sway) * this.swayAmp;
-      this.y += this.speedY;
-      this.rotation += this.rotSpeed;
+    update(dt) {
+      this.sway += this.swaySpeed * dt;
+      this.x += (this.speedX + Math.sin(this.sway) * this.swayAmp) * dt;
+      this.y += this.speedY * dt;
+      this.rotation += this.rotSpeed * dt;
       if (this.y > canvas.height + 40) this.reset(false);
     }
 
@@ -1254,55 +1350,8 @@
       ctx.translate(this.x, this.y);
       ctx.rotate(this.rotation);
       ctx.globalAlpha = this.opacity;
-      ctx.fillStyle = this.color;
-      const s = this.size;
-
-      if (this.variant === 0) {
-        // Simple maple-ish leaf: 3-lobe shape
-        ctx.beginPath();
-        ctx.moveTo(0, s);
-        ctx.bezierCurveTo(-s * 0.5, s * 0.5, -s * 0.9, -s * 0.1, -s * 0.6, -s * 0.4);
-        ctx.bezierCurveTo(-s * 0.3, -s * 0.7, 0, -s * 0.3, 0, -s * 0.6);
-        ctx.bezierCurveTo(0, -s * 0.3, s * 0.3, -s * 0.7, s * 0.6, -s * 0.4);
-        ctx.bezierCurveTo(s * 0.9, -s * 0.1, s * 0.5, s * 0.5, 0, s);
-        ctx.closePath();
-        ctx.fill();
-        // Vein
-        ctx.strokeStyle = 'rgba(255,220,150,0.3)';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(0, s);
-        ctx.lineTo(0, -s * 0.5);
-        ctx.stroke();
-      } else if (this.variant === 1) {
-        // Oval leaf
-        ctx.beginPath();
-        ctx.ellipse(0, 0, s * 0.45, s * 0.9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Vein
-        ctx.strokeStyle = 'rgba(255,220,150,0.25)';
-        ctx.lineWidth = 0.7;
-        ctx.beginPath();
-        ctx.moveTo(0, -s * 0.9);
-        ctx.lineTo(0, s * 0.9);
-        ctx.stroke();
-      } else {
-        // Pointed teardrop leaf
-        ctx.beginPath();
-        ctx.moveTo(0, -s);
-        ctx.bezierCurveTo(s * 0.6, -s * 0.3, s * 0.5, s * 0.5, 0, s);
-        ctx.bezierCurveTo(-s * 0.5, s * 0.5, -s * 0.6, -s * 0.3, 0, -s);
-        ctx.closePath();
-        ctx.fill();
-        // Vein
-        ctx.strokeStyle = 'rgba(255,220,150,0.25)';
-        ctx.lineWidth = 0.7;
-        ctx.beginPath();
-        ctx.moveTo(0, -s);
-        ctx.lineTo(0, s);
-        ctx.stroke();
-      }
-
+      const d = (this.size / LEAF_REF) * LEAF_SPR;
+      ctx.drawImage(leafSprites[this.variant + '|' + this.color], -d / 2, -d / 2, d, d);
       ctx.restore();
     }
   }
@@ -1310,13 +1359,26 @@
   const petals = Array.from({ length: 40 }, () => new Petal());
   const leaves  = Array.from({ length: 2 }, () => new Leaf());
 
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    leaves.forEach(l  => { l.update();  l.draw();  });
-    petals.forEach(p  => { p.update();  p.draw();  });
+  // ── PERF: cap real work to ~30fps (delta-scaled so on-screen speed is unchanged), and fully
+  // stop the loop while the tab is hidden — resumes exactly where it left off when visible. ──
+  const FRAME_MS = 1000 / 30, REF_MS = 1000 / 60;
+  let lastT = 0;
+  function animate(t) {
     requestAnimationFrame(animate);
+    if (document.hidden) return;
+    if (lastT === 0) { lastT = t; return; }
+    const elapsed = t - lastT;
+    if (elapsed < FRAME_MS) return;
+    const dt = Math.min(elapsed, FRAME_MS * 3) / REF_MS;
+    lastT = t;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1;
+    leaves.forEach(l  => { l.update(dt);  l.draw();  });
+    petals.forEach(p  => { p.update(dt);  p.draw();  });
+    ctx.globalAlpha = 1;
   }
-  animate();
+  requestAnimationFrame(animate);
 })();
 </script>
 
