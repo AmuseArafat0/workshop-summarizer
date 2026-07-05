@@ -1076,6 +1076,17 @@
 
   <div class="error-box" id="errorBox"></div>
 
+  <!-- ═══ MANUAL PART-BY-PART ANALYSIS PANEL ═════════════════════════════ -->
+  <div id="partsPanel" style="display:none;flex-direction:column;align-items:center;gap:14px;padding:32px 24px;margin-top:24px;background:rgba(255,255,255,0.6);border:1.5px dashed rgba(196,122,58,0.3);border-radius:20px;text-align:center;">
+    <div style="font-family:'Noto Serif JP',serif;font-size:14px;font-weight:600;color:var(--amber);letter-spacing:0.1em;">🌸 Long Transcript — Manual Part Analysis</div>
+    <div id="partsInfo" style="font-size:13px;color:var(--muted);line-height:1.7;max-width:520px;"></div>
+    <div id="partsChips" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>
+    <div id="partsError" style="display:none;font-size:12px;color:#c06060;padding:8px 14px;background:rgba(200,80,80,0.06);border-radius:10px;border:1px solid rgba(200,80,80,0.18);max-width:520px;"></div>
+    <button class="run-btn" id="partsBtn" onclick="analyzeNextPart()" style="max-width:380px;margin-top:4px;">
+      <span>🌸</span> Analyze Part 1
+    </button>
+  </div>
+
   <!-- ═══ RESULTS ════════════════════════════════════════════════════════ -->
   <div class="results" id="results">
 
@@ -2145,6 +2156,8 @@ window.addEventListener('load', () => {
     if (!uploadedFiles.length) { showError('Please upload at least one transcript file.'); return; }
 
     clearError();
+    document.getElementById('partsPanel').style.display = 'none';
+    msChunks = []; msResults = []; msIndex = 0;
     document.getElementById('results').classList.remove('active');
     document.getElementById('detailsReport').style.display = 'none';
     document.getElementById('detailsCards').innerHTML = '';
@@ -2170,26 +2183,51 @@ window.addEventListener('load', () => {
       chunks = chunks.flatMap(part => chunkTranscript(part, charLimit));
       const loaderEl = document.getElementById('loaderText');
 
-      async function callAPI(prompt) {
-        if (currentProvider === 'gemini')         return await callGemini(apiKey, prompt);
-        else if (currentProvider === 'openrouter') return await callOpenRouter(apiKey, prompt);
-        else if (currentProvider === 'claude')     return await callClaude(apiKey, prompt);
-        else if (currentProvider === 'groq')       return await callGroq(apiKey, prompt);
-      }
-
       let finalText = '';
 
       if (chunks.length === 1) {
         // Fits in one shot — send directly
         clearInterval(loaderInterval);
         if (loaderEl) loaderEl.textContent = 'Reading full transcript…';
-        finalText = await callAPI(buildPrompt(chunks[0]));
+        finalText = await callProviderAPI(apiKey, buildPrompt(chunks[0]));
       } else {
+        // ── MANUAL MODE: transcript is long — set up part-by-part state and
+        // let the user analyze each part with a button click, then combine.
         clearInterval(loaderInterval);
-        // Multiple chunks — extract raw bullets from each, then merge into one report
-        if (loaderEl) loaderEl.textContent = 'Transcript is long — reading in ' + chunks.length + ' parts…';
+        msChunks  = chunks;
+        msResults = [];
+        msIndex   = 0;
+        msApiKey  = apiKey;
+        stopLoader();
+        document.getElementById('runBtn').disabled = false;
+        renderPartsPanel();
+        document.getElementById('partsPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return; // wait for user clicks — analyzeNextPart() / combineParts()
+      }
 
-        function buildChunkPrompt(chunk, chunkNum, totalChunks) {
+      if (!finalText) throw new Error('Empty response from API. Please try again.');
+      const report1Ok = parseAndDisplayReport1(finalText);
+      summaryProvider = currentProvider;
+      // Report 2 is triggered manually by the user via button
+    } catch (err) {
+      showError(err.message || 'Something went wrong. Check your API key and try again.');
+    } finally {
+      stopLoader();
+      document.getElementById('runBtn').disabled = false;
+    }
+  }
+
+  // ── Manual part-by-part analysis state ─────────────────────────────────────
+  let msChunks = [], msResults = [], msIndex = 0, msApiKey = '';
+
+  async function callProviderAPI(apiKey, prompt) {
+    if (currentProvider === 'gemini')          return await callGemini(apiKey, prompt);
+    else if (currentProvider === 'openrouter') return await callOpenRouter(apiKey, prompt);
+    else if (currentProvider === 'claude')     return await callClaude(apiKey, prompt);
+    else if (currentProvider === 'groq')       return await callGroq(apiKey, prompt);
+  }
+
+  function buildChunkPrompt(chunk, chunkNum, totalChunks) {
           return [
             'You are extracting raw intelligence from part ' + chunkNum + ' of ' + totalChunks + ' of a workshop transcript.',
             'Extract EVERY valuable insight from this segment. Be exhaustive — nothing relevant should be skipped.',
@@ -2272,37 +2310,99 @@ window.addEventListener('load', () => {
           }
         }
 
-        // Step 1: extract from each chunk
-        const allData = [];
-        for (let i = 0; i < chunks.length; i++) {
-          if (loaderEl) loaderEl.textContent = 'Reading part ' + (i+1) + ' of ' + chunks.length + '…';
-          const chunkText = await callAPI(buildChunkPrompt(chunks[i], i+1, chunks.length));
-          const parsed = safeParseJSON(chunkText);
-          if (parsed) allData.push(parsed);
-        }
+  // ── Manual mode: render the parts panel ─────────────────────────────────
+  function renderPartsPanel() {
+    const panel = document.getElementById('partsPanel');
+    const info  = document.getElementById('partsInfo');
+    const chips = document.getElementById('partsChips');
+    const btn   = document.getElementById('partsBtn');
+    const errEl = document.getElementById('partsError');
+    if (errEl) errEl.style.display = 'none';
 
-        // Step 2: flatten all bullets into one text block
-        const keys = ['summary','hookAudience','salesConversion','offerMonetization','trustEngagement','aiToolsValue','businessMoat','weaknesses'];
-        let allBullets = '';
-        keys.forEach(key => {
-          const bullets = allData.flatMap(d => Array.isArray(d[key]) ? d[key] : []).filter(Boolean);
-          if (bullets.length) allBullets += '\n[' + key + ']\n' + bullets.map(b => '• ' + b).join('\n');
-        });
+    const total = msChunks.length;
+    const done  = msResults.filter(Boolean).length;
 
-        // Step 3: merge pass
-        if (loaderEl) loaderEl.textContent = 'Merging all ' + chunks.length + ' parts into final report…';
-        finalText = await callAPI(buildMergePrompt(allBullets));
-      }
+    // Chips showing status of each part
+    let chipHtml = '';
+    for (let i = 0; i < total; i++) {
+      const isDone = !!msResults[i];
+      const isNext = i === msIndex && !isDone;
+      chipHtml += '<span style="font-size:11px;font-family:\'Noto Serif JP\',serif;font-weight:600;padding:6px 14px;border-radius:999px;' +
+        (isDone
+          ? 'background:rgba(122,155,106,0.12);border:1px solid rgba(122,155,106,0.3);color:var(--leaf);'
+          : isNext
+            ? 'background:rgba(232,160,176,0.12);border:1px solid rgba(232,160,176,0.4);color:var(--sakura);'
+            : 'background:rgba(255,255,255,0.5);border:1px solid var(--border);color:var(--muted);') +
+        '">' + (isDone ? '✓ ' : '') + 'Part ' + (i+1) + '</span>';
+    }
+    chips.innerHTML = chipHtml;
 
-      if (!finalText) throw new Error('Empty response from API. Please try again.');
-      const report1Ok = parseAndDisplayReport1(finalText);
-      summaryProvider = currentProvider;
-      // Report 2 is triggered manually by the user via button
+    if (done < total) {
+      info.textContent = 'Your transcript is long, so it was split into ' + total + ' parts to avoid analysis failures. Analyze each part one at a time — ' + done + ' of ' + total + ' done.';
+      btn.innerHTML = '<span>🌸</span> Analyze Part ' + (msIndex + 1) + ' of ' + total;
+      btn.onclick = analyzeNextPart;
+    } else {
+      info.textContent = 'All ' + total + ' parts analyzed ✓ — now combine them into the final report.';
+      btn.innerHTML = '<span>✿</span> Combine All Parts → Final Report';
+      btn.onclick = combineParts;
+    }
+    btn.disabled = false;
+    panel.style.display = 'flex';
+  }
+
+  function showPartsError(msg) {
+    const errEl = document.getElementById('partsError');
+    if (errEl) { errEl.textContent = '⚠ ' + msg + ' — click the button to retry this step.'; errEl.style.display = 'block'; }
+  }
+
+  // ── Manual mode: analyze the current part (one button click = one part) ──
+  async function analyzeNextPart() {
+    const btn = document.getElementById('partsBtn');
+    const errEl = document.getElementById('partsError');
+    if (errEl) errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span>🌸</span> Analyzing Part ' + (msIndex + 1) + ' of ' + msChunks.length + '…';
+    try {
+      const text = await callProviderAPI(msApiKey, buildChunkPrompt(msChunks[msIndex], msIndex + 1, msChunks.length));
+      const parsed = safeParseJSON(text);
+      if (!parsed) throw new Error('Could not parse the model response for part ' + (msIndex + 1));
+      msResults[msIndex] = parsed;
+      // Move to the next unfinished part
+      while (msIndex < msChunks.length && msResults[msIndex]) msIndex++;
     } catch (err) {
-      showError(err.message || 'Something went wrong. Check your API key and try again.');
-    } finally {
-      stopLoader();
-      document.getElementById('runBtn').disabled = false;
+      showPartsError('Part ' + (msIndex + 1) + ' failed: ' + (err.message || 'Unknown error'));
+    }
+    renderPartsPanel();
+  }
+
+  // ── Manual mode: combine all analyzed parts into the final report ────────
+  async function combineParts() {
+    const btn = document.getElementById('partsBtn');
+    const errEl = document.getElementById('partsError');
+    if (errEl) errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span>✿</span> Combining ' + msChunks.length + ' parts…';
+    try {
+      const keys = ['summary','hookAudience','salesConversion','offerMonetization','trustEngagement','aiToolsValue','businessMoat','weaknesses'];
+      let allBullets = '';
+      keys.forEach(key => {
+        const bullets = msResults.flatMap(d => (d && Array.isArray(d[key])) ? d[key] : []).filter(Boolean);
+        if (bullets.length) allBullets += '\n[' + key + ']\n' + bullets.map(b => '• ' + b).join('\n');
+      });
+
+      const finalText = await callProviderAPI(msApiKey, buildMergePrompt(allBullets));
+      if (!finalText) throw new Error('Empty response from API. Please try again.');
+      parseAndDisplayReport1(finalText);
+      summaryProvider = currentProvider;
+      document.getElementById('partsPanel').style.display = 'none';
+    } catch (err) {
+      showPartsError('Combine failed: ' + (err.message || 'Unknown error'));
+      renderPartsPanel();
+      // Keep parts intact so user only retries the combine step
+      const b = document.getElementById('partsBtn');
+      b.innerHTML = '<span>✿</span> Retry Combine → Final Report';
+      b.onclick = combineParts;
+      b.disabled = false;
     }
   }
 
