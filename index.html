@@ -1800,6 +1800,43 @@ window.addEventListener('load', () => {
     return chunks;
   }
 
+  // ── Word-based splitter: guarantees full coverage in ~9,000-word parts ────
+  // If the transcript is longer than WORDS_PER_PART, it is split into equal
+  // sequential parts (usually 2 halves), each analyzed in its own API call,
+  // then merged into one final report. Splits only on line boundaries.
+  const WORDS_PER_PART = 9000;
+
+  function countWords(s) {
+    return s.split(/\s+/).filter(Boolean).length;
+  }
+
+  function splitByWords(text, wordsPerPart) {
+    const totalWords = countWords(text);
+    if (totalWords <= wordsPerPart) return [text];
+
+    // Number of parts needed (2 for up to 18k words, 3 for up to 27k, etc.)
+    const numParts = Math.ceil(totalWords / wordsPerPart);
+    const targetPerPart = Math.ceil(totalWords / numParts); // balance halves evenly
+
+    const lines = text.split('\n');
+    const parts = [];
+    let current = '';
+    let currentWords = 0;
+
+    for (const line of lines) {
+      const lineWords = countWords(line);
+      if (currentWords + lineWords > targetPerPart && current.trim() && parts.length < numParts - 1) {
+        parts.push(current.trim());
+        current = '';
+        currentWords = 0;
+      }
+      current += line + '\n';
+      currentWords += lineWords;
+    }
+    if (current.trim()) parts.push(current.trim());
+    return parts;
+  }
+
   // Keep trimTranscript for Report 2 fallback (still used there)
   function trimTranscript(text, maxChars) {
     if (text.length <= maxChars) return text;
@@ -2124,9 +2161,13 @@ window.addEventListener('load', () => {
       }
       setTranscriptMemory(timestampedParts.join('\n\n'));
 
-      // Report 1: chunk → extract → merge so EVERY part of the transcript is read.
+      // Report 1: split by word count (~9,000 words per part) so long
+      // transcripts are analyzed in 2 (or more) full passes, then merged.
       const charLimit = getCharLimit();
-      const chunks = chunkTranscript(storedTimestampedTranscript, charLimit);
+      let chunks = splitByWords(storedTimestampedTranscript, WORDS_PER_PART);
+      // Safety net: if any word-based part still exceeds the provider's
+      // context window, sub-split that part on the char limit.
+      chunks = chunks.flatMap(part => chunkTranscript(part, charLimit));
       const loaderEl = document.getElementById('loaderText');
 
       async function callAPI(prompt) {
