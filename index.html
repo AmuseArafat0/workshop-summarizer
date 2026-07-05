@@ -1432,7 +1432,7 @@ window.addEventListener('load', () => {
   let storedReport1Data = null;           // parsed JSON from Report 1
   let storedTimestampedTranscript = '';   // full timestamped transcript text
   let storedTimestampMap = {};            // { "MM:SS": "transcript text at that point" }
-  let transcriptMemoryTimer = null;       // 5-min expiry timer for transcript memory
+  let transcriptMemoryTimer = null;       // 10-min expiry timer for transcript memory
 
   function setTranscriptMemory(timestampedText) {
     // Build a lookup map: timestamp -> ~200 chars of context around that point
@@ -1450,14 +1450,14 @@ window.addEventListener('load', () => {
     }
     // Clear any existing timer
     if (transcriptMemoryTimer) clearTimeout(transcriptMemoryTimer);
-    // Expire memory after 5 minutes
+    // Expire memory after 10 minutes
     transcriptMemoryTimer = setTimeout(() => {
       storedTimestampMap = {};
       storedTimestampedTranscript = '';
-      console.log('[Memory] Transcript memory expired after 5 minutes.');
+      console.log('[Memory] Transcript memory expired after 10 minutes.');
       const notice = document.getElementById('memoryNotice');
       if (notice) {
-        notice.textContent = '⚠ Transcript memory expired (5 min limit). Please re-upload and regenerate Report 1 before running Report 2.';
+        notice.textContent = '⚠ Transcript memory expired (10 min limit). Please re-upload and regenerate Report 1 before running Report 2.';
         notice.style.display = 'block';
       }
       const statusEl = document.getElementById('memoryStatus');
@@ -1466,13 +1466,13 @@ window.addEventListener('load', () => {
       if (countdownEl) countdownEl.textContent = 'Memory expired — regenerate Report 1 to continue';
       const btn = document.getElementById('report2RunBtn');
       if (btn) btn.disabled = true;
-    }, 5 * 60 * 1000);
+    }, 10 * 60 * 1000);
 
     // Live countdown every second
     const memoryStartTime = Date.now();
     const countdownInterval = setInterval(() => {
       const elapsed = Date.now() - memoryStartTime;
-      const remaining = Math.max(0, 5 * 60 * 1000 - elapsed);
+      const remaining = Math.max(0, 10 * 60 * 1000 - elapsed);
       const mins = Math.floor(remaining / 60000);
       const secs = Math.floor((remaining % 60000) / 1000);
       const countdownEl = document.getElementById('memoryCountdown');
@@ -1482,7 +1482,7 @@ window.addEventListener('load', () => {
       if (remaining <= 0) clearInterval(countdownInterval);
     }, 1000);
 
-    console.log('[Memory] Transcript stored: ' + Object.keys(storedTimestampMap).length + ' timestamps. Expires in 5 mins.');
+    console.log('[Memory] Transcript stored: ' + Object.keys(storedTimestampMap).length + ' timestamps. Expires in 10 mins.');
   }
 
   function getMemoryStatus() {
@@ -2556,7 +2556,7 @@ window.addEventListener('load', () => {
     try {
       // Check transcript memory is still alive
       if (Object.keys(storedTimestampMap).length === 0) {
-        throw new Error('Transcript memory has expired (5 min limit). Please re-upload and regenerate Report 1 first.');
+        throw new Error('Transcript memory has expired (10 min limit). Please re-upload and regenerate Report 1 first.');
       }
       console.log('[Report 2] Using timestamp map with ' + Object.keys(storedTimestampMap).length + ' entries');
 
