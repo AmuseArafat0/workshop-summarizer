@@ -2099,22 +2099,30 @@ window.addEventListener('load', () => {
       return await callOpenRouterModel(apiKey, selected, prompt);
     }
 
-    // Auto mode — try each model in fallback order until one succeeds
-    const errors = [];
-    for (const model of OPENROUTER_FREE_FALLBACK_MODELS.slice(0, 8)) {
-      try {
-        liveStatus('Trying ' + model.split('/').pop().replace(':free','') + '…');
-        const result = await callOpenRouterModel(apiKey, model, prompt, 50000);
-        console.log('[Auto] Succeeded with:', model);
-        return result;
-      } catch (err) {
-        console.warn('[Auto] Failed with ' + model + ':', err.message);
-        errors.push(model.split('/').pop() + ': ' + err.message);
-        // Small delay before next attempt
-        await new Promise(r => setTimeout(r, 600));
-      }
+    // Auto mode — PARALLEL RACE: fire the top free models at once,
+    // return the FIRST successful response. No more waiting for slow
+    // models one by one.
+    const raceGroup = (models, timeoutMs) => new Promise((resolve, reject) => {
+      let pending = models.length; const errs = [];
+      liveStatus('Racing ' + models.length + ' free models — first to answer wins…');
+      models.forEach(model => {
+        callOpenRouterModel(apiKey, model, prompt, timeoutMs)
+          .then(res => { console.log('[Auto race] Won by:', model); resolve(res); })
+          .catch(err => {
+            console.warn('[Auto race] Failed:', model, err.message);
+            errs.push(model.split('/').pop() + ': ' + err.message);
+            if (--pending === 0) reject(new Error(errs.join('\n')));
+          });
+      });
+    });
+    // Wave 1: best 4 models in parallel (60s cap)
+    try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(0, 4), 60000); }
+    catch (e1) { console.warn('[Auto] Wave 1 all failed'); }
+    // Wave 2: next 4 models in parallel (60s cap)
+    try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(4, 8), 60000); }
+    catch (e2) {
+      throw new Error('All free models failed or timed out. Free tier may be overloaded right now — wait a minute and retry, or pick a specific model.\n' + String(e2.message).split('\n').slice(-3).join('\n'));
     }
-    throw new Error('All free models failed. Last errors:\n' + errors.slice(-3).join('\n'));
   }
 
   async function callClaude(apiKey, prompt) {
@@ -2435,8 +2443,13 @@ window.addEventListener('load', () => {
   // automatic sub-split into two halves as a last resort.
   async function analyzeChunkRobust(chunk, partNum, totalParts, btn, isSubHalf) {
     let lastErr = '';
+    // In auto mode the provider already races/falls back across many models,
+    // so 2 outer attempts is plenty. Manual model: 3 attempts.
+    const modelSel = document.getElementById('model-' + currentProvider);
+    const isAuto = !modelSel || modelSel.value === 'auto';
+    const maxAttempts = isAuto ? 2 : 3;
     const waits = [0, 3000, 6000]; // backoff between attempts (rate limits)
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       if (waits[attempt - 1]) {
         if (btn) btn.innerHTML = '<span>🌸</span> Part ' + partNum + ': waiting ' + (waits[attempt-1]/1000) + 's (rate limit safety)…';
         await new Promise(r => setTimeout(r, waits[attempt - 1]));
