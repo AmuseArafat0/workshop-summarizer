@@ -870,7 +870,7 @@
         <button class="provider-tab active" id="tab-gemini">
           <div class="p-icon">🟦</div>
           <div class="p-name">Google Gemini</div>
-          <div class="p-model">gemini-2.5-flash</div>
+          <div class="p-model">gemini-3.8-flash</div>
           <span class="p-badge badge-free">FREE · No credit card</span>
         </button>
 
@@ -884,7 +884,7 @@
         <button class="provider-tab" id="tab-claude">
           <div class="p-icon">🟠</div>
           <div class="p-name">Claude (Anthropic)</div>
-          <div class="p-model">claude-haiku-4-5</div>
+          <div class="p-model">claude-haiku-5-5</div>
           <span class="p-badge badge-paid">Paid · Best quality</span>
         </button>
 
@@ -895,7 +895,7 @@
         <button class="provider-tab" id="tab-groq">
           <div class="p-icon">⚡</div>
           <div class="p-name">Groq</div>
-          <div class="p-model">llama-3.3-70b</div>
+          <div class="p-model">gpt-oss-120b</div>
           <span class="p-badge badge-free">FREE · Ultra fast</span>
         </button>
 
@@ -922,13 +922,13 @@
         <div class="field" style="margin-top:12px">
           <span class="field-label">Select Model</span>
           <select id="model-gemini">
-            <option value="auto" selected>⚡ Auto — FREE models, best → fastest</option>
-            <option value="gemini-flash-latest">Gemini Flash (latest) — FREE (recommended)</option>
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash — FREE</option>
-            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite — FREE (fastest)</option>
-            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite — FREE</option>
-            <option value="gemini-2.5-pro">Gemini 2.5 Pro — PAID tier only (since Apr 2026)</option>
-          </select>
+            <option value="auto" selected>⚡ Auto — FREE models, newest → fastest</option>
+            <option value="gemini-3.8-flash">Gemini 3.8 Flash — FREE (newest, recommended)</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash — FREE</option>
+            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite — FREE (fast)</option>
+            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite — FREE</option>
+            <option value="gemini-flash-latest">Gemini Flash (latest alias) — FREE</option>
+            </select>
         </div>
         <div class="provider-hint">
           🌿 Completely free — no credit card needed.<br>
@@ -951,39 +951,30 @@
             <optgroup label="── ✦ Smart Auto-Select ──">
               <option value="auto" selected>✦ Auto — FREE models, best → worst (recommended)</option>
             </optgroup>
-            <optgroup label="── Tier 1: Best (120B+) ──">
-              <option value="openai/gpt-oss-120b:free">OpenAI GPT OSS 120B — FREE · 131K</option>
+            <optgroup label="── Tier 1: Best (large / 1M context) ──">
+              <option value="nvidia/nemotron-3-ultra-550b-a55b:free">NVIDIA Nemotron 3 Ultra 550B — FREE · 1M</option>
+              <option value="thinkingmachines/inkling:free">Thinking Machines Inkling — FREE · 1M</option>
+              <option value="nvidia/nemotron-3.5-super-vl:free">NVIDIA Nemotron 3.5 Super VL — FREE · 1M</option>
               <option value="nvidia/nemotron-3-super-120b-a12b:free">NVIDIA Nemotron 3 Super 120B — FREE · 262K</option>
-              <option value="nousresearch/hermes-3-llama-3.1-405b:free">Hermes 3 Llama 405B — FREE · 131K</option>
-              <option value="qwen/qwen3-coder:free">Qwen3 Coder — FREE · 262K</option>
-              <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen3 Next 80B — FREE · 262K</option>
-              <option value="minimax/minimax-m2.5:free">MiniMax M2.5 — FREE · 197K</option>
+              <option value="nvidia/nemotron-3.5-lightning:free">NVIDIA Nemotron 3.5 Lightning — FREE · 1M</option>
             </optgroup>
-            <optgroup label="── Tier 2: Good (30–80B) ──">
+            <optgroup label="── Tier 2: Good (25–35B) ──">
+              <option value="thinkingmachines/inkling-small:free">Thinking Machines Inkling Small — FREE · 1M</option>
               <option value="google/gemma-4-31b-it:free">Google Gemma 4 31B — FREE · 262K</option>
               <option value="google/gemma-4-26b-a4b-it:free">Google Gemma 4 26B MoE — FREE · 262K</option>
-              <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B — FREE · 66K</option>
+              <option value="xingchen-agi/xing4.0-29b-a4b:free">XingChen Xing4.0 29B — FREE · 262K</option>
+              <option value="recursive/flint-v1.0:free">Recursive Flint v1.0 — FREE · 262K</option>
+              <option value="dots-studio/dots-3-note-preview:free">Dots3-Note Preview — FREE · 512K · preview</option>
+              <option value="cohere/north-mini-code:free">Cohere North Mini Code — FREE · 256K</option>
               <option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free">NVIDIA Nemotron 3 Nano Omni 30B — FREE · 256K · ⚠ reasoning (may return no JSON)</option>
-              <option value="nvidia/nemotron-3-nano-30b-a3b:free">NVIDIA Nemotron 3 Nano 30B — FREE · 256K</option>
-              <option value="tencent/hy3-preview:free">Tencent Hy3 — FREE · 262K</option>
-              <option value="z-ai/glm-4.5-air:free">Z.ai GLM 4.5 Air — FREE · 131K</option>
-              <option value="openai/gpt-oss-20b:free">OpenAI GPT OSS 20B — FREE · 131K</option>
-              <option value="poolside/laguna-m.1:free">Poolside Laguna M.1 — FREE · 131K</option>
             </optgroup>
-            <optgroup label="── Tier 3: Fallback (≤12B) ──">
-              <option value="nvidia/nemotron-nano-12b-v2-vl:free">NVIDIA Nemotron Nano 12B — FREE · 128K</option>
-              <option value="nvidia/nemotron-nano-9b-v2:free">NVIDIA Nemotron Nano 9B — FREE · 128K</option>
-              <option value="cognitivecomputations/dolphin-mistral-24b-venice-edition:free">Dolphin Mistral 24B — FREE · 33K</option>
-              <option value="poolside/laguna-xs.2:free">Poolside Laguna XS.2 — FREE · 131K</option>
-              <option value="baidu/cobuddy:free">Baidu CoBuddy — FREE · 131K</option>
-              <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B — FREE · 131K</option>
-              <option value="liquid/lfm-2.5-1.2b-thinking:free">LiquidAI LFM 2.5 Thinking — FREE · 33K · ⚠ reasoning (may return no JSON)</option>
-              <option value="liquid/lfm-2.5-1.2b-instruct:free">LiquidAI LFM 2.5 Instruct — FREE · 33K</option>
+            <optgroup label="── Safety net ──">
+              <option value="openrouter/free">OpenRouter Free Router (random free model) — FREE · 200K</option>
             </optgroup>
             <optgroup label="── Paid Models ──">
-              <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5 — Paid</option>
-              <option value="openai/gpt-4o-mini">GPT-4o Mini — Paid</option>
-              <option value="google/gemini-2.5-flash-preview-05-20">Gemini 2.5 Flash — Paid</option>
+              <option value="anthropic/claude-haiku-5.5">Claude Haiku 5.5 — Paid</option>
+              <option value="anthropic/claude-sonnet-5.5">Claude Sonnet 5.5 — Paid</option>
+              <option value="google/gemini-3.8-flash">Gemini 3.8 Flash — Paid</option>
             </optgroup>
           </select>
         </div>
@@ -1001,6 +992,14 @@
             <input type="password" id="key-claude" placeholder="sk-ant-..." autocomplete="off" oninput="updateRunBtn()" />
           </div>
           <button class="save-btn" onclick="saveKey('claude')">Save</button>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="field-label">Select Model</span>
+          <select id="model-claude">
+            <option value="claude-haiku-5-5" selected>Claude Haiku 5.5 — fastest, cheapest (recommended)</option>
+            <option value="claude-sonnet-5-5">Claude Sonnet 5.5 — balanced, higher accuracy</option>
+            <option value="claude-opus-5-5">Claude Opus 5.5 — most capable, slowest</option>
+          </select>
         </div>
         <div class="provider-hint">
           🌸 Paid API — best accuracy on long transcripts.<br>
@@ -1021,10 +1020,10 @@
           <span class="field-label">Select Model</span>
           <select id="model-groq">
             <option value="auto" selected>⚡ Auto — FREE models, best → fastest</option>
-            <option value="meta-llama/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick 17B — FREE (strongest)</option>
-            <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B — FREE (preview)</option>
-            <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile — FREE</option>
-            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant — FREE (fastest)</option>
+            <option value="openai/gpt-oss-120b">OpenAI GPT-OSS 120B — FREE (strongest)</option>
+            <option value="openai/gpt-oss-20b">OpenAI GPT-OSS 20B — FREE (fastest)</option>
+            <option value="qwen/qwen3.6-27b">Qwen 3.6 27B — FREE (preview)</option>
+            <option value="minimaxai/minimax-m2.7">MiniMax M2.7 — FREE (preview)</option>
           </select>
         </div>
         <div class="provider-hint">
@@ -1692,81 +1691,66 @@ window.addEventListener('load', () => {
   // Tier 2: Strong mid-size models (30–80B, good instruction following)
   // Tier 3: Smaller/specialised models (last resort)
   const OPENROUTER_FREE_FALLBACK_MODELS = [
-    // ── Tier 1: Best capability, large context ─────────────────────────────
-    'openai/gpt-oss-120b:free',                              // OpenAI 120B, 131K ctx — strongest free model
-    'nvidia/nemotron-3-super-120b-a12b:free',                // NVIDIA 120B MoE, 262K ctx
-    'nousresearch/hermes-3-llama-3.1-405b:free',             // Llama 405B fine-tune, 131K ctx
-    'qwen/qwen3-coder:free',                                 // Qwen3 Coder (large), 262K ctx — excellent instruction following
-    'qwen/qwen3-next-80b-a3b-instruct:free',                 // Qwen3 80B MoE, 262K ctx
-    'minimax/minimax-m2.5:free',                             // MiniMax M2.5, 197K ctx — strong general model
-    // ── Tier 2: Good capability, solid context ─────────────────────────────
-    'google/gemma-4-31b-it:free',                            // Google Gemma 4 31B, 262K ctx
-    'google/gemma-4-26b-a4b-it:free',                        // Google Gemma 4 26B MoE, 262K ctx
-    'meta-llama/llama-3.3-70b-instruct:free',                // Llama 3.3 70B, most reliable free model
-    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',    // NVIDIA 30B reasoning, 256K ctx
-    'nvidia/nemotron-3-nano-30b-a3b:free',                   // NVIDIA 30B, 256K ctx
-    'tencent/hy3-preview:free',                              // Tencent Hy3, 262K ctx
-    'z-ai/glm-4.5-air:free',                                 // Z.ai GLM 4.5 Air, 131K ctx
-    'openai/gpt-oss-20b:free',                               // OpenAI 20B, 131K ctx — lighter but reliable
-    'poolside/laguna-m.1:free',                              // Poolside Laguna M, 131K ctx
-    // ── Tier 3: Smaller/fallback models ────────────────────────────────────
-    'nvidia/nemotron-nano-12b-v2-vl:free',                   // NVIDIA 12B, 128K ctx
-    'nvidia/nemotron-nano-9b-v2:free',                       // NVIDIA 9B, 128K ctx
-    'cognitivecomputations/dolphin-mistral-24b-venice-edition:free', // Dolphin Mistral 24B, 33K ctx
-    'poolside/laguna-xs.2:free',                             // Poolside XS, 131K ctx
-    'baidu/cobuddy:free',                                    // Baidu CoBuddy, 131K ctx
-    'meta-llama/llama-3.2-3b-instruct:free',                 // Llama 3.2 3B — tiny but functional
-    'liquid/lfm-2.5-1.2b-thinking:free',                     // LiquidAI 1.2B thinking — last resort
-    'liquid/lfm-2.5-1.2b-instruct:free',                     // LiquidAI 1.2B instruct — absolute last resort
-    'openrouter/free',                                       // OpenRouter auto-router — final safety net
+    // ── Tier 1: Large / 1M-context flagships (refreshed Oct 2026) ──
+    'nvidia/nemotron-3-ultra-550b-a55b:free',                // NVIDIA 550B MoE, 1M ctx — largest free model
+    'thinkingmachines/inkling:free',                         // Inkling MoE, 1M ctx
+    'nvidia/nemotron-3.5-super-vl:free',                     // Nemotron 3.5 Super, 1M ctx, structured outputs
+    'nvidia/nemotron-3-super-120b-a12b:free',                // NVIDIA 120B MoE, 262K ctx, structured outputs
+    'nvidia/nemotron-3.5-lightning:free',                    // Nemotron 3.5 Lightning, 1M ctx
+    // ── Tier 2: Mid-size ───────────────────────────────────────────────────
+    'thinkingmachines/inkling-small:free',                   // Inkling Small, 1M ctx
+    'google/gemma-4-31b-it:free',                            // Gemma 4 31B, 262K ctx
+    'google/gemma-4-26b-a4b-it:free',                        // Gemma 4 26B MoE, 262K ctx
+    'xingchen-agi/xing4.0-29b-a4b:free',                     // Xing4.0 29B, 262K ctx, structured outputs
+    'recursive/flint-v1.0:free',                             // Flint v1.0, 262K ctx
+    'dots-studio/dots-3-note-preview:free',                  // Dots3-Note preview, 512K ctx (until 2026-12-31)
+    'cohere/north-mini-code:free',                           // Cohere North Mini Code, 256K ctx
+    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',    // Nemotron Nano Omni 30B reasoning, 256K ctx
+    // ── Final safety net ───────────────────────────────────────────────────
+    'openrouter/free',                                       // OpenRouter auto-router — picks any live free model
   ];
 
   const MODEL_CHAR_LIMITS = {
-    'gemini-flash-latest':                            880000,
+    // Gemini (native API)
+    'gemini-3.8-flash':                               880000,
+    'gemini-3.6-flash':                               880000,
+    'gemini-3.5-flash-lite':                          880000,
     'gemini-3.1-flash-lite':                          880000,
+    'gemini-flash-latest':                            880000,
     // Auto mode uses the highest-context free model limit
-    'auto':                                          880000,
+    'auto':                                           880000,
     // openrouter/free auto-router — 200K context
-    'openrouter/free':                               680000,
+    'openrouter/free':                                680000,
+    // 1M context models (capped at 880K chars — plenty for any workshop)
+    'nvidia/nemotron-3-ultra-550b-a55b:free':         880000,
+    'nvidia/nemotron-3.5-super-vl:free':              880000,
+    'nvidia/nemotron-3.5-lightning:free':             880000,
+    'thinkingmachines/inkling:free':                  880000,
+    'thinkingmachines/inkling-small:free':            880000,
+    // 512K
+    'dots-studio/dots-3-note-preview:free':           880000,
     // 262K context models
-    'google/gemma-4-31b-it:free':                    880000,
-    'google/gemma-4-26b-a4b-it:free':                880000,
+    'google/gemma-4-31b-it:free':                     880000,
+    'google/gemma-4-26b-a4b-it:free':                 880000,
     'nvidia/nemotron-3-super-120b-a12b:free':         880000,
-    'qwen/qwen3-next-80b-a3b-instruct:free':          880000,
-    'qwen/qwen3-coder:free':                          880000,
-    'tencent/hy3-preview:free':                       880000,
+    'xingchen-agi/xing4.0-29b-a4b:free':              880000,
+    'recursive/flint-v1.0:free':                      880000,
     // 256K context models
+    'cohere/north-mini-code:free':                    860000,
     'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 860000,
-    'nvidia/nemotron-3-nano-30b-a3b:free':            860000,
-    // 197K context
-    'minimax/minimax-m2.5:free':                      660000,
-    // 131K context models
-    'openai/gpt-oss-120b:free':                       440000,
-    'openai/gpt-oss-20b:free':                        440000,
-    'nousresearch/hermes-3-llama-3.1-405b:free':      440000,
-    'z-ai/glm-4.5-air:free':                          440000,
-    'poolside/laguna-m.1:free':                       440000,
-    'poolside/laguna-xs.2:free':                      440000,
-    'baidu/cobuddy:free':                             440000,
-    'meta-llama/llama-3.2-3b-instruct:free':          440000,
-    // 128K context models
-    'nvidia/nemotron-nano-12b-v2-vl:free':            424000,
-    'nvidia/nemotron-nano-9b-v2:free':                424000,
-    // 66K context
-    'meta-llama/llama-3.3-70b-instruct:free':          48000,
-    // 33K context models
-    'cognitivecomputations/dolphin-mistral-24b-venice-edition:free': 88000,
-    'liquid/lfm-2.5-1.2b-thinking:free':               88000,
-    'liquid/lfm-2.5-1.2b-instruct:free':               88000,
-    // Paid models
-    'anthropic/claude-haiku-4-5':                     600000,
-    'openai/gpt-4o-mini':                             480000,
-    'google/gemini-2.5-flash-preview-05-20':          700000,
-    // Groq models — 32768 token context
-    'llama-3.3-70b-versatile':      88000,
-    'llama-3.1-8b-instant':        88000,
-    'llama-3.2-90b-vision-preview': 88000,
-    'llama-3.2-11b-vision-preview': 88000,
+    // Paid models (OpenRouter)
+    'anthropic/claude-haiku-5.5':                     880000,
+    'anthropic/claude-sonnet-5.5':                    880000,
+    'google/gemini-3.8-flash':                        880000,
+    // Claude (direct API)
+    'claude-haiku-5-5':                               880000,
+    'claude-sonnet-5-5':                              880000,
+    'claude-opus-5-5':                                880000,
+    // Groq models — prompt is truncated to 16K chars in callGroqModel (free-tier TPM)
+    'openai/gpt-oss-120b':          88000,
+    'openai/gpt-oss-20b':           88000,
+    'qwen/qwen3.6-27b':             88000,
+    'minimaxai/minimax-m2.7':       88000,
     // Mistral
     'mistral-small-latest':    100000,
     'open-mistral-nemo':       100000,
@@ -1779,7 +1763,7 @@ window.addEventListener('load', () => {
 
   const PROVIDER_CHAR_LIMITS = {
     gemini:  700000,
-    claude:  600000,
+    claude:  880000,
     groq:     88000,
     mistral: 100000,
     cohere:  480000,
@@ -2018,11 +2002,12 @@ window.addEventListener('load', () => {
 
     // ── API Calls ──────────────────────────────────────────────────────────────
   const GEMINI_FALLBACK_MODELS = [
-    'gemini-flash-latest',       // Auto-alias to newest Flash (Gemini 3 family)
-    'gemini-2.5-flash',          // Stable fallback
-    'gemini-3.1-flash-lite',     // Fast lite (stable since 2026)
-    'gemini-2.5-flash-lite',     // Last resort
-    // NOTE: gemini-2.5-pro removed — paid-only since April 2026, fails on free keys
+    'gemini-3.8-flash',          // Newest Flash — free tier
+    'gemini-3.6-flash',          // Previous Flash — free tier
+    'gemini-3.5-flash-lite',     // Fast + cheap — free tier
+    'gemini-3.1-flash-lite',     // Older lite — free tier (often "high demand")
+    'gemini-flash-latest',       // Alias to newest Flash — last resort
+    // NOTE: 2.5-flash / 2.5-flash-lite removed — closed to new users. 2.5-pro is paid-only.
   ];
 
   // Live status visible in BOTH the loader and the parts-panel button
@@ -2059,23 +2044,33 @@ window.addEventListener('load', () => {
 
   async function callGemini(apiKey, prompt) {
     const selectEl = document.getElementById('model-gemini');
-    const selected = selectEl ? selectEl.value : 'gemini-2.5-flash';
+    const selected = selectEl ? selectEl.value : 'gemini-3.8-flash';
     if (selected !== 'auto') return await callGeminiModel(apiKey, selected, prompt);
     const errors = [];
     for (const model of GEMINI_FALLBACK_MODELS) {
       try {
         liveStatus('Trying ' + model + '…');
-        return await callGeminiModel(apiKey, model, prompt);
+        try { return await callGeminiModel(apiKey, model, prompt); }
+        catch (e1) {
+          // Transient overload ("high demand", 503, 429 per-minute) — one retry after a short pause
+          if (/high demand|overloaded|unavailable|try again|per minute|503/i.test(e1.message)) {
+            liveStatus('Busy — retrying ' + model + ' in 3s…');
+            await new Promise(r => setTimeout(r, 3000));
+            return await callGeminiModel(apiKey, model, prompt);
+          }
+          throw e1;
+        }
       } catch(err) {
         console.warn('[Gemini Auto] Failed ' + model + ':', err.message);
         errors.push(model + ': ' + err.message);
         await new Promise(r => setTimeout(r, 400));
       }
     }
-    throw new Error('All Gemini models failed:\n' + errors.slice(-3).join('\n'));
+    throw new Error('All Gemini models failed:\n' + errors.map(x => x.length > 150 ? x.slice(0, 150) + '…' : x).join('\n'));
   }
 
   async function callOpenRouterModel(apiKey, model, prompt, timeoutMs) {
+    if (!/^sk-or-/i.test(apiKey)) throw new Error('This does not look like an OpenRouter key (should start with sk-or-v1-). Get one at openrouter.ai/keys and paste it in the OpenRouter tab.');
     // Ask for a strict JSON object and keep the reasoning stream OUT of the
     // reply. Without this, "reasoning" models (GPT-OSS, nemotron-reasoning,
     // lfm-thinking, etc.) spend their whole token budget narrating their
@@ -2139,31 +2134,38 @@ window.addEventListener('load', () => {
     catch (e1) { console.warn('[Auto] Wave 1 all failed'); }
     // Wave 2: next 4 models in parallel (60s cap)
     try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(4, 8), 60000); }
+    catch (e2) { console.warn('[Auto] Wave 2 all failed'); }
+    // Wave 3: remaining models + free router (60s cap)
+    try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(8), 60000); }
     catch (e2) {
       throw new Error('All free models failed or timed out. Free tier may be overloaded right now — wait a minute and retry, or pick a specific model.\n' + String(e2.message).split('\n').slice(-3).join('\n'));
     }
   }
 
   async function callClaude(apiKey, prompt) {
-    // Prefill the assistant turn with "{" so Claude continues valid JSON from
-    // the first character — no preamble is possible, nothing to strip.
+    // Claude 5.x: no assistant prefill and no temperature override. The prompt already
+    // demands JSON-only; we extract the outermost {...} so stray text can't break parsing.
+    const model = (document.getElementById('model-claude') || {}).value || 'claude-haiku-5-5';
     const res = await fetchT('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 8192, temperature: 0.2, messages: [{ role: 'user', content: prompt }, { role: 'assistant', content: '{' }] })
+      body: JSON.stringify({ model, max_tokens: 16000, messages: [{ role: 'user', content: prompt }] })
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Claude API error ' + res.status); }
     const data = await res.json();
-    const body = data.content?.[0]?.text || '';
-    // Re-attach the "{" we prefilled (unless the model repeated it itself).
-    return body.trimStart().startsWith('{') ? body : '{' + body;
+    // Skip any thinking blocks — join only the text blocks
+    const body = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('').trim();
+    if (!body) throw new Error('Empty response from Claude');
+    const i = body.indexOf('{'), j = body.lastIndexOf('}');
+    return (i >= 0 && j > i) ? body.slice(i, j + 1) : body;
   }
 
   const GROQ_FALLBACK_MODELS = [
-    'meta-llama/llama-4-maverick-17b-128e-instruct', // Strongest (128E MoE)
-    'meta-llama/llama-4-scout-17b-16e-instruct',     // Strong (16E MoE)
-    'llama-3.3-70b-versatile',                        // Reliable 70B
-    'llama-3.1-8b-instant',                           // Fastest / lightest
+    'openai/gpt-oss-120b',   // Production — strongest, ~500 tok/s
+    'openai/gpt-oss-20b',    // Production — fastest, ~1000 tok/s
+    'qwen/qwen3.6-27b',      // Preview
+    'minimaxai/minimax-m2.7',// Preview
+    // NOTE: llama-3.1-8b-instant / llama-3.3-70b-versatile / llama-4-* removed — shut down for free tier
   ];
 
   async function callGroqModel(apiKey, model, prompt) {
@@ -2172,7 +2174,7 @@ window.addEventListener('load', () => {
     const res = await fetchT('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: groqPrompt }], temperature: 0.2, max_tokens: 8192, response_format: { type: 'json_object' } })
+      body: JSON.stringify(Object.assign({ model, messages: [{ role: 'user', content: groqPrompt }], temperature: 0.2, max_tokens: 8192, response_format: { type: 'json_object' } }, /gpt-oss/.test(model) ? { reasoning_effort: 'low' } : {}))
     });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Groq error ' + res.status); }
     const data = await res.json();
@@ -2195,7 +2197,7 @@ window.addEventListener('load', () => {
         await new Promise(r => setTimeout(r, 400));
       }
     }
-    throw new Error('All Groq models failed:\n' + errors.slice(-3).join('\n'));
+    throw new Error('All Groq models failed:\n' + errors.map(x => x.length > 150 ? x.slice(0, 150) + '…' : x).join('\n'));
   }
 
 
