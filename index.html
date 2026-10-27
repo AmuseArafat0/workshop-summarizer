@@ -801,6 +801,17 @@
       transform: translateY(0);
     }
 
+
+    /* ─── PASSWORD GATE + KEY SOURCE ──────────────────────────────────── */
+    .key-source { display: flex; gap: 8px; margin-bottom: 14px; }
+    .ks-btn { flex: 1; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--border); background: rgba(255,255,255,0.6);
+            color: var(--text2); font-size: 12px; cursor: pointer; transition: all .2s; font-family: inherit; }
+    .ks-btn:hover { border-color: var(--sakura); }
+    .ks-btn.active { border-color: var(--sakura); background: rgba(255,240,244,0.95); color: var(--text); font-weight: 600; box-shadow: 0 0 0 3px rgba(232,160,176,0.15); }
+    .ks-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .builtin-note { font-size: 12px; color: var(--leaf); padding: 6px 2px 2px; }
+    .custom-model { margin-top: 10px; }
+
     /* ─── RESPONSIVE ──────────────────────────────────────────────────── */
     @media (max-width: 600px) {
       .provider-tabs, .provider-tabs-row2 { grid-template-columns: 1fr 1fr; }
@@ -824,6 +835,7 @@
   </style>
 </head>
 <body>
+
 <script>
 // Toggle a class on <html> the instant this tab is hidden/shown, so the perpetual decorative
 // CSS animations (floating orbs, spinning emblem, bouncing upload icon) pause while nobody's
@@ -861,9 +873,34 @@
     <p class="subtitle">Upload your workshop transcripts and let the wind carry their wisdom — transformed into structured intelligence, like petals caught in gentle light.</p>
   </header>
 
+  <!-- ═══ MODE ═══════════════════════════════════════════════════════════ -->
+  <div id="modeBar" style="margin-bottom:28px">
+    <div class="step-label">Mode</div>
+    <div class="glass-card">
+      <div class="key-source" style="margin-bottom:0">
+        <button class="ks-btn" id="mode-auto" onclick="setMode('auto')">⚡ Auto — built-in AIs <span style="opacity:.7">(password)</span></button>
+        <button class="ks-btn" id="mode-manual" onclick="setMode('manual')">✎ Manual — pick AI + my own key</button>
+      </div>
+      <div id="unlockBox" style="display:none;margin-top:14px">
+        <div class="api-row">
+          <div class="field">
+            <span class="field-label">Password to use the built-in AIs</span>
+            <input type="password" id="unlockPw" placeholder="Enter password" autocomplete="off" />
+          </div>
+          <button class="save-btn" id="unlockBtn" onclick="unlockGate()">Unlock</button>
+        </div>
+        <div id="unlockErr" class="key-status" style="color:#b04050;min-height:14px"></div>
+      </div>
+      <div class="builtin-note" id="autoInfo" style="display:none;line-height:1.7"></div>
+      <div id="netBanner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:12px;background:rgba(200,80,80,0.08);border:1px solid rgba(200,80,80,0.25);color:#a03a4a;font-size:12px;line-height:1.7">
+        ⚠ <b>This preview window blocks all outside connections, so no AI can be reached from here.</b><br>Fix: <b>download index.html</b>, save it on your computer and <b>double-click it</b> to open it in Brave/Chrome/Edge. In Brave, if it is still blocked, click the 🦁 lion icon in the address bar and switch <b>Shields off</b> for the page. Also check internet / VPN.
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ STEP 1: PROVIDER ══════════════════════════════════════════════ -->
-  <div class="provider-section">
-    <div class="step-label">Step 1 — Choose Your AI Provider</div>
+  <div class="provider-section" id="step1">
+    <div class="step-label">Step 1 — Choose Your AI Provider (Manual)</div>
     <div class="glass-card">
       <div class="provider-tabs">
 
@@ -899,6 +936,29 @@
           <span class="p-badge badge-free">FREE · Ultra fast</span>
         </button>
 
+        <button class="provider-tab" id="tab-mistral">
+          <div class="p-icon">🌬️</div>
+          <div class="p-name">Mistral</div>
+          <div class="p-model">mistral-small-latest</div>
+          <span class="p-badge badge-free">FREE tier</span>
+        </button>
+
+        <button class="provider-tab" id="tab-cohere">
+          <div class="p-icon">🔷</div>
+          <div class="p-name">Cohere</div>
+          <div class="p-model">command-a</div>
+          <span class="p-badge badge-free">FREE trial key</span>
+        </button>
+      </div>
+
+      <div class="provider-tabs-row2">
+        <button class="provider-tab" id="tab-huggingface">
+          <div class="p-icon">🤗</div>
+          <div class="p-name">Hugging Face</div>
+          <div class="p-model">Inference Providers</div>
+          <span class="p-badge badge-free">FREE credits</span>
+        </button>
+
 
 
       </div>
@@ -906,9 +966,10 @@
   </div>
 
   <!-- ═══ STEP 2: API KEY ════════════════════════════════════════════════ -->
-  <div>
-    <div class="step-label">Step 2 — Enter Your API Key</div>
+  <div id="step2">
+    <div class="step-label">Step 2 — Your API Key (Manual)</div>
     <div class="glass-card">
+
 
       <!-- Gemini -->
       <div id="fields-gemini" class="provider-fields">
@@ -1032,9 +1093,97 @@
         </div>
       </div>
 
+      <!-- Mistral -->
+      <div id="fields-mistral" class="provider-fields" style="display:none">
+        <div class="api-row">
+          <div class="field">
+            <span class="field-label">Mistral API Key</span>
+            <input type="password" id="key-mistral" placeholder="Mistral API key" autocomplete="off" oninput="updateRunBtn()" />
+          </div>
+          <button class="save-btn" onclick="saveKey('mistral')">Save</button>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="field-label">Select Model</span>
+          <select id="model-mistral">
+            <option value="auto" selected>⚡ Auto — tries models in order until one works</option>
+            <option value="mistral-small-latest">Mistral Small — fast, FREE tier</option>
+            <option value="mistral-medium-latest">Mistral Medium — balanced</option>
+            <option value="open-mistral-nemo">Mistral Nemo — FREE tier</option>
+            <option value="mistral-large-latest">Mistral Large — strongest</option>
+          </select>
+        </div>
+        <div class="field custom-model">
+          <span class="field-label">Custom model ID (optional — overrides the selection above)</span>
+          <input type="text" id="custom-mistral" placeholder="leave blank to use the selection" autocomplete="off" />
+        </div>
+        <div class="provider-hint">
+          🌬️ Free "Experiment" tier available.<br>Get key → <a href="https://console.mistral.ai/api-keys" target="_blank">console.mistral.ai/api-keys</a>
+        </div>
+      </div>
+
+      <!-- Cohere -->
+      <div id="fields-cohere" class="provider-fields" style="display:none">
+        <div class="api-row">
+          <div class="field">
+            <span class="field-label">Cohere API Key</span>
+            <input type="password" id="key-cohere" placeholder="Cohere API key" autocomplete="off" oninput="updateRunBtn()" />
+          </div>
+          <button class="save-btn" onclick="saveKey('cohere')">Save</button>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="field-label">Select Model</span>
+          <select id="model-cohere">
+            <option value="auto" selected>⚡ Auto — tries models in order until one works</option>
+            <option value="command-a-03-2025">Command A — strongest</option>
+            <option value="command-r-plus-08-2024">Command R+ (08-2024)</option>
+            <option value="command-r-08-2024">Command R (08-2024)</option>
+            <option value="command-r7b-12-2024">Command R7B — fastest</option>
+          </select>
+        </div>
+        <div class="field custom-model">
+          <span class="field-label">Custom model ID (optional — overrides the selection above)</span>
+          <input type="text" id="custom-cohere" placeholder="leave blank to use the selection" autocomplete="off" />
+        </div>
+        <div class="provider-hint">
+          🔷 Trial keys are free but rate-limited (≈20 calls/min).<br>Get key → <a href="https://dashboard.cohere.com/api-keys" target="_blank">dashboard.cohere.com/api-keys</a>
+        </div>
+      </div>
+
+      <!-- Hugging Face -->
+      <div id="fields-huggingface" class="provider-fields" style="display:none">
+        <div class="api-row">
+          <div class="field">
+            <span class="field-label">Hugging Face API Key</span>
+            <input type="password" id="key-huggingface" placeholder="hf_..." autocomplete="off" oninput="updateRunBtn()" />
+          </div>
+          <button class="save-btn" onclick="saveKey('huggingface')">Save</button>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <span class="field-label">Select Model</span>
+          <select id="model-huggingface">
+            <option value="auto" selected>⚡ Auto — tries models in order until one works</option>
+            <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
+            <option value="Qwen/Qwen3-235B-A22B-Instruct-2507">Qwen3 235B Instruct</option>
+            <option value="meta-llama/Llama-3.3-70B-Instruct">Llama 3.3 70B Instruct</option>
+            <option value="deepseek-ai/DeepSeek-V3.1">DeepSeek V3.1</option>
+          </select>
+        </div>
+        <div class="field custom-model">
+          <span class="field-label">Custom model ID (optional — overrides the selection above)</span>
+          <input type="text" id="custom-huggingface" placeholder="leave blank to use the selection" autocomplete="off" />
+        </div>
+        <div class="provider-hint">
+          🤗 Uses the Inference Providers router (token needs "Make calls to Inference Providers").<br>Get key → <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a>
+        </div>
+      </div>
+
 
 
       <div id="keyStatus" class="key-status none" style="margin-top:8px">No key saved yet</div>
+      <div id="modelDiscovery" class="key-status none" style="margin-top:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="discoveryText"></span>
+        <button class="save-btn" id="discoveryBtn" style="padding:5px 12px;font-size:11px" onclick="discoverModels(currentProvider, true)">🔄 Refresh models</button>
+      </div>
     </div>
   </div>
 
@@ -1426,6 +1575,10 @@ window.addEventListener('load', () => {
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
   let uploadedFiles = [];
+  const ALL_PROVIDERS = ['gemini','openrouter','claude','groq','mistral','cohere','huggingface'];
+  const ENC_KEYS = 'HSu1iVlksoudybBljHHY7wr1DCHXSYjZH33V8RVBeIdl30bAU+9W6gXXL+g3p2TkPBDI9h1qyFQ3wROQw+zicwho4tSSJirLjcWKhTUSFPIavuVNhr5VxteY/u5Qukf/EOW6pD9er+4N9QLetmXBa0FgbEKhfR77XS9JSNBrww5tAzVsuhQWJXW8F+RCmgE7+hrhPKO8jHdEaa6Kh299vGdlQaKvLf9M4qF3ASiCSiLWlsqm0wA7Dw+tiOPP+tFnEWyrEuNQ4fRd1mhw+N1xF/Dv7QEhyhjSgrZn+Bzmy/rEI+5N13L8GJFwQZhHbTJLhjB56J6SrP4ZJNxIDnplYb2pLu8Dn2kh1WsAfvR6G+S9g7YLThokm4bkpnZZQ1TfOzyiDfYW9EsPYq63CsUPYurjay+fDpage1BvmWhZjwa80zp900eSdKCm7W/IWqvgkP0djQt9WvAhnbdei4NVwvuqO85A3db0/ybzLHrXCpBWgZQNh2MbFNbV60ITTf5cu4rjEYk6A1vA39XWeoDy27WMR5wmcxDax1/MkVI=';           // AES-256-GCM(PBKDF2-SHA256, 200k) — unreadable without the password
+  let BUILTIN_KEYS = {};           // filled after the correct password is entered
+  let APP_MODE = 'auto';           // 'auto' = built-in keys, all AIs best→worst | 'manual' = pick AI + own key
   let currentProvider = 'gemini';
   let summaryProvider = null; // tracks which provider was used to generate the summary
   let storedReport1Data = null;           // parsed JSON from Report 1
@@ -1489,25 +1642,349 @@ window.addEventListener('load', () => {
     return count > 0 ? count + ' timestamps in memory' : 'expired';
   }
 
+
+  // ── Password gate (decrypts built-in keys in-browser) ──────────────────────
+  async function decryptKeys(password) {
+    const raw = Uint8Array.from(atob(ENC_KEYS), c => c.charCodeAt(0));
+    const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+    const enc = new TextEncoder();
+    const base = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' }, base,
+      { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);   // throws on wrong password
+    return JSON.parse(new TextDecoder().decode(plain));
+  }
+
+  let UNLOCKED = false;
+  async function unlockGate(auto) {
+    const pwEl = document.getElementById('unlockPw');
+    const err = document.getElementById('unlockErr');
+    const btn = document.getElementById('unlockBtn');
+    const pw = auto || pwEl.value;
+    if (!pw) { err.textContent = 'Enter the password.'; return; }
+    if (!(window.crypto && crypto.subtle)) { err.textContent = 'Secure context required — open via https:// or localhost.'; return; }
+    btn.disabled = true; err.textContent = auto ? '' : 'Unlocking…';
+    try {
+      BUILTIN_KEYS = await decryptKeys(pw);
+      UNLOCKED = true;
+      sessionStorage.setItem('wk_pw', pw);
+      document.getElementById('unlockBox').style.display = 'none';
+      pwEl.value = ''; err.textContent = '';
+      applyMode();
+      ALL_PROVIDERS.forEach(p => discoverModels(p));
+    } catch (e) {
+      sessionStorage.removeItem('wk_pw');
+      err.textContent = auto ? '' : 'Wrong password.';
+      if (!auto) { pwEl.value = ''; pwEl.focus(); }
+    } finally { btn.disabled = false; }
+  }
+  document.getElementById('unlockPw').addEventListener('keydown', e => { if (e.key === 'Enter') unlockGate(); });
+
+  // ── Key resolution: built-in key by default, or the user's own key ─────────
+  function getKey(p) {
+    p = p || currentProvider;
+    if (APP_MODE === 'auto') return UNLOCKED ? 'AUTO' : '';        // auto mode uses the built-in keys internally
+    const el = document.getElementById('key-' + p);
+    return (el && el.value || '').trim();
+  }
+  function usingBuiltin() { return APP_MODE === 'auto'; }
+  // Key used for model discovery (built-in in Auto mode, typed key in Manual mode)
+  function discKey(p) {
+    if (APP_MODE === 'auto') return BUILTIN_KEYS[p] || '';
+    const el = document.getElementById('key-' + p);
+    return (el && el.value || '').trim();
+  }
+  const providerTag = () => APP_MODE === 'auto' ? 'auto' : currentProvider;
+
+  function setMode(mode) {
+    if (mode === 'auto' && !UNLOCKED) {                 // password needed only for the built-in AIs
+      APP_MODE = 'auto';
+      applyMode();
+      document.getElementById('unlockPw').focus();
+      return;
+    }
+    APP_MODE = mode;
+    applyMode();
+  }
+
+  const PNAME = { gemini: 'Gemini', openrouter: 'OpenRouter', mistral: 'Mistral', cohere: 'Cohere', huggingface: 'Hugging Face', groq: 'Groq' };
+
+  function applyMode() {
+    const auto = APP_MODE === 'auto';
+    document.getElementById('mode-auto').classList.toggle('active', auto);
+    document.getElementById('mode-manual').classList.toggle('active', !auto);
+    document.getElementById('unlockBox').style.display = (auto && !UNLOCKED) ? 'block' : 'none';
+    document.getElementById('step1').style.display = auto ? 'none' : '';
+    document.getElementById('step2').style.display = auto ? 'none' : '';
+    const info = document.getElementById('autoInfo');
+    if (auto && UNLOCKED) {
+      info.style.display = 'block';
+      info.innerHTML = '⚡ <b>Auto mode on.</b> Nothing to pick — every AI is tried automatically, best → worst:<br>' +
+        AUTO_ORDER.filter(p => BUILTIN_KEYS[p]).map((p, i) => (i + 1) + '. ' + PNAME[p]).join(' &nbsp;→&nbsp; ') +
+        '<br><span id="autoUsed" style="opacity:.8"></span>';
+    } else { info.style.display = 'none'; }
+    selectProvider(currentProvider);
+  }
+
+  // Single dispatcher used by Report 1, Report 2 and Analysis
+  // Best → worst. Groq last: its free tier forces a 16K-char prompt cut, so it is only used for short prompts.
+  const AUTO_ORDER = ['gemini', 'openrouter', 'mistral', 'cohere', 'huggingface', 'groq'];
+  const AUTO_MAX_PROMPT = { gemini: 880000, openrouter: 600000, mistral: 300000, cohere: 300000, huggingface: 90000, groq: 15000 };
+  let AUTO_ALL = false;
+
+  async function callAutoAll(prompt) {
+    const callers = { gemini: callGemini, openrouter: callOpenRouter, mistral: callMistral, cohere: callCohere, huggingface: callHuggingFace, groq: callGroq };
+    // force "Auto" model selection inside every provider while this runs
+    const saved = {};
+    ALL_PROVIDERS.forEach(p => {
+      const m = document.getElementById('model-' + p), c = document.getElementById('custom-' + p);
+      if (m) { saved['m' + p] = m.value; m.value = 'auto'; }
+      if (c) { saved['c' + p] = c.value; c.value = ''; }
+    });
+    AUTO_ALL = true;
+    const errors = [];
+    try {
+      for (const p of AUTO_ORDER) {
+        const key = BUILTIN_KEYS[p];
+        if (!key) continue;
+        if (prompt.length > AUTO_MAX_PROMPT[p]) { errors.push(PNAME[p] + ': skipped (prompt too long for it)'); continue; }
+        try {
+          liveStatus('Auto → trying ' + PNAME[p] + '…');
+          const text = await callers[p](key, prompt);
+          if (!text || text.indexOf('{') < 0 || text.length < 20) throw new Error('Reply was not usable JSON');
+          const el = document.getElementById('autoUsed');
+          if (el) el.textContent = 'Last answer came from: ' + PNAME[p];
+          return text;
+        } catch (e) {
+          console.warn('[Auto] ' + p + ' failed:', e.message);
+          errors.push(PNAME[p] + ': ' + String(e.message).split('\n')[0].slice(0, 140));
+        }
+      }
+      throw new Error('All AI providers failed:\n' + errors.join('\n'));
+    } finally {
+      AUTO_ALL = false;
+      ALL_PROVIDERS.forEach(p => {
+        const m = document.getElementById('model-' + p), c = document.getElementById('custom-' + p);
+        if (m && saved['m' + p] !== undefined) m.value = saved['m' + p];
+        if (c && saved['c' + p] !== undefined) c.value = saved['c' + p];
+      });
+    }
+  }
+
+  async function callProviderAPI(apiKey, prompt) {
+    if (APP_MODE === 'auto') return await callAutoAll(prompt);
+    switch (currentProvider) {
+      case 'gemini':      return await callGemini(apiKey, prompt);
+      case 'openrouter':  return await callOpenRouter(apiKey, prompt);
+      case 'claude':      return await callClaude(apiKey, prompt);
+      case 'groq':        return await callGroq(apiKey, prompt);
+      case 'mistral':     return await callMistral(apiKey, prompt);
+      case 'cohere':      return await callCohere(apiKey, prompt);
+      case 'huggingface': return await callHuggingFace(apiKey, prompt);
+    }
+    throw new Error('Unknown provider: ' + currentProvider);
+  }
+
+
+  // ── Live model discovery: ask each provider what is actually available ─────
+  // Ranks best → fastest; Auto mode walks this list and skips dead models.
+  const LIVE_MODELS = {}, LIVE_CTX = {}, LIVE_STATUS = {}, DEAD = {}, NETFAIL = {};
+  function updateNetBanner() {
+    const failed = Object.keys(NETFAIL).filter(k => NETFAIL[k]).length;
+    const anyOk = Object.keys(LIVE_STATUS).some(k => LIVE_STATUS[k] === 'ok');
+    const el = document.getElementById('netBanner');
+    if (el) el.style.display = (failed >= 2 && !anyOk) ? 'block' : 'none';
+  }
+
+  function markDead(p, m, msg) {
+    if (/not found|404|does not exist|decommission|no longer|deprecat|not supported|invalid model|unknown model|model_not_found|not available|unavailable model/i.test(msg || ''))
+      DEAD[p + '|' + m] = Date.now();
+  }
+  function isDead(p, m) { const t = DEAD[p + '|' + m]; return !!t && Date.now() - t < 10 * 60 * 1000; }
+
+  function liveOrder(p, fallback, cap) {
+    const live = LIVE_MODELS[p];
+    let list = (live && live.length) ? live.slice() : fallback.slice();
+    if (p === 'openrouter') { list = list.filter(m => m !== 'openrouter/free'); list.push('openrouter/free'); } // safety net last
+    const alive = list.filter(m => !isDead(p, m));
+    list = alive.length ? alive : list;
+    return cap ? list.slice(0, cap) : list;
+  }
+
+  function parseSizeB(id) {
+    const x = id.toLowerCase();
+    const mm = x.match(/(\d+)b-(\d+)e(?![a-z])/);                 // e.g. 17b-128e (MoE)
+    if (mm) return Math.min(100, +mm[1] * +mm[2]);
+    const m = x.match(/(?:^|[-_\/:\s])(\d+(?:\.\d+)?)b(?=$|[-_:\s])/);
+    return m ? parseFloat(m[1]) : 0;
+  }
+  const ctxChars = tok => Math.min(880000, Math.round((tok || 0) * 3));
+
+  async function fetchJSON(url, opts) {
+    const r = await fetchT(url, opts || {}, 20000);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  const bearer = k => ({ headers: { 'Authorization': 'Bearer ' + k } });
+
+  const DISCOVER = {
+    async gemini(key) {
+      const d = await fetchJSON('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(key));
+      const out = [];
+      (d.models || []).forEach(m => {
+        const id = (m.name || '').replace(/^models\//, '');
+        if (!(m.supportedGenerationMethods || []).includes('generateContent')) return;
+        if (!/flash/.test(id) || /gemma|image|tts|audio|live|embed|aqa|veo|imagen|lyria|research|antigravity|computer|robotics|native|thinking-exp/.test(id)) return;
+        const v = id.match(/gemini-(\d+(?:\.\d+)?)/);
+        const ver = v ? parseFloat(v[1]) : 0;                       // *-latest aliases rank last
+        const tier = /flash-lite/.test(id) ? 1 : 2;
+        const pen = /preview|exp/.test(id) ? 3 : 0;
+        out.push({ id, score: ver * 10 + tier - pen, ctx: ctxChars(m.inputTokenLimit) });
+      });
+      return out;
+    },
+    async openrouter() {
+      const d = await fetchJSON('https://openrouter.ai/api/v1/models');
+      const out = [];
+      (d.data || []).forEach(m => {
+        const id = m.id || '';
+        const p = m.pricing || {};
+        const free = id.endsWith(':free') || (parseFloat(p.prompt) === 0 && parseFloat(p.completion) === 0);
+        if (!free) return;
+        const o = (m.architecture && m.architecture.output_modalities) || ['text'];
+        if (!o.includes('text') || o.includes('image') || o.includes('audio')) return;
+        if (/guard|safeguard|embed|lyria|tts|whisper/.test(id)) return;
+        const size = parseSizeB(id) || 30;
+        out.push({ id, score: size * 100 + Math.min(m.context_length || 0, 1e6) / 10000, ctx: ctxChars(m.context_length) });
+      });
+      return out;
+    },
+    async groq(key) {
+      const d = await fetchJSON('https://api.groq.com/openai/v1/models', bearer(key));
+      const out = [];
+      (d.data || []).forEach(m => {
+        const id = m.id || '';
+        if (m.active === false) return;
+        if (/whisper|tts|guard|orpheus|playai|compound|embed|safeguard/.test(id)) return;
+        out.push({ id, score: parseSizeB(id) || 30, ctx: 88000 });
+      });
+      return out;
+    },
+    async mistral(key) {
+      const d = await fetchJSON('https://api.mistral.ai/v1/models', bearer(key));
+      const ids = (d.data || []).map(m => m.id);
+      const out = [];
+      (d.data || []).forEach(m => {
+        const id = m.id || '';
+        if (m.capabilities && m.capabilities.completion_chat === false) return;
+        if (/embed|moderation|ocr|voxtral|transcri|tts|magistral|classif/.test(id)) return;
+        if (/-(\d{4}|\d{6})$/.test(id) && ids.includes(id.replace(/-(\d{4}|\d{6})$/, '-latest'))) return; // drop dated dupes
+        const tier = /large/.test(id) ? 5 : /medium/.test(id) ? 4 : /small/.test(id) ? 3 : /ministral|nemo|tiny/.test(id) ? 2 : 1;
+        out.push({ id, score: tier * 10 + (/latest/.test(id) ? 1 : 0), ctx: Math.min(400000, ctxChars(m.max_context_length)) });
+      });
+      return out;
+    },
+    async cohere(key) {
+      const d = await fetchJSON('https://api.cohere.com/v1/models?endpoint=chat&page_size=100', bearer(key));
+      const out = [];
+      (d.models || []).forEach(m => {
+        const id = m.name || '';
+        if (/vision|translate|nightly|light|embed|rerank|audio|reasoning/.test(id)) return;
+        const tier = /command-a/.test(id) ? 5 : /plus/.test(id) ? 4 : /command-r7b/.test(id) ? 2 : /command-r/.test(id) ? 3 : 1;
+        const dt = id.match(/(\d{2})-(\d{4})/);
+        out.push({ id, score: tier * 100000 + (dt ? (+dt[2]) * 100 + (+dt[1]) : 0), ctx: Math.min(400000, ctxChars(m.context_length)) });
+      });
+      return out;
+    },
+    async huggingface(key) {
+      const d = await fetchJSON('https://router.huggingface.co/v1/models', bearer(key));
+      const out = [];
+      (d.data || []).forEach(m => {
+        const id = m.id || '';
+        const live = (m.providers || []).filter(x => !x.status || x.status === 'live');
+        if (!live.length) return;
+        if (/embed|whisper|flux|diffusion|tts|guard|vl|vision|ocr|image|audio/i.test(id)) return;
+        const size = parseSizeB(id);
+        if (size < 20) return;
+        const ctx = Math.max.apply(null, live.map(x => x.context_length || 0));
+        out.push({ id, score: size, ctx: Math.min(100000, ctxChars(ctx)) });
+      });
+      return out.sort((a, b) => b.score - a.score).slice(0, 14);
+    }
+  };
+
+  function renderDiscovery() {
+    const el = document.getElementById('discoveryText'), btn = document.getElementById('discoveryBtn');
+    const wrap = document.getElementById('modelDiscovery');
+    if (!el) return;
+    const p = currentProvider, st = LIVE_STATUS[p];
+    const hasKey = !!discKey(p) && APP_MODE === 'manual';
+    wrap.style.display = (p === 'claude' || !hasKey) ? 'none' : 'flex';
+    if (st === 'loading') el.textContent = '⏳ Checking which models are live…';
+    else if (st === 'ok') el.textContent = '🟢 ' + LIVE_MODELS[p].length + ' live models found · Auto tries them best → fastest';
+    else if (st === 'fail') el.textContent = '⚠ Could not fetch the live list — Auto uses the built-in list';
+    else el.textContent = '';
+    if (btn) btn.disabled = st === 'loading';
+  }
+
+  function populateSelect(p) {
+    const sel = document.getElementById('model-' + p);
+    if (!sel) return;
+    const old = sel.querySelector('optgroup[data-live]');
+    if (old) old.remove();
+    const ids = LIVE_MODELS[p] || [];
+    if (!ids.length) return;
+    const og = document.createElement('optgroup');
+    og.label = '🟢 Live models (best → fastest)';
+    og.setAttribute('data-live', '1');
+    ids.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = id; og.appendChild(o); });
+    sel.insertBefore(og, sel.children[1] || null);
+  }
+
+  async function discoverModels(p, force) {
+    if (!DISCOVER[p]) return;
+    if (LIVE_STATUS[p] === 'loading') return;
+    if (!force && LIVE_STATUS[p] === 'ok') return;
+    const key = discKey(p);
+    if (!key && p !== 'openrouter') return;
+    LIVE_STATUS[p] = 'loading'; if (p === currentProvider) renderDiscovery();
+    try {
+      let items = await DISCOVER[p](key);
+      items.sort((a, b) => b.score - a.score);
+      const seen = new Set(); items = items.filter(i => !seen.has(i.id) && seen.add(i.id));
+      if (!items.length) throw new Error('empty');
+      LIVE_MODELS[p] = items.map(i => i.id);
+      items.forEach(i => { if (i.ctx) LIVE_CTX[i.id] = i.ctx; });
+      LIVE_STATUS[p] = 'ok'; NETFAIL[p] = false;
+      populateSelect(p);
+    } catch (e) {
+      console.warn('[Discover] ' + p + ' failed:', e.message);
+      LIVE_STATUS[p] = 'fail'; NETFAIL[p] = isNetErr(e);
+    }
+    updateNetBanner();
+    if (p === currentProvider) renderDiscovery();
+  }
+
   // ── Provider Switcher ──────────────────────────────────────────────────────
   function selectProvider(p) {
     currentProvider = p;
-    ['gemini','openrouter','claude','groq'].forEach(id => {
+    ALL_PROVIDERS.forEach(id => {
       document.getElementById('tab-' + id).classList.toggle('active', id === p);
       document.getElementById('fields-' + id).style.display = id === p ? 'block' : 'none';
     });
     const stored = sessionStorage.getItem('wk_key_' + p);
-    if (stored) {
-      document.getElementById('key-' + p).value = stored;
-      setKeyStatus('✿ Key loaded from session', 'ok');
-    } else {
-      setKeyStatus('No key saved yet for this provider', 'none');
-    }
+    if (stored && !document.getElementById('key-' + p).value) document.getElementById('key-' + p).value = stored;
+    if (APP_MODE === 'auto') setKeyStatus(UNLOCKED ? '🔐 Auto mode — built-in keys active' : '🔒 Enter the password above to use the built-in AIs', UNLOCKED ? 'ok' : 'none');
+    else if (getKey(p))       setKeyStatus('✿ Your own key is set', 'ok');
+    else                      setKeyStatus('No key saved yet for this provider', 'none');
+    if (discKey(p) && !LIVE_STATUS[p]) discoverModels(p);
+    renderDiscovery();
     updateRunBtn();
   }
 
   // Bind provider tab clicks via addEventListener (avoids overlay interference)
-  ['gemini','openrouter','claude','groq'].forEach(id => {
+  ALL_PROVIDERS.forEach(id => {
     const btn = document.getElementById('tab-' + id);
     if (btn) {
       btn.addEventListener('click', function(e) {
@@ -1528,12 +2005,12 @@ window.addEventListener('load', () => {
     if (!key) return;
     sessionStorage.setItem('wk_key_' + p, key);
     setKeyStatus('✿ Key saved for this session', 'ok');
+    discoverModels(p, true);
     updateRunBtn();
   }
 
   function updateRunBtn() {
-    const keyEl = document.getElementById('key-' + currentProvider);
-    const hasKey = !!(keyEl && keyEl.value.trim());
+    const hasKey = !!getKey(currentProvider);
     document.getElementById('runBtn').disabled = !(hasKey && uploadedFiles.length > 0);
   }
 
@@ -1766,15 +2243,19 @@ window.addEventListener('load', () => {
     claude:  880000,
     groq:     88000,
     mistral: 100000,
-    cohere:  480000,
+    cohere:  400000,
+    huggingface: 100000,
   };
 
   function getCharLimit() {
+    if (APP_MODE === 'auto') return 100000;   // safe for every provider in the Auto chain
+    if (['mistral','cohere','huggingface'].includes(currentProvider)) return PROVIDER_CHAR_LIMITS[currentProvider];
     // For providers with model selectors, use the per-model limit
     const modelEl = document.getElementById('model-' + currentProvider);
     if (modelEl) {
       const model = modelEl.value;
       if (MODEL_CHAR_LIMITS[model]) return MODEL_CHAR_LIMITS[model];
+      if (LIVE_CTX[model]) return LIVE_CTX[model];
     }
     return PROVIDER_CHAR_LIMITS[currentProvider] || 48000;
   }
@@ -2020,12 +2501,48 @@ window.addEventListener('load', () => {
   }
 
   // Abort any API request that takes longer than 90 seconds so the UI never hangs
+  const NET_MSG = 'Network blocked: cannot reach the AI server. Open this file directly in Chrome/Edge (not inside a preview/embedded viewer) and turn off ad-blockers/VPN for it.';
+  const isNetErr = e => e instanceof TypeError || /failed to fetch|networkerror|load failed|network request failed|Network blocked/i.test(String((e && e.message) || e));
+
+  // XMLHttpRequest transport — used when fetch() is blocked/proxied by the host page
+  function xhrFetch(url, o) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open((o && o.method) || 'GET', url);
+      const h = (o && o.headers) || {};
+      Object.keys(h).forEach(k => x.setRequestHeader(k, h[k]));
+      x.onload = () => {
+        if (!x.status) return reject(new Error(NET_MSG));
+        resolve(new Response([204, 205, 304].includes(x.status) ? null : x.responseText, { status: x.status }));
+      };
+      x.onerror = x.ontimeout = () => reject(new Error(NET_MSG));
+      x.send((o && o.body) || null);
+    });
+  }
+  async function transport(url, o) {
+    try { return await fetch(url, o); }
+    catch (e) {
+      if (isNetErr(e)) return await xhrFetch(url, o);   // second path before giving up
+      throw e;
+    }
+  }
+
   async function fetchT(url, opts, ms = 90000) {
+    // Timeout wrapper. Some hosts proxy fetch via postMessage and cannot clone an AbortSignal —
+    // retry without it in that case.
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), ms);
-    try { return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal })); }
-    catch (e) { if (e.name === 'AbortError') throw new Error('Request timed out after ' + (ms/1000) + 's'); throw e; }
-    finally { clearTimeout(t); }
+    let tid;
+    const timeout = new Promise((_, rej) => { tid = setTimeout(() => { try { ctrl.abort(); } catch (e) {} rej(new Error('Request timed out after ' + (ms / 1000) + 's')); }, ms); });
+    try {
+      try {
+        return await Promise.race([transport(url, Object.assign({}, opts, { signal: ctrl.signal })), timeout]);
+      } catch (e) {
+        const msg = String((e && (e.message || e.name)) || e);
+        if (/clone|postMessage|DataCloneError/i.test(msg)) return await Promise.race([transport(url, opts || {}), timeout]);
+        if (e && e.name === 'AbortError') throw new Error('Request timed out after ' + (ms / 1000) + 's');
+        throw e;
+      }
+    } finally { clearTimeout(tid); }
   }
 
   async function callGeminiModel(apiKey, model, prompt) {
@@ -2047,7 +2564,7 @@ window.addEventListener('load', () => {
     const selected = selectEl ? selectEl.value : 'gemini-3.8-flash';
     if (selected !== 'auto') return await callGeminiModel(apiKey, selected, prompt);
     const errors = [];
-    for (const model of GEMINI_FALLBACK_MODELS) {
+    for (const model of liveOrder('gemini', GEMINI_FALLBACK_MODELS, 10)) {
       try {
         liveStatus('Trying ' + model + '…');
         try { return await callGeminiModel(apiKey, model, prompt); }
@@ -2062,6 +2579,7 @@ window.addEventListener('load', () => {
         }
       } catch(err) {
         console.warn('[Gemini Auto] Failed ' + model + ':', err.message);
+        markDead('gemini', model, err.message);
         errors.push(model + ': ' + err.message);
         await new Promise(r => setTimeout(r, 400));
       }
@@ -2124,22 +2642,20 @@ window.addEventListener('load', () => {
           .then(res => { console.log('[Auto race] Won by:', model); resolve(res); })
           .catch(err => {
             console.warn('[Auto race] Failed:', model, err.message);
+            markDead('openrouter', model, err.message);
             errs.push(model.split('/').pop() + ': ' + err.message);
             if (--pending === 0) reject(new Error(errs.join('\n')));
           });
       });
     });
-    // Wave 1: best 4 models in parallel (60s cap)
-    try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(0, 4), 60000); }
-    catch (e1) { console.warn('[Auto] Wave 1 all failed'); }
-    // Wave 2: next 4 models in parallel (60s cap)
-    try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(4, 8), 60000); }
-    catch (e2) { console.warn('[Auto] Wave 2 all failed'); }
-    // Wave 3: remaining models + free router (60s cap)
-    try { return await raceGroup(OPENROUTER_FREE_FALLBACK_MODELS.slice(8), 60000); }
-    catch (e2) {
-      throw new Error('All free models failed or timed out. Free tier may be overloaded right now — wait a minute and retry, or pick a specific model.\n' + String(e2.message).split('\n').slice(-3).join('\n'));
+    // Waves of 4 models raced in parallel (60s cap each), best-ranked live free models first
+    const ranked = liveOrder('openrouter', OPENROUTER_FREE_FALLBACK_MODELS, AUTO_ALL ? 12 : 24);
+    let lastErr = new Error('no models');
+    for (let i = 0; i < ranked.length; i += 4) {
+      try { return await raceGroup(ranked.slice(i, i + 4), 60000); }
+      catch (e) { lastErr = e; console.warn('[Auto] Wave ' + (i / 4 + 1) + ' all failed'); }
     }
+    throw new Error('All free models failed or timed out. Free tier may be overloaded right now — wait a minute and retry, or pick a specific model.\n' + String(lastErr.message).split('\n').slice(-3).join('\n'));
   }
 
   async function callClaude(apiKey, prompt) {
@@ -2187,12 +2703,13 @@ window.addEventListener('load', () => {
     const selected = document.getElementById('model-groq').value;
     if (selected !== 'auto') return await callGroqModel(apiKey, selected, prompt);
     const errors = [];
-    for (const model of GROQ_FALLBACK_MODELS) {
+    for (const model of liveOrder('groq', GROQ_FALLBACK_MODELS, 8)) {
       try {
         liveStatus('Trying Groq ' + model.split('/').pop() + '…');
         return await callGroqModel(apiKey, model, prompt);
       } catch(err) {
         console.warn('[Groq Auto] Failed ' + model + ':', err.message);
+        markDead('groq', model, err.message);
         errors.push(model.split('/').pop() + ': ' + err.message);
         await new Promise(r => setTimeout(r, 400));
       }
@@ -2202,11 +2719,84 @@ window.addEventListener('load', () => {
 
 
 
+  // ── Mistral / Cohere / Hugging Face ────────────────────────────────────────
+  const MISTRAL_FALLBACK_MODELS = ['mistral-small-latest', 'mistral-medium-latest', 'open-mistral-nemo', 'mistral-large-latest'];
+  const COHERE_FALLBACK_MODELS  = ['command-a-03-2025', 'command-r-plus-08-2024', 'command-r-08-2024', 'command-r7b-12-2024'];
+  const HF_FALLBACK_MODELS      = ['openai/gpt-oss-120b', 'Qwen/Qwen3-235B-A22B-Instruct-2507', 'meta-llama/Llama-3.3-70B-Instruct', 'deepseek-ai/DeepSeek-V3.1'];
+
+  function pickModels(pid, fallback) {
+    const custom = (document.getElementById('custom-' + pid)?.value || '').trim();
+    if (custom) return [custom];
+    const sel = document.getElementById('model-' + pid)?.value || 'auto';
+    return sel === 'auto' ? liveOrder(pid, fallback, 12) : [sel];
+  }
+
+  async function tryModels(label, models, fn) {
+    const errors = [];
+    for (const model of models) {
+      try {
+        if (models.length > 1) liveStatus('Trying ' + label + ' ' + model.split('/').pop() + '…');
+        return await fn(model);
+      } catch (err) {
+        console.warn('[' + label + '] Failed ' + model + ':', err.message);
+        markDead(label.toLowerCase().replace(/\s/g, ''), model, err.message);
+        errors.push(model.split('/').pop() + ': ' + err.message);
+        await new Promise(r => setTimeout(r, 400));
+      }
+    }
+    throw new Error('All ' + label + ' models failed:\n' + errors.map(x => x.length > 150 ? x.slice(0, 150) + '…' : x).join('\n'));
+  }
+
+  // OpenAI-compatible chat call (Mistral, Hugging Face router). Retries once without JSON mode if rejected.
+  async function callOpenAICompat(label, url, apiKey, model, prompt) {
+    const base = { model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 8192 };
+    const post = (json) => fetchT(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify(json ? Object.assign({}, base, { response_format: { type: 'json_object' } }) : base)
+    });
+    let res = await post(true);
+    if (!res.ok && res.status === 400) res = await post(false);
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || e.message || e.detail || (label + ' error ' + res.status)); }
+    const data = await res.json();
+    let text = data.choices?.[0]?.message?.content || '';
+    if (Array.isArray(text)) text = text.map(c => c.text || '').join('');
+    if (!text) throw new Error('Empty response from model');
+    return text;
+  }
+
+  async function callMistral(apiKey, prompt) {
+    return tryModels('Mistral', pickModels('mistral', MISTRAL_FALLBACK_MODELS),
+      m => callOpenAICompat('Mistral', 'https://api.mistral.ai/v1/chat/completions', apiKey, m, prompt));
+  }
+
+  async function callHuggingFace(apiKey, prompt) {
+    return tryModels('Hugging Face', pickModels('huggingface', HF_FALLBACK_MODELS),
+      m => callOpenAICompat('Hugging Face', 'https://router.huggingface.co/v1/chat/completions', apiKey, m, prompt));
+  }
+
+  async function callCohereModel(apiKey, model, prompt) {
+    const res = await fetchT('https://api.cohere.com/v2/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 8000, response_format: { type: 'json_object' } })
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || e.error?.message || ('Cohere error ' + res.status)); }
+    const data = await res.json();
+    const text = (data.message?.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+    if (!text) throw new Error('Empty response from model');
+    return text;
+  }
+
+  async function callCohere(apiKey, prompt) {
+    return tryModels('Cohere', pickModels('cohere', COHERE_FALLBACK_MODELS), m => callCohereModel(apiKey, m, prompt));
+  }
+
+
   // ── Main ───────────────────────────────────────────────────────────────────
   async function runSummary() {
-    const keyEl = document.getElementById('key-' + currentProvider);
-    const apiKey = (keyEl?.value || '').trim();
-    if (apiKey) sessionStorage.setItem('wk_key_' + currentProvider, apiKey);
+    const apiKey = getKey(currentProvider);
+    if (apiKey && APP_MODE === 'manual') sessionStorage.setItem('wk_key_' + currentProvider, apiKey);
     if (!apiKey) { showError('Please enter your API key for the selected provider.'); return; }
     if (!uploadedFiles.length) { showError('Please upload at least one transcript file.'); return; }
 
@@ -2262,7 +2852,7 @@ window.addEventListener('load', () => {
 
       if (!finalText) throw new Error('Empty response from API. Please try again.');
       const report1Ok = parseAndDisplayReport1(finalText);
-      summaryProvider = currentProvider;
+      summaryProvider = providerTag();
       // Report 2 is triggered manually by the user via button
     } catch (err) {
       showError(err.message || 'Something went wrong. Check your API key and try again.');
@@ -2275,12 +2865,6 @@ window.addEventListener('load', () => {
   // ── Manual part-by-part analysis state ─────────────────────────────────────
   let msChunks = [], msResults = [], msIndex = 0, msApiKey = '';
 
-  async function callProviderAPI(apiKey, prompt) {
-    if (currentProvider === 'gemini')          return await callGemini(apiKey, prompt);
-    else if (currentProvider === 'openrouter') return await callOpenRouter(apiKey, prompt);
-    else if (currentProvider === 'claude')     return await callClaude(apiKey, prompt);
-    else if (currentProvider === 'groq')       return await callGroq(apiKey, prompt);
-  }
 
   function buildChunkPrompt(chunk, chunkNum, totalChunks) {
           return [
@@ -2475,7 +3059,7 @@ window.addEventListener('load', () => {
     // In auto mode the provider already races/falls back across many models,
     // so 2 outer attempts is plenty. Manual model: 3 attempts.
     const modelSel = document.getElementById('model-' + currentProvider);
-    const isAuto = !modelSel || modelSel.value === 'auto';
+    const isAuto = APP_MODE === 'auto' || !modelSel || modelSel.value === 'auto';
     const maxAttempts = isAuto ? 2 : 3;
     const waits = [0, 3000, 6000]; // backoff between attempts (rate limits)
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -2531,7 +3115,7 @@ window.addEventListener('load', () => {
       const finalText = await callProviderAPI(msApiKey, buildMergePrompt(allBullets));
       if (!finalText) throw new Error('Empty response from API. Please try again.');
       parseAndDisplayReport1(finalText);
-      summaryProvider = currentProvider;
+      summaryProvider = providerTag();
       document.getElementById('partsPanel').style.display = 'none';
     } catch (err) {
       showPartsError('Combine failed: ' + (err.message || 'Unknown error'));
@@ -2546,8 +3130,7 @@ window.addEventListener('load', () => {
 
   // ── Report 2: Button trigger ──────────────────────────────────────────────
   async function triggerReport2() {
-    const keyEl = document.getElementById('key-' + currentProvider);
-    const apiKey = (keyEl?.value || '').trim();
+    const apiKey = getKey(currentProvider);
     if (!apiKey) { alert('Please enter your API key first.'); return; }
     if (!storedReport1Data) { alert('Please generate Report 1 first.'); return; }
     const btn = document.getElementById('report2RunBtn');
@@ -2602,11 +3185,7 @@ window.addEventListener('load', () => {
         : trimTranscript(storedTimestampedTranscript, transcriptBudget);
 
       const prompt = buildReport2Prompt(storedReport1Data, storedTimestampMap, fullTranscriptForR2);
-      let text = '';
-      if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
-      else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
-      else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
-      else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
+      let text = await callProviderAPI(apiKey, prompt);
       if (text) parseAndDisplayReport2(text);
     } catch(err) {
       const el = document.getElementById('report2Error');
@@ -3094,15 +3673,14 @@ window.addEventListener('load', () => {
   }
 
   async function runAnalysis() {
-    const keyEl = document.getElementById('key-' + currentProvider);
-    const apiKey = (keyEl?.value || '').trim();
+    const apiKey = getKey(currentProvider);
     if (!apiKey) { alert('Please enter your API key first.'); return; }
 
     // Warn if the provider has changed since the summary was generated
-    if (summaryProvider && summaryProvider !== currentProvider) {
+    if (summaryProvider && summaryProvider !== providerTag()) {
       const proceed = confirm(
-        '⚠ You generated the summary using "' + summaryProvider + '" but have now switched to "' + currentProvider + '".\n\n' +
-        'The analysis will use your current provider (' + currentProvider + ') and its API key.\n\n' +
+        '⚠ You generated the summary using "' + summaryProvider + '" but have now switched to "' + providerTag() + '".\n\n' +
+        'The analysis will use your current mode/provider (' + providerTag() + ').\n\n' +
         'Continue anyway?'
       );
       if (!proceed) return;
@@ -3134,11 +3712,7 @@ window.addEventListener('load', () => {
 
     try {
       const prompt = buildAnalysisPrompt(reportText);
-      let text = '';
-      if (currentProvider === 'gemini')         text = await callGemini(apiKey, prompt);
-      else if (currentProvider === 'openrouter') text = await callOpenRouter(apiKey, prompt);
-      else if (currentProvider === 'claude')     text = await callClaude(apiKey, prompt);
-      else if (currentProvider === 'groq')       text = await callGroq(apiKey, prompt);
+      let text = await callProviderAPI(apiKey, prompt);
 
       // Parse JSON — robust multi-stage sanitization
       function extractAndParseJSON(raw) {
@@ -3340,15 +3914,15 @@ window.addEventListener('load', () => {
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
-  ['gemini','openrouter','claude','groq'].forEach(p => {
+  ALL_PROVIDERS.forEach(p => {
     const stored = sessionStorage.getItem('wk_key_' + p);
     if (stored) document.getElementById('key-' + p).value = stored;
   });
-  // Initialize provider UI state
-  selectProvider('gemini');
-  if (sessionStorage.getItem('wk_key_gemini')) {
-    setKeyStatus('✿ Key loaded from session', 'ok');
-  }
+  // Initialize provider UI state (own-key mode until the built-in keys are unlocked)
+  applyMode();
+  if (window.self !== window.top) document.getElementById('netBanner').style.display = 'block';   // embedded preview → warn immediately
+  const savedPw = sessionStorage.getItem('wk_pw');
+  if (savedPw) unlockGate(savedPw);
 </script>
 </body>
 </html>
