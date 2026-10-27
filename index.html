@@ -1231,6 +1231,10 @@
     <div style="font-family:'Noto Serif JP',serif;font-size:14px;font-weight:600;color:var(--amber);letter-spacing:0.1em;">🌸 Long Transcript — Manual Part Analysis</div>
     <div id="partsInfo" style="font-size:13px;color:var(--muted);line-height:1.7;max-width:520px;"></div>
     <div id="partsChips" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none;">
+      <input type="checkbox" id="partsAuto" checked onchange="onPartsAutoToggle()" style="accent-color:#d4789a;width:15px;height:15px;cursor:pointer;">
+      Auto-run all parts &amp; combine (untick to stop)
+    </label>
     <div id="partsError" style="display:none;font-size:12px;color:#c06060;padding:8px 14px;background:rgba(200,80,80,0.06);border-radius:10px;border:1px solid rgba(200,80,80,0.18);max-width:520px;"></div>
     <button class="run-btn" id="partsBtn" onclick="analyzeNextPart()" style="max-width:380px;margin-top:4px;">
       <span>🌸</span> Analyze Part 1
@@ -2802,7 +2806,7 @@ window.addEventListener('load', () => {
 
     clearError();
     document.getElementById('partsPanel').style.display = 'none';
-    msChunks = []; msResults = []; msIndex = 0;
+    msRunId++; msChunks = []; msResults = []; msIndex = 0;
     document.getElementById('results').classList.remove('active');
     document.getElementById('detailsReport').style.display = 'none';
     document.getElementById('detailsCards').innerHTML = '';
@@ -2847,7 +2851,8 @@ window.addEventListener('load', () => {
         document.getElementById('runBtn').disabled = false;
         renderPartsPanel();
         document.getElementById('partsPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return; // wait for user clicks — analyzeNextPart() / combineParts()
+        autoDriveParts(); // auto-click through all parts + combine (toggle in panel)
+        return;
       }
 
       if (!finalText) throw new Error('Empty response from API. Please try again.');
@@ -2864,6 +2869,28 @@ window.addEventListener('load', () => {
 
   // ── Manual part-by-part analysis state ─────────────────────────────────────
   let msChunks = [], msResults = [], msIndex = 0, msApiKey = '';
+  let msRunId = 0, msBusy = false, msDriving = false;
+
+  // ── Auto-run: drives Part 1 → Part N → Combine without clicks ─────────────
+  // Stops on first failure (error shown, click the button to retry — auto resumes after).
+  function partsAutoOn() { const c = document.getElementById('partsAuto'); return !!(c && c.checked); }
+  function onPartsAutoToggle() { if (partsAutoOn() && !msBusy && msChunks.length) autoDriveParts(); }
+  async function autoDriveParts() {
+    if (msDriving) return;
+    msDriving = true;
+    const myRun = ++msRunId;
+    try {
+      while (partsAutoOn() && myRun === msRunId && msChunks.length) {
+        const total = msChunks.length;
+        const done  = msResults.filter(Boolean).length;
+        let ok;
+        if (done < total) ok = await analyzeNextPart();
+        else { ok = await combineParts(); if (ok) return; }
+        if (!ok) return;
+        await new Promise(r => setTimeout(r, 1200)); // small gap between calls (rate-limit friendly)
+      }
+    } finally { msDriving = false; }
+  }
 
 
   function buildChunkPrompt(chunk, chunkNum, totalChunks) {
@@ -3018,7 +3045,9 @@ window.addEventListener('load', () => {
     chips.innerHTML = chipHtml;
 
     if (done < total) {
-      info.textContent = 'Your transcript is long, so it was split into ' + total + ' parts to avoid analysis failures. Analyze each part one at a time — ' + done + ' of ' + total + ' done.';
+      info.textContent = partsAutoOn()
+        ? 'Your transcript is long, so it was split into ' + total + ' parts. Parts run automatically one after another — ' + done + ' of ' + total + ' done.'
+        : 'Your transcript is long, so it was split into ' + total + ' parts to avoid analysis failures. Analyze each part one at a time — ' + done + ' of ' + total + ' done.';
       btn.innerHTML = '<span>🌸</span> Analyze Part ' + (msIndex + 1) + ' of ' + total;
       btn.onclick = analyzeNextPart;
     } else {
@@ -3040,16 +3069,24 @@ window.addEventListener('load', () => {
     const btn = document.getElementById('partsBtn');
     const errEl = document.getElementById('partsError');
     if (errEl) errEl.style.display = 'none';
+    if (msBusy) return false;
+    msBusy = true;
     btn.disabled = true;
     btn.innerHTML = '<span>🌸</span> Analyzing Part ' + (msIndex + 1) + ' of ' + msChunks.length + '…';
+    let ok = true;
     try {
       msResults[msIndex] = await analyzeChunkRobust(msChunks[msIndex], msIndex + 1, msChunks.length, btn);
       // Move to the next unfinished part
       while (msIndex < msChunks.length && msResults[msIndex]) msIndex++;
     } catch (err) {
+      ok = false;
       showPartsError('Part ' + (msIndex + 1) + ' failed: ' + (err.message || 'Unknown error'));
     }
+    msBusy = false;
     renderPartsPanel();
+    // Manual retry click after a failure → resume auto-run for the remaining parts
+    if (ok && !msDriving && partsAutoOn()) autoDriveParts();
+    return ok;
   }
 
   // Analyze one chunk with: 3 attempts (with rate-limit backoff), then
@@ -3102,6 +3139,8 @@ window.addEventListener('load', () => {
     const btn = document.getElementById('partsBtn');
     const errEl = document.getElementById('partsError');
     if (errEl) errEl.style.display = 'none';
+    if (msBusy) return false;
+    msBusy = true;
     btn.disabled = true;
     btn.innerHTML = '<span>✿</span> Combining ' + msChunks.length + ' parts…';
     try {
@@ -3117,7 +3156,10 @@ window.addEventListener('load', () => {
       parseAndDisplayReport1(finalText);
       summaryProvider = providerTag();
       document.getElementById('partsPanel').style.display = 'none';
+      msBusy = false;
+      return true;
     } catch (err) {
+      msBusy = false;
       showPartsError('Combine failed: ' + (err.message || 'Unknown error'));
       renderPartsPanel();
       // Keep parts intact so user only retries the combine step
@@ -3125,6 +3167,7 @@ window.addEventListener('load', () => {
       b.innerHTML = '<span>✿</span> Retry Combine → Final Report';
       b.onclick = combineParts;
       b.disabled = false;
+      return false;
     }
   }
 
